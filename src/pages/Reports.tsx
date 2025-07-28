@@ -202,23 +202,29 @@ export default function Reports() {
       ['Total Transactions', salesOverview.totalTransactions.toString()],
       ['Average Transaction', `₹${salesOverview.averageTransaction.toFixed(2)}`],
       ['Total Profit', `₹${salesOverview.totalProfit.toFixed(2)}`],
-      ['Profit Margin', `${((salesOverview.totalProfit / salesOverview.totalSales) * 100).toFixed(2)}%`]
+      [''],
+      ['Top Products', 'Quantity Sold', 'Revenue', 'Profit'],
+      ...itemWiseSales.slice(0, 10).map(item => [
+        item.product.name,
+        item.quantity.toString(),
+        `₹${item.revenue.toFixed(2)}`,
+        `₹${item.profit.toFixed(2)}`
+      ])
     ];
     const overviewSheet = XLSX.utils.aoa_to_sheet(overviewData);
     XLSX.utils.book_append_sheet(workbook, overviewSheet, 'Overview');
     
-    // Detailed Transactions Sheet
+    // All Transactions Sheet
     const transactionsData = [
       ['Transaction ID', 'Date', 'Time', 'Customer', 'Employee', 'Items Count', 'Subtotal', 'Tax', 'Total', 'Payment Method', 'Status']
     ];
     filteredTransactions.forEach(transaction => {
-      const customer = customers.find(c => c.id === transaction.customerId);
       const employee = employees.find(e => e.id === transaction.employeeId);
       transactionsData.push([
         transaction.id,
-        format(transaction.timestamp, 'dd/MM/yyyy'),
-        format(transaction.timestamp, 'HH:mm:ss'),
-        customer?.name || 'Walk-in Customer',
+        format(new Date(transaction.timestamp), 'dd/MM/yyyy'),
+        format(new Date(transaction.timestamp), 'HH:mm'),
+        transaction.customerName || 'Walk-in Customer',
         employee?.name || 'Unknown',
         transaction.items.length.toString(),
         `₹${transaction.subtotal.toFixed(2)}`,
@@ -321,88 +327,50 @@ export default function Reports() {
         ? filteredTransactions.filter(t => format(t.timestamp, 'HH:mm') === sale.time)
         : filteredTransactions.filter(t => format(t.timestamp, 'dd/MM') === sale.date);
       
-      const itemsInPeriod = periodTransactions.reduce((sum, t) => 
+      const itemsSold = periodTransactions.reduce((sum, t) => 
         sum + t.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
       
       salesData.push([
         dateFilter === 'today' ? sale.time : sale.date,
         `₹${sale.sales.toFixed(2)}`,
         sale.transactions.toString(),
-        itemsInPeriod.toString()
+        itemsSold.toString()
       ]);
     });
     const salesSheet = XLSX.utils.aoa_to_sheet(salesData);
     XLSX.utils.book_append_sheet(workbook, salesSheet, 'Daily Sales');
     
-    // Payment Methods Sheet
-    const paymentData = [
-      ['Payment Method', 'Amount', 'Percentage']
-    ];
-    const totalPayments = paymentBreakdown.reduce((sum, p) => sum + p.value, 0);
-    paymentBreakdown.forEach(payment => {
-      paymentData.push([
-        payment.name,
-        payment.value.toFixed(2),
-        ((payment.value / totalPayments) * 100).toFixed(2)
-      ]);
-    });
-    const paymentSheet = XLSX.utils.aoa_to_sheet(paymentData);
-    XLSX.utils.book_append_sheet(workbook, paymentSheet, 'Payment Methods');
-    
     // Save the file
-    XLSX.writeFile(workbook, `sales-report-${dateFilter}-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    XLSX.writeFile(workbook, `sales_report_${dateFilter}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   const exportReport = () => {
-    const reportData = {
-      period: dateFilter,
-      generatedAt: new Date().toISOString(),
-      overview: salesOverview,
-      itemWiseSales,
-      employeeWiseSales,
-      dailySales,
-      paymentBreakdown
-    };
-    
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `sales-report-${dateFilter}-${format(new Date(), 'yyyy-MM-dd')}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    exportToExcel();
   };
 
   const printReport = async () => {
-    // Create a fake Transaction for printDriver, or create a summary printout
-    // For now, print a summary of the sales overview as a transaction-like object
-    const summaryTransaction: Transaction = {
-      id: 'REPORT-' + dateFilter + '-' + format(new Date(), 'yyyyMMddHHmmss'),
-      items: [
-        {
-          product: { id: 'total', name: 'Total Sales', price: salesOverview.totalSales, cost: 0, sku: '', category: '', stock: 0, minStock: 0, taxRate: 0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          quantity: 1
-        },
-        {
-          product: { id: 'profit', name: 'Total Profit', price: salesOverview.totalProfit, cost: 0, sku: '', category: '', stock: 0, minStock: 0, taxRate: 0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          quantity: 1
-        },
-        {
-          product: { id: 'avg', name: 'Avg Transaction', price: salesOverview.averageTransaction, cost: 0, sku: '', category: '', stock: 0, minStock: 0, taxRate: 0, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          quantity: 1
-        }
-      ],
-      subtotal: salesOverview.totalSales,
-      tax: 0,
-      discount: 0,
-      total: salesOverview.totalSales,
-      paymentMethod: 'cash',
-      paymentDetails: {},
-      timestamp: new Date(),
-      status: 'completed'
-    };
-    await printDriver.print(summaryTransaction, { paperSize: 'thermal' });
+    const reportContent = `
+      Sales Report - ${dateFilter.toUpperCase()}
+      Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm:ss')}
+      
+      Overview:
+      - Total Sales: ₹${salesOverview.totalSales.toFixed(2)}
+      - Total Transactions: ${salesOverview.totalTransactions}
+      - Average Transaction: ₹${salesOverview.averageTransaction.toFixed(2)}
+      - Total Profit: ₹${salesOverview.totalProfit.toFixed(2)}
+      
+      Top Products:
+      ${itemWiseSales.slice(0, 5).map((item, index) => 
+        `${index + 1}. ${item.product.name} - ${item.quantity} sold - ₹${item.revenue.toFixed(2)}`
+      ).join('\n')}
+      
+      Employee Performance:
+      ${employeeWiseSales.slice(0, 5).map((emp, index) => 
+        `${index + 1}. ${emp.name} - ${emp.transactions} transactions - ₹${emp.revenue.toFixed(2)}`
+      ).join('\n')}
+    `;
+    
+    await printDriver.printText(reportContent);
   };
 
   return (
@@ -410,12 +378,32 @@ export default function Reports() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive sales and business insights</p>
+          <p className="text-muted-foreground">Comprehensive sales and performance insights</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={dateFilter} onValueChange={(value: string) => setDateFilter(value as 'today' | 'week' | 'month' | 'all')}>
+          <Button onClick={exportReport} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
+          <Button onClick={printReport} variant="outline">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Print Report
+          </Button>
+        </div>
+      </div>
+
+      {/* Date Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Filter by Date Range
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
             <SelectTrigger className="w-48">
-              <SelectValue />
+              <SelectValue placeholder="Select date range" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="today">Today</SelectItem>
@@ -424,20 +412,8 @@ export default function Reports() {
               <SelectItem value="all">All Time</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={exportToExcel} variant="default">
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button onClick={exportReport} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export JSON
-          </Button>
-          <Button onClick={printReport} variant="secondary">
-            <Download className="w-4 h-4 mr-2" />
-            Print Report
-          </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -448,42 +424,55 @@ export default function Reports() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹{salesOverview.totalSales.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {salesOverview.totalTransactions} transactions
+            </p>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{salesOverview.totalTransactions}</div>
-          </CardContent>
-        </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Transaction</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{salesOverview.averageTransaction.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">₹{salesOverview.totalProfit.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{salesOverview.averageTransaction.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              per transaction
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{salesOverview.totalProfit.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {((salesOverview.totalProfit / salesOverview.totalSales) * 100).toFixed(1)}% margin
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Top Products</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{itemWiseSales.length}</div>
+            <p className="text-xs text-muted-foreground">
+              products sold
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      {/* Detailed Reports */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="items">Item Sales</TabsTrigger>
           <TabsTrigger value="employees">Employee Performance</TabsTrigger>
@@ -491,28 +480,43 @@ export default function Reports() {
           <TabsTrigger value="payments">Payment Methods</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Sales Trend</CardTitle>
+                <CardTitle>Top Selling Products</CardTitle>
+                <CardDescription>Best performing products by revenue</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={dailySales}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={dateFilter === 'today' ? 'time' : 'date'} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Sales']} />
-                    <Line type="monotone" dataKey="sales" stroke="#8884d8" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Revenue</TableHead>
+                      <TableHead>Profit</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemWiseSales.slice(0, 5).map((item) => (
+                      <TableRow key={item.product.id}>
+                        <TableCell className="font-medium">{item.product.name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.revenue.toFixed(2)}</TableCell>
+                        <TableCell className={item.profit > 0 ? 'text-green-600' : 'text-red-600'}>
+                          ₹{item.profit.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Payment Methods</CardTitle>
+                <CardDescription>Sales breakdown by payment type</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -623,14 +627,8 @@ export default function Reports() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey={dateFilter === 'today' ? 'time' : 'date'} />
                   <YAxis />
-                  <Tooltip 
-                    formatter={(value, name) => [
-                      name === 'sales' ? `₹${Number(value).toFixed(2)}` : value, 
-                      name === 'sales' ? 'Revenue' : 'Transactions'
-                    ]} 
-                  />
-                  <Bar dataKey="sales" fill="#8884d8" name="sales" />
-                  <Bar dataKey="transactions" fill="#82ca9d" name="transactions" />
+                  <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Sales']} />
+                  <Bar dataKey="sales" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -638,60 +636,56 @@ export default function Reports() {
         </TabsContent>
 
         <TabsContent value="payments">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Method Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={paymentBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ₹${value.toFixed(2)}`}
-                    >
-                      {paymentBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {paymentBreakdown.map((payment) => (
-                    <div key={payment.name} className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded" 
-                          style={{ backgroundColor: payment.color }}
-                        />
-                        <span className="font-medium">{payment.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">₹{payment.value.toFixed(2)}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {((payment.value / salesOverview.totalSales) * 100).toFixed(1)}%
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Method Analysis</CardTitle>
+              <CardDescription>Detailed breakdown of payment methods</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Payment Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={paymentBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {paymentBreakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
+                  <div className="space-y-4">
+                    {paymentBreakdown.map((method) => (
+                      <div key={method.name} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <div>
+                          <p className="font-medium">{method.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₹{method.value.toFixed(2)}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3,
   ShoppingCart,
@@ -9,8 +9,7 @@ import {
   Receipt,
   TrendingUp,
   Store,
-  Settings,
-  LogOut
+  Settings
 } from "lucide-react";
 
 import {
@@ -25,8 +24,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-
-import { getCurrentUser, logout } from '@/lib/storage';
 
 const navigationItems = [
   {
@@ -89,19 +86,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  const user = getCurrentUser();
-  const navigate = useNavigate();
-
-  if (!user || !user.isLoggedIn) return null;
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50";
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <Sidebar
@@ -155,14 +143,6 @@ export function AppSidebar() {
                     <Settings className="w-5 h-5" />
                     {state !== "collapsed" && <span>Settings</span>}
                   </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem onClick={handleLogout}>
-                <SidebarMenuButton asChild>
-                  <button className="w-full flex items-center gap-2 text-destructive hover:bg-destructive/10">
-                    <LogOut className="w-5 h-5" />
-                    {state !== "collapsed" && <span>Logout</span>}
-                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

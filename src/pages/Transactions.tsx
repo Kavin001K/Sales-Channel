@@ -157,7 +157,7 @@ export default function Transactions() {
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Items</TableHead>
-                    <TableHead>Payment Method</TableHead>
+                                        <TableHead>Payment Method</TableHead>
                     <TableHead>Payment Details</TableHead>
                     <TableHead>Employee</TableHead>
                     <TableHead className="text-right">Total</TableHead>
@@ -211,7 +211,7 @@ export default function Transactions() {
                               </div>
                             )}
                           </div>
-                        )}
+                                                )}
                       </TableCell>
                       <TableCell>
                         {transaction.employeeName || 'System'}

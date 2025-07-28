@@ -15,38 +15,22 @@ import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import QuickSell from "./pages/QuickSell";
-import { getCurrentUser, logout, initializeSampleData } from '@/lib/storage';
+import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
-import Login from './pages/Login';
 import { useState } from 'react';
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const user = getCurrentUser();
-  if (!user || !user.isLoggedIn) {
-    window.location.href = '/login';
-    return null;
-  }
-  return children;
-}
-
 function AppRoutes() {
-  const [user, setUser] = useState(getCurrentUser());
-  useEffect(() => {
-    setUser(getCurrentUser());
-  }, []);
   return (
     <Routes>
-      <Route path="/login" element={user && user.isLoggedIn ? <Dashboard /> : <Login />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
-      <Route path="/quickpos" element={<ProtectedRoute><QuickPOS /></ProtectedRoute>} />
-      <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-      <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-      <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-      <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/sales" element={<Sales />} />
+      <Route path="/quickpos" element={<QuickPOS />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/customers" element={<Customers />} />
+      <Route path="/employees" element={<Employees />} />
+      <Route path="/transactions" element={<Transactions />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -57,11 +41,16 @@ const queryClient = new QueryClient();
 const AppWithRouter = () => {
   const location = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+  
   useEffect(() => {
+    // Initialize sample data on app start
+    initializeSampleData();
+    
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

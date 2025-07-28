@@ -6,7 +6,6 @@ import {
   ShoppingCart, 
   Package, 
   Users, 
-  UserCheck, 
   Receipt, 
   BarChart3, 
   Settings,

@@ -140,11 +140,3 @@ export interface InventoryAlert {
   minStock: number;
   type: 'low_stock' | 'out_of_stock';
 }
-
-export interface User {
-  id: string;
-  employeeId: string;
-  isLoggedIn: boolean;
-  loginTime?: Date;
-  role: 'admin' | 'manager' | 'cashier';
-}

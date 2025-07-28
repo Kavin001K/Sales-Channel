@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Product } from '@/lib/types';
-import { getProducts, addProduct, updateProduct, deleteProduct, getCurrentUser } from '@/lib/storage';
+import { getProducts, addProduct, updateProduct, deleteProduct } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,8 +16,6 @@ import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
 
 export default function Products() {
-  const user = getCurrentUser();
-  const isAdminOrManager = user && (user.employeeId === '22BsT025' || user.role === 'manager');
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -223,7 +221,6 @@ export default function Products() {
           <p className="text-muted-foreground">Manage your inventory and product catalog</p>
         </div>
         
-        {isAdminOrManager && (
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { resetForm(); setEditingProduct(null); }}>
@@ -332,7 +329,6 @@ export default function Products() {
             </form>
           </DialogContent>
         </Dialog>
-        )}
       </div>
 
       <Tabs defaultValue="products" className="w-full">
@@ -450,8 +446,6 @@ export default function Products() {
                   )}
                   
                   <div className="flex gap-2">
-                    {isAdminOrManager && (
-                      <>
                     <Button
                       variant="outline"
                       size="sm"
@@ -482,8 +476,6 @@ export default function Products() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                      </>
-                    )}
                   </div>
                 </CardContent>
               </Card>

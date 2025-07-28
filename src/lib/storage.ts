@@ -1,11 +1,10 @@
-import { Product, Transaction, Customer, Employee, User } from './types';
+import { Product, Transaction, Customer, Employee } from './types';
 
 // Local storage keys
 const PRODUCTS_KEY = 'pos_products';
 const TRANSACTIONS_KEY = 'pos_transactions';
 const CUSTOMERS_KEY = 'pos_customers';
 const EMPLOYEES_KEY = 'pos_employees';
-const CURRENT_USER_KEY = 'pos_current_user';
 
 // Products storage
 export const getProducts = (): Product[] => {
@@ -153,55 +152,7 @@ export const deleteEmployee = (id: string): void => {
   saveEmployees(employees);
 };
 
-// User authentication
-export const getCurrentUser = (): User | null => {
-  const stored = localStorage.getItem(CURRENT_USER_KEY);
-  return stored ? JSON.parse(stored) : null;
-};
-
-export const setCurrentUser = (user: User): void => {
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-};
-
-export const logout = (): void => {
-  localStorage.removeItem(CURRENT_USER_KEY);
-};
-
 // Initialize with sample data
-const adminData = {
-  id: '22BsT025',
-  name: 'Admin User',
-  email: 'admin@pos.com',
-  phone: '+1-555-0100',
-  role: 'admin' as 'admin',
-  permissions: {
-    canProcessSales: true,
-    canManageProducts: true,
-    canManageCustomers: true,
-    canViewReports: true,
-    canManageEmployees: true,
-    canProcessRefunds: true,
-    canApplyDiscounts: true,
-    canVoidTransactions: true
-  },
-  hourlyRate: 25.00,
-  isActive: true,
-  pin: '2005',
-  createdAt: new Date(),
-  updatedAt: new Date()
-};
-
-export const ensureAdminAccount = () => {
-  const employees = getEmployees();
-  const adminIndex = employees.findIndex(e => e.id === '22BsT025');
-  if (adminIndex === -1) {
-    employees.push(adminData);
-  } else {
-    employees[adminIndex] = { ...employees[adminIndex], ...adminData };
-  }
-  saveEmployees(employees);
-};
-
 export const initializeSampleData = (): void => {
   // Initialize default settings if they don't exist
   if (!localStorage.getItem('company_settings')) {
@@ -229,6 +180,7 @@ export const initializeSampleData = (): void => {
     };
     localStorage.setItem('print_settings', JSON.stringify(defaultPrintSettings));
   }
+  
   // Products
   if (getProducts().length === 0) {
     const sampleProducts: Product[] = [
@@ -290,11 +242,32 @@ export const initializeSampleData = (): void => {
   // Employees
   if (getEmployees().length === 0) {
     const sampleEmployees: Employee[] = [
-      adminData,
       {
-        id: '2',
-        name: 'John Cashier',
+        id: 'EMP001',
+        name: 'John Admin',
         email: 'john@pos.com',
+        phone: '+1-555-0100',
+        role: 'admin' as 'admin',
+        permissions: {
+          canProcessSales: true,
+          canManageProducts: true,
+          canManageCustomers: true,
+          canViewReports: true,
+          canManageEmployees: true,
+          canProcessRefunds: true,
+          canApplyDiscounts: true,
+          canVoidTransactions: true
+        },
+        hourlyRate: 25.00,
+        isActive: true,
+        pin: '2005',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'EMP002',
+        name: 'Sarah Cashier',
+        email: 'sarah@pos.com',
         phone: '+1-555-0101',
         role: 'cashier' as 'cashier',
         permissions: {
@@ -316,7 +289,6 @@ export const initializeSampleData = (): void => {
     ];
     saveEmployees(sampleEmployees);
   }
-  ensureAdminAccount();
 
   // Customers
   if (getCustomers().length === 0) {
