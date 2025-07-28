@@ -429,7 +429,7 @@ export default function Reports() {
             </p>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Transaction</CardTitle>
@@ -442,7 +442,7 @@ export default function Reports() {
             </p>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
@@ -455,7 +455,7 @@ export default function Reports() {
             </p>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Top Products</CardTitle>
@@ -636,38 +636,38 @@ export default function Reports() {
         </TabsContent>
 
         <TabsContent value="payments">
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <CardTitle>Payment Method Analysis</CardTitle>
               <CardDescription>Detailed breakdown of payment methods</CardDescription>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Payment Distribution</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={paymentBreakdown}
-                        cx="50%"
-                        cy="50%"
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={paymentBreakdown}
+                      cx="50%"
+                      cy="50%"
                         labelLine={false}
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {paymentBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                  </PieChart>
+                </ResponsiveContainer>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
-                  <div className="space-y-4">
+                <div className="space-y-4">
                     {paymentBreakdown.map((method) => (
                       <div key={method.name} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                         <div>
@@ -675,17 +675,17 @@ export default function Reports() {
                           <p className="text-sm text-muted-foreground">
                             {((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales
                           </p>
-                        </div>
-                        <div className="text-right">
+                      </div>
+                      <div className="text-right">
                           <p className="font-semibold">₹{method.value.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
+                    </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -151,6 +151,11 @@ export const CheckoutDialog = ({
     setPaymentMethod('cash');
     setCustomer(null);
     onClose();
+    
+    // Redirect to QuickPOS for next billing after a short delay
+    setTimeout(() => {
+      navigate('/quickpos');
+    }, 1500); // 1.5 second delay to allow printing to complete
   };
 
   const cashAmountFloat = parseFloat(cashAmount) || 0;

@@ -230,7 +230,7 @@ export default function Employees() {
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="phone">Phone</Label>
@@ -358,18 +358,18 @@ export default function Employees() {
                       })}
                     />
                     <Label htmlFor="canApplyDiscounts">Apply Discounts</Label>
-                  </div>
+              </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox
+                      <Checkbox
                       id="canVoidTransactions"
                       checked={formData.permissions.canVoidTransactions}
                       onCheckedChange={(checked) => setFormData({
-                        ...formData,
+                            ...formData,
                         permissions: {...formData.permissions, canVoidTransactions: !!checked}
                       })}
                     />
                     <Label htmlFor="canVoidTransactions">Void Transactions</Label>
-                  </div>
+                    </div>
                 </div>
               </div>
 
@@ -391,36 +391,36 @@ export default function Employees() {
       </div>
 
       {/* Search */}
-      <Card>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="w-5 h-5" />
             Search Employees
           </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </CardHeader>
+          <CardContent>
           <Input
             placeholder="Search by name, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Employees List */}
-      <Card>
+        <Card>
         <CardHeader>
           <CardTitle>All Employees</CardTitle>
           <p className="text-sm text-muted-foreground">
             {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} found
           </p>
-        </CardHeader>
-        <CardContent>
+          </CardHeader>
+          <CardContent>
           {filteredEmployees.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No employees found</p>
-            </div>
+      </div>
           ) : (
             <div className="grid gap-4">
               {filteredEmployees.map((employee) => (
@@ -429,62 +429,62 @@ export default function Employees() {
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                         <UserCheck className="w-6 h-6 text-primary" />
-                      </div>
+      </div>
                       <div>
                         <h3 className="font-semibold">{employee.name}</h3>
-                        <p className="text-sm text-muted-foreground">{employee.email}</p>
+                  <p className="text-sm text-muted-foreground">{employee.email}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant={getRoleBadgeVariant(employee.role)}>
+                <Badge variant={getRoleBadgeVariant(employee.role)}>
                             {employee.role}
-                          </Badge>
-                          {employee.hourlyRate && (
+                </Badge>
+              {employee.hourlyRate && (
                             <Badge variant="outline">
                               ₹{employee.hourlyRate}/hr
                             </Badge>
                           )}
                           <Badge variant={employee.isActive ? 'default' : 'secondary'}>
                             {employee.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                      </Badge>
                         </div>
-                      </div>
-                    </div>
+                </div>
+              </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(employee)}
-                      >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(employee)}
+                >
                         <Edit className="w-4 h-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
-                            <AlertDialogDescription>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                      <AlertDialogDescription>
                               Are you sure you want to delete {employee.name}? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(employee.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(employee.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
                   </div>
-                </Card>
-              ))}
-            </div>
+          </Card>
+        ))}
+      </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
-} 
+}
