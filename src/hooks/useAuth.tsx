@@ -6,6 +6,7 @@ interface AuthContextType extends AuthState {
   loginCompany: (credentials: LoginCredentials) => Promise<boolean>;
   loginEmployee: (credentials: EmployeeLoginCredentials) => Promise<boolean>;
   logout: () => void;
+  logoutEmployee: () => void;
   refreshAuth: () => void;
 }
 
@@ -138,6 +139,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('auth_state');
   };
 
+  const logoutEmployee = () => {
+    const newState: AuthState = {
+      isAuthenticated: true,
+      company: authState.company,
+      employee: null,
+      loading: false
+    };
+    
+    setAuthState(newState);
+    saveAuthState(newState);
+  };
+
   const refreshAuth = () => {
     // This could be used to refresh tokens or validate current session
     // For now, we'll just reload from localStorage
@@ -161,6 +174,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loginCompany,
     loginEmployee,
     logout,
+    logoutEmployee,
     refreshAuth
   };
 

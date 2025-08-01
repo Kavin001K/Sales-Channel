@@ -111,6 +111,12 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
             
+            <Route path="/quickpos" element={
+              <ProtectedRoute>
+                <QuickPOS />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getTransactions, getProducts, getCustomers } from '@/lib/storage';
 import { Transaction, Product, InventoryAlert } from '@/lib/types';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -11,10 +13,12 @@ import {
   TrendingUp, 
   TrendingDown,
   AlertTriangle,
-  Calendar
+  Calendar,
+  LogOut
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const { logout, logoutEmployee, employee } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlert[]>([]);
@@ -92,6 +96,16 @@ export default function Dashboard() {
 
   const weeklyStats = getWeeklyStats();
 
+  const handleLogout = () => {
+    if (employee) {
+      // If employee is logged in, logout employee only
+      logoutEmployee();
+    } else {
+      // If no employee, logout completely
+      logout();
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -99,14 +113,25 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="w-4 h-4" />
-          {new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="w-4 h-4" />
+            {new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            {employee ? 'Logout Employee' : 'Logout'}
+          </Button>
         </div>
       </div>
 
@@ -118,7 +143,7 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${todayStats.sales.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{todayStats.sales.toFixed(2)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <TrendingUp className="w-3 h-3 mr-1" />
               +12.5% from yesterday
@@ -160,7 +185,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${todayStats.averageTransaction.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{todayStats.averageTransaction.toFixed(2)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <TrendingDown className="w-3 h-3 mr-1" />
               -2.3% from yesterday
@@ -192,13 +217,20 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${transaction.total.toFixed(2)}</p>
+                    <p className="font-medium">₹{transaction.total.toFixed(2)}</p>
                     <Badge variant="outline" className="text-xs">
                       {transaction.paymentMethod}
                     </Badge>
                   </div>
                 </div>
               ))}
+              {getRecentTransactions().length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent transactions</p>
+                  <p className="text-sm">Start making sales to see them here</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -214,33 +246,30 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {inventoryAlerts.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No inventory alerts - all products are well stocked!
-                </p>
-              ) : (
-                inventoryAlerts.map((alert) => (
-                  <div key={alert.product.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        alert.type === 'out_of_stock' ? 'bg-destructive/10' : 'bg-yellow-100'
-                      }`}>
-                        <Package className={`w-5 h-5 ${
-                          alert.type === 'out_of_stock' ? 'text-destructive' : 'text-yellow-600'
-                        }`} />
-                      </div>
-                      <div>
-                        <p className="font-medium">{alert.product.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {alert.currentStock} left (min: {alert.minStock})
-                        </p>
-                      </div>
+              {inventoryAlerts.map((alert) => (
+                <div key={alert.product.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <Package className="w-5 h-5 text-red-600" />
                     </div>
-                    <Badge variant={alert.type === 'out_of_stock' ? 'destructive' : 'secondary'}>
-                      {alert.type === 'out_of_stock' ? 'Out of Stock' : 'Low Stock'}
-                    </Badge>
+                    <div>
+                      <p className="font-medium">{alert.product.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Stock: {alert.currentStock} {alert.product.unit}
+                      </p>
+                    </div>
                   </div>
-                ))
+                  <Badge variant={alert.type === 'out_of_stock' ? 'destructive' : 'secondary'}>
+                    {alert.type === 'out_of_stock' ? 'Out of Stock' : 'Low Stock'}
+                  </Badge>
+                </div>
+              ))}
+              {inventoryAlerts.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No inventory alerts</p>
+                  <p className="text-sm">All products are well stocked!</p>
+                </div>
               )}
             </div>
           </CardContent>
@@ -256,16 +285,16 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">${weeklyStats.sales.toFixed(2)}</div>
-              <p className="text-sm text-muted-foreground">Total Sales</p>
+              <div className="text-3xl font-bold text-green-600">₹{weeklyStats.sales.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground">Total Sales</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{weeklyStats.transactions}</div>
-              <p className="text-sm text-muted-foreground">Transactions</p>
+              <div className="text-3xl font-bold text-blue-600">{weeklyStats.transactions}</div>
+              <div className="text-sm text-muted-foreground">Transactions</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">+{weeklyStats.growth}%</div>
-              <p className="text-sm text-muted-foreground">Growth</p>
+              <div className="text-3xl font-bold text-green-600">+{weeklyStats.growth}%</div>
+              <div className="text-sm text-muted-foreground">Growth</div>
             </div>
           </div>
         </CardContent>

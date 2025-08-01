@@ -343,7 +343,7 @@ export default function QuickPOS() {
       printWindow.print();
       setTimeout(() => {
         printWindow.close();
-        window.location.href = 'https://acebusiness.shop';
+        window.location.href = 'https://acebusiness.shop/quickpos';
       }, 1000);
     };
   };
@@ -553,7 +553,7 @@ export default function QuickPOS() {
           printWindow.print();
           setTimeout(() => {
             printWindow.close();
-            window.location.href = 'https://acebusiness.shop';
+            window.location.href = 'https://acebusiness.shop/quickpos';
           }, 1000);
         };
       }

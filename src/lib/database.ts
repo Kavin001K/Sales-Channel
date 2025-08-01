@@ -125,61 +125,8 @@ class DatabaseService {
       return JSON.parse(stored);
     }
 
-    // Demo products
-    const demoProducts = [
-      {
-        id: 'prod_001',
-        companyId: 'comp_001',
-        name: 'Laptop Computer',
-        description: 'High-performance laptop for business use',
-        price: 1299.99,
-        cost: 800.00,
-        stock: 15,
-        category: 'Electronics',
-        barcode: '1234567890123',
-        sku: 'LAP001',
-        image: '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'prod_002',
-        companyId: 'comp_001',
-        name: 'Wireless Mouse',
-        description: 'Ergonomic wireless mouse',
-        price: 29.99,
-        cost: 15.00,
-        stock: 50,
-        category: 'Electronics',
-        barcode: '1234567890124',
-        sku: 'MOU001',
-        image: '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'prod_003',
-        companyId: 'comp_002',
-        name: 'Office Chair',
-        description: 'Comfortable office chair with lumbar support',
-        price: 199.99,
-        cost: 120.00,
-        stock: 10,
-        category: 'Furniture',
-        barcode: '1234567890125',
-        sku: 'CHA001',
-        image: '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    const companyProducts = demoProducts.filter(p => p.companyId === companyId);
-    localStorage.setItem(`products_${companyId}`, JSON.stringify(companyProducts));
-    return companyProducts;
+    // Return empty array instead of sample data
+    return [];
   }
 
   async addProduct(product: Product): Promise<void> {
@@ -214,51 +161,8 @@ class DatabaseService {
       return JSON.parse(stored);
     }
 
-    // Demo customers
-    const demoCustomers = [
-      {
-        id: 'cust_001',
-        companyId: 'comp_001',
-        name: 'John Smith',
-        email: 'john.smith@email.com',
-        phone: '+1-555-0101',
-        address: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        country: 'USA',
-        notes: '',
-        totalSpent: 0,
-        visitCount: 0,
-        lastVisit: undefined,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'cust_002',
-        companyId: 'comp_001',
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@email.com',
-        phone: '+1-555-0102',
-        address: '456 Oak Ave',
-        city: 'Los Angeles',
-        state: 'CA',
-        zipCode: '90210',
-        country: 'USA',
-        notes: '',
-        totalSpent: 0,
-        visitCount: 0,
-        lastVisit: undefined,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    const companyCustomers = demoCustomers.filter(c => c.companyId === companyId);
-    localStorage.setItem(`customers_${companyId}`, JSON.stringify(companyCustomers));
-    return companyCustomers;
+    // Return empty array instead of sample data
+    return [];
   }
 
   async addCustomer(customer: Customer): Promise<void> {
@@ -281,39 +185,8 @@ class DatabaseService {
       return [];
     }
 
-    // Return demo employees for the company
-    const demoEmployees = [
-      {
-        id: 'emp_001',
-        companyId: 'comp_001',
-        employeeId: 'EMP001',
-        name: 'Alice Manager',
-        email: 'alice.manager@techsolutions.com',
-        phone: '+1-555-0201',
-        position: 'Store Manager',
-        salary: 45000.00,
-        hireDate: new Date('2023-01-15'),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'emp_002',
-        companyId: 'comp_001',
-        employeeId: 'EMP002',
-        name: 'Bob Sales',
-        email: 'bob.sales@techsolutions.com',
-        phone: '+1-555-0202',
-        position: 'Sales Associate',
-        salary: 35000.00,
-        hireDate: new Date('2023-02-01'),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    return demoEmployees.filter(e => e.companyId === companyId);
+    // Return empty array instead of sample data
+    return [];
   }
 
   async addEmployee(employee: Employee): Promise<void> {
