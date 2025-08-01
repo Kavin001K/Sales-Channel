@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, Company, Employee, LoginCredentials, EmployeeLoginCredentials } from '../lib/types';
 import { databaseService } from '../lib/database';
 

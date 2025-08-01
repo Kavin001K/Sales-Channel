@@ -140,7 +140,7 @@ export default function Sales() {
     setProducts(updatedProducts);
     setFilteredProducts(updatedProducts);
     
-    // Redirect to acebusiness.shop after successful bill completion
+    // Redirect to acebusiness.shop dashboard after successful bill completion
     setTimeout(() => {
       window.location.href = 'https://acebusiness.shop';
     }, 1500); // 1.5 second delay to allow printing to complete
