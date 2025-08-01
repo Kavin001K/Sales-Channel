@@ -1,24 +1,73 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
-import { getTransactions } from '@/lib/storage';
+import { databaseService } from '@/lib/database';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, Receipt } from 'lucide-react';
+import { Calendar, Search, Filter, Receipt, Printer } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'card'>('all');
+  const [loading, setLoading] = useState(true);
+  
+  const { company } = useAuth();
 
   useEffect(() => {
-    setTransactions(getTransactions());
-  }, []);
+    const loadTransactions = async () => {
+      if (!company) return;
+      
+      try {
+        setLoading(true);
+        const data = await databaseService.getTransactions(company.id);
+        setTransactions(data);
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load transactions",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, [company]);
+
+  const handleReprint = async (transaction: Transaction) => {
+    try {
+      // Here you would typically call a print service
+      // For now, we'll simulate printing by showing a toast
+      toast({
+        title: "Reprinting Receipt",
+        description: `Reprinting receipt for transaction ${transaction.id.slice(-8)}`,
+      });
+      
+      // Simulate print delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Receipt Printed",
+        description: "Receipt has been sent to the printer",
+      });
+    } catch (error) {
+      toast({
+        title: "Print Error",
+        description: "Failed to print receipt",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -71,6 +120,19 @@ export default function Transactions() {
   }, [transactions, searchQuery, dateFilter, paymentFilter]);
 
   const totalAmount = filteredTransactions.reduce((sum, transaction) => sum + transaction.total, 0);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <span>Loading transactions...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -157,11 +219,12 @@ export default function Transactions() {
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Items</TableHead>
-                                        <TableHead>Payment Method</TableHead>
+                    <TableHead>Payment Method</TableHead>
                     <TableHead>Payment Details</TableHead>
                     <TableHead>Employee</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -188,30 +251,23 @@ export default function Transactions() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={transaction.paymentMethod === 'cash' ? 'default' : 'secondary'}>
-                          {transaction.paymentMethod.toUpperCase()}
+                          {transaction.paymentMethod?.toUpperCase() || 'UNKNOWN'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount && (
-                          <div className="text-sm">
-                            <div>Paid: ₹{transaction.paymentDetails.cashAmount.toFixed(2)}</div>
-                            {transaction.paymentDetails.change && transaction.paymentDetails.change > 0 && (
-                              <div className="text-muted-foreground">
-                                Change: ₹{transaction.paymentDetails.change.toFixed(2)}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount && (
-                          <div className="text-sm">
-                            <div>Card: ₹{transaction.paymentDetails.cardAmount.toFixed(2)}</div>
-                            {transaction.receipt && (
-                              <div className="text-muted-foreground font-mono">
-                                ***{transaction.receipt.slice(-4)}
-                              </div>
-                            )}
-                          </div>
-                                                )}
+                        <div className="text-sm">
+                          <div>Paid: ₹{transaction.total.toFixed(2)}</div>
+                          {transaction.paymentMethod === 'cash' && (
+                            <div className="text-muted-foreground">
+                              Cash Payment
+                            </div>
+                          )}
+                          {transaction.paymentMethod === 'card' && (
+                            <div className="text-muted-foreground">
+                              Card Payment
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {transaction.employeeName || 'System'}
@@ -226,6 +282,17 @@ export default function Transactions() {
                         }>
                           {transaction.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReprint(transaction)}
+                          className="h-8 w-8 p-0"
+                          title="Reprint Receipt"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

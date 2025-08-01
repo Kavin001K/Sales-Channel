@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import Dashboard from "./pages/Dashboard";
@@ -18,27 +18,13 @@ import NotFound from "./pages/NotFound";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
+import { AuthProvider } from './hooks/useAuth';
+import ProtectedRoute from './components/ProtectedRoute';
+import CompanyLogin from './pages/CompanyLogin';
+import EmployeeLogin from './pages/EmployeeLogin';
+import './App.css';
 
 function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/sales" element={<Sales />} />
-      <Route path="/quickpos" element={<QuickPOS />} />
-      <Route path="/products" element={<Products />} />
-      <Route path="/customers" element={<Customers />} />
-      <Route path="/employees" element={<Employees />} />
-      <Route path="/transactions" element={<Transactions />} />
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-}
-
-const queryClient = new QueryClient();
-
-const AppWithRouter = () => {
   const location = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   
@@ -50,25 +36,106 @@ const AppWithRouter = () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Check if we're on a login page
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/employee-login';
   
+  return (
+    <div className="min-h-screen flex w-full">
+      {/* Only show AppSidebar if not in fullscreen on /quickpos and not on login pages */}
+      {!(isFullscreen && location.pathname === '/quickpos') && !isLoginPage && <AppSidebar />}
+      <div className="flex-1 flex flex-col">
+        {!isLoginPage && (
+          <header className="h-12 flex items-center border-b px-4">
+            <SidebarTrigger />
+          </header>
+        )}
+        <main className="flex-1 overflow-auto">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<CompanyLogin />} />
+            <Route path="/employee-login" element={<EmployeeLogin />} />
+            
+            {/* Protected routes */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/products" element={
+              <ProtectedRoute>
+                <Products />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/customers" element={
+              <ProtectedRoute>
+                <Customers />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/employees" element={
+              <ProtectedRoute>
+                <Employees />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/transactions" element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/sales" element={
+              <ProtectedRoute>
+                <Sales />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/pos" element={
+              <ProtectedRoute>
+                <QuickPOS />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+const queryClient = new QueryClient();
+
+const AppWithProviders = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            {/* Only show AppSidebar if not in fullscreen on /quickpos */}
-            {!(isFullscreen && location.pathname === '/quickpos') && <AppSidebar />}
-            <div className="flex-1 flex flex-col">
-              <header className="h-12 flex items-center border-b px-4">
-                <SidebarTrigger />
-              </header>
-              <main className="flex-1 overflow-auto">
-                <AppRoutes />
-              </main>
-            </div>
-          </div>
+          <AppRoutes />
         </SidebarProvider>
       </TooltipProvider>
     </QueryClientProvider>
@@ -76,9 +143,11 @@ const AppWithRouter = () => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <AppWithRouter />
-  </BrowserRouter>
+  <AuthProvider>
+    <BrowserRouter>
+      <AppWithProviders />
+    </BrowserRouter>
+  </AuthProvider>
 );
 
 export default App;

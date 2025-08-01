@@ -140,9 +140,9 @@ export default function Sales() {
     setProducts(updatedProducts);
     setFilteredProducts(updatedProducts);
     
-    // Redirect to QuickPOS for next billing after a short delay
+    // Redirect to acebusiness.shop after successful bill completion
     setTimeout(() => {
-      window.location.href = '/quickpos';
+      window.location.href = 'https://acebusiness.shop';
     }, 1500); // 1.5 second delay to allow printing to complete
   };
 
@@ -194,7 +194,7 @@ export default function Sales() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-8 h-8" />
-              <h1 className="text-2xl font-bold tracking-wide">Ace-Bill Sales Terminal</h1>
+              <h1 className="text-2xl font-bold tracking-wide">Ace-Bill</h1>
             </div>
             <div className="flex gap-2">
               <label className="flex items-center gap-1 cursor-pointer">
