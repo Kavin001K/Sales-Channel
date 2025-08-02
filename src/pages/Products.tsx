@@ -214,26 +214,27 @@ export default function Products() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Products</h1>
-          <p className="text-muted-foreground">Manage your inventory and product catalog</p>
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
+      {/* Header Section - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Products</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your inventory and product catalog</p>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingProduct(null); }}>
+            <Button onClick={() => { resetForm(); setEditingProduct(null); }} size="sm" className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Product
             </Button>
           </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-            </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-8">
+                        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto p-4 sm:p-6">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-8">
                   {/* Product Details */}
                   <div className="space-y-4 border rounded p-4">
                     <div className="font-bold text-lg mb-2">Product Details</div>
@@ -332,11 +333,12 @@ export default function Products() {
       </div>
 
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="products">Product List</TabsTrigger>
-          <TabsTrigger value="import">
-            <Upload className="w-4 h-4 mr-2" />
-            Import from Excel
+        <TabsList className="grid w-full grid-cols-2 h-auto">
+          <TabsTrigger value="products" className="text-xs sm:text-sm py-2">Product List</TabsTrigger>
+          <TabsTrigger value="import" className="text-xs sm:text-sm py-2">
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Import from Excel</span>
+            <span className="sm:hidden">Import</span>
           </TabsTrigger>
         </TabsList>
 
@@ -350,55 +352,55 @@ export default function Products() {
           />
         </TabsContent>
 
-        <TabsContent value="products" className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <TabsContent value="products" className="space-y-4 sm:space-y-6">
+          {/* Stats Cards - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Products</CardTitle>
+                <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{products.length}</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold">{products.length}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-xs sm:text-sm font-medium">Low Stock Items</CardTitle>
+                <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{lowStockProducts.length}</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600">{lowStockProducts.length}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Value</CardTitle>
+                <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold">
                   ₹{products.reduce((sum, p) => sum + (p.price * p.stock), 0).toFixed(2)}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Filters */}
-          <div className="flex gap-4">
+          {/* Filters - Responsive */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm sm:text-base"
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
@@ -410,37 +412,37 @@ export default function Products() {
             </Select>
           </div>
 
-          {/* Products Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Products Grid - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredProducts.map((product) => (
               <Card key={product.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{product.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                      <CardTitle className="text-base sm:text-lg">{product.name}</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{product.category}</p>
                     </div>
-                    <Badge variant={product.stock <= product.minStock ? 'destructive' : 'secondary'}>
+                    <Badge variant={product.stock <= product.minStock ? 'destructive' : 'secondary'} className="text-xs">
                       {product.stock <= product.minStock ? 'Low Stock' : 'In Stock'}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-primary">
+                    <span className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
                       ₹{product.price.toFixed(2)}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       Stock: {product.stock}
                     </span>
                   </div>
                   
                   {product.sku && (
-                    <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">SKU: {product.sku}</p>
                   )}
                   
                   {product.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                       {product.description}
                     </p>
                   )}
@@ -450,15 +452,15 @@ export default function Products() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(product)}
-                      className="flex-1"
+                      className="flex-1 text-xs sm:text-sm"
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       Edit
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

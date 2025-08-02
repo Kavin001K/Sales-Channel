@@ -188,51 +188,51 @@ export default function Sales() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-blue-800 text-white p-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      {/* Header - Responsive */}
+      <header className="bg-blue-800 text-white p-2 sm:p-4 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-8 h-8" />
-              <h1 className="text-2xl font-bold tracking-wide">Ace-Bill</h1>
+              <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8" />
+              <h1 className="text-xl sm:text-2xl font-bold tracking-wide">Ace-Bill</h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-                <span className={searchType === 'serial' ? 'text-blue-200 font-bold' : ''}>Serial No.</span>
+                <span className={`text-xs sm:text-sm ${searchType === 'serial' ? 'text-blue-200 font-bold' : ''}`}>Serial No.</span>
               </label>
               <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-                <span className={searchType === 'code' ? 'text-blue-200 font-bold' : ''}>Item Code</span>
+                <span className={`text-xs sm:text-sm ${searchType === 'code' ? 'text-blue-200 font-bold' : ''}`}>Item Code</span>
               </label>
               <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-                <span className={searchType === 'name' ? 'text-blue-200 font-bold' : ''}>Item Name</span>
+                <span className={`text-xs sm:text-sm ${searchType === 'name' ? 'text-blue-200 font-bold' : ''}`}>Item Name</span>
               </label>
             </div>
             <div className="flex items-center w-full max-w-xl">
               <input
-                className="border rounded-l px-4 py-2 w-full text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border rounded-l px-2 sm:px-4 py-1 sm:py-2 w-full text-sm sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
-              <button className="bg-blue-700 text-white px-4 py-2 rounded-r">
-                <Search className="w-5 h-5" />
+              <button className="bg-blue-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-r">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
-          {/* Bill/Tax Invoice Toggle and Date/Time */}
-          <div className="flex flex-col items-end min-w-[200px]">
-            <div className="flex gap-2 mb-2">
+          {/* Bill/Tax Invoice Toggle and Date/Time - Responsive */}
+          <div className="flex flex-col items-end min-w-[120px] sm:min-w-[200px]">
+            <div className="flex gap-1 sm:gap-2 mb-1 sm:mb-2">
               <button
-                className={`px-4 py-2 rounded-t ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`px-2 sm:px-4 py-1 sm:py-2 rounded-t text-xs sm:text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setInvoiceType('bill')}
               >
                 Bill
               </button>
               <button
-                className={`px-4 py-2 rounded-t ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`px-2 sm:px-4 py-1 sm:py-2 rounded-t text-xs sm:text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setInvoiceType('tax')}
               >
                 Tax Invoice
@@ -240,72 +240,81 @@ export default function Sales() {
             </div>
             <div className="text-right">
               <span className="text-xs text-gray-300">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              <div className="text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+              <div className="text-sm sm:text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar */}
-        <div className="bg-blue-800 text-white w-56 flex flex-col py-6 px-2 flex-shrink-0 min-h-0">
-          <div className="font-bold text-lg mb-6 tracking-widest text-center">CATEGORY</div>
-          {categories.map(category => (
-            <button
-              key={category}
-              className={`w-full text-left px-4 py-3 mb-2 rounded-lg transition font-semibold text-lg ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
+      {/* Main Content - Responsive */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
+        {/* Category Sidebar - Collapsible on Mobile */}
+        <div className="bg-blue-800 text-white w-full lg:w-56 flex flex-col py-3 sm:py-6 px-2 flex-shrink-0 min-h-0 lg:min-h-0">
+          <div className="font-bold text-base sm:text-lg mb-3 sm:mb-6 tracking-widest text-center">CATEGORY</div>
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 lg:gap-0">
+            {categories.map(category => (
+              <button
+                key={category}
+                className={`w-full text-left px-2 sm:px-4 py-2 sm:py-3 mb-1 lg:mb-2 rounded-lg transition font-semibold text-sm sm:text-lg ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Product Grid */}
-        <div className="flex-1 bg-gray-50 p-8 overflow-auto min-w-0 min-h-0">
-          <table className="min-w-full bg-white rounded shadow text-left">
-            <thead>
-              <tr className="bg-blue-100 text-blue-900">
-                <th className="px-4 py-2">Item Name</th>
-                <th className="px-4 py-2">Tag</th>
-                <th className="px-4 py-2">Sale Price</th>
-                <th className="px-4 py-2">MRP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedProducts.length === 0 ? (
-                <tr><td colSpan={4} className="text-center text-gray-400 py-8">No products found.</td></tr>
-              ) : (
-                displayedProducts.map(product => (
-                  <tr
-                    key={product.id}
-                    className="hover:bg-blue-50 cursor-pointer border-b"
-                    onClick={() => handleProductSelect(product, 1)}
-                  >
-                    <td className="px-4 py-3 font-semibold">{product.name}</td>
-                    <td className="px-4 py-3">{product.sku || '-'}</td>
-                    <td className="px-4 py-3">₹{product.price.toFixed(2)}</td>
-                    <td className="px-4 py-3">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {/* Product Grid - Responsive */}
+        <div className="flex-1 bg-gray-50 p-2 sm:p-4 lg:p-8 overflow-auto min-w-0 min-h-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded shadow text-left">
+              <thead>
+                <tr className="bg-blue-100 text-blue-900">
+                  <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">Item Name</th>
+                  <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm hidden sm:table-cell">Tag</th>
+                  <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">Sale Price</th>
+                  <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm hidden md:table-cell">MRP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayedProducts.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center text-gray-400 py-8">No products found.</td></tr>
+                ) : (
+                  displayedProducts.map(product => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-blue-50 cursor-pointer border-b"
+                      onClick={() => handleProductSelect(product, 1)}
+                    >
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm">
+                        <div className="max-w-[120px] sm:max-w-none truncate" title={product.name}>
+                          {product.name}
+                        </div>
+                        <div className="text-xs text-gray-500 sm:hidden">{product.sku || '-'}</div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm hidden sm:table-cell">{product.sku || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">₹{product.price.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm hidden md:table-cell">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Cart/Invoice Panel */}
-        <div className="w-96 bg-white border-l flex flex-col h-full flex-shrink-0 min-h-0">
-          <div className="p-4 border-b">
-            <div className="flex gap-2 mb-2">
+        {/* Cart/Invoice Panel - Responsive */}
+        <div className="w-full lg:w-96 bg-white border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
+          <div className="p-2 sm:p-4 border-b">
+            <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <input
-                className="border rounded px-2 py-1 flex-1"
+                className="border rounded px-2 py-1 flex-1 text-xs sm:text-sm"
                 placeholder="Mobile No."
                 value={barcodeQuery}
                 onChange={e => setBarcodeQuery(e.target.value)}
               />
               <input
-                className="border rounded px-2 py-1 flex-1"
+                className="border rounded px-2 py-1 flex-1 text-xs sm:text-sm"
                 placeholder="Client Name"
                 value={skuQuery}
                 onChange={e => setSkuQuery(e.target.value)}
@@ -313,58 +322,60 @@ export default function Sales() {
             </div>
           </div>
           {/* Cart Table */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left">Item Name</th>
-                  <th className="text-center">Qty</th>
-                  <th className="text-right">Rate</th>
-                  <th className="text-right">Amount</th>
-                  <th className="text-center"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {cart.items.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center text-gray-400 py-8">No items</td></tr>
-                ) : cart.items.map((item, idx) => (
-                  <tr key={item.product.id} className="border-b">
-                    <td>{item.product.name}</td>
-                    <td className="text-center">{item.quantity}</td>
-                    <td className="text-right">₹{item.product.price.toFixed(2)}</td>
-                    <td className="text-right">₹{(item.product.price * item.quantity).toFixed(2)}</td>
-                    <td className="text-center">
-                      <button onClick={() => handleRemoveCartItem(idx)} className="text-red-600 hover:text-red-800"><X className="w-5 h-5" /></button>
-                    </td>
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left">Item Name</th>
+                    <th className="text-center">Qty</th>
+                    <th className="text-right">Rate</th>
+                    <th className="text-right">Amount</th>
+                    <th className="text-center"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {cart.items.length === 0 ? (
+                    <tr><td colSpan={5} className="text-center text-gray-400 py-8">No items</td></tr>
+                  ) : cart.items.map((item, idx) => (
+                    <tr key={item.product.id} className="border-b">
+                      <td className="max-w-[80px] sm:max-w-none truncate" title={item.product.name}>{item.product.name}</td>
+                      <td className="text-center">{item.quantity}</td>
+                      <td className="text-right">₹{item.product.price.toFixed(2)}</td>
+                      <td className="text-right">₹{(item.product.price * item.quantity).toFixed(2)}</td>
+                      <td className="text-center">
+                        <button onClick={() => handleRemoveCartItem(idx)} className="text-red-600 hover:text-red-800"><X className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
           {/* Bill Summary & Payment */}
-          <div className="p-4 border-t space-y-2">
+          <div className="p-2 sm:p-4 border-t space-y-2">
             <div className="flex justify-between text-xs text-gray-500">
               <span>Savings</span><span>0.00</span>
             </div>
             <div className="flex justify-between text-xs text-gray-500">
               <span>Round Off</span><span>0.00</span>
             </div>
-            <div className="flex justify-between text-lg font-bold">
+            <div className="flex justify-between text-sm sm:text-lg font-bold">
               <span>Total</span><span>₹{cart.getTotal().toFixed(2)}</span>
             </div>
-            <div className="flex gap-4 mt-2">
-              <label className="flex items-center gap-1 cursor-pointer">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2">
+              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm">
                 <input type="radio" name="payment" defaultChecked /> Cash
               </label>
-              <label className="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="payment" /> Credit / Debit Card
+              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm">
+                <input type="radio" name="payment" /> Card
               </label>
-              <label className="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="payment" /> Mobile Wallet
+              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm">
+                <input type="radio" name="payment" /> Wallet
               </label>
             </div>
             <button 
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded text-lg mt-2" 
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-3 rounded text-sm sm:text-lg mt-2" 
               onClick={handleCheckout}
               disabled={cart.items.length === 0}
             >
@@ -374,12 +385,12 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Quantity Dialog */}
+      {/* Quantity Dialog - Responsive */}
       {isQtyDialogOpen && qtyDialogProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-lg relative">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg relative">
             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-600 text-2xl" onClick={() => setIsQtyDialogOpen(false)}>&times;</button>
-            <h2 className="text-xl font-bold mb-2">{qtyDialogProduct.name}</h2>
+            <h2 className="text-lg sm:text-xl font-bold mb-2">{qtyDialogProduct.name}</h2>
             <div className="mb-2 text-sm text-gray-600">
               <span className="font-semibold">Unit:</span> {qtyDialogProduct.unit || 'PCS'}
             </div>
@@ -388,7 +399,7 @@ export default function Sales() {
             )}
             <input
               type="number"
-              className="border rounded px-4 py-2 w-full mb-4"
+              className="border rounded px-3 sm:px-4 py-2 w-full mb-4 text-sm sm:text-base"
               value={qtyDialogQty}
               onChange={e => setQtyDialogQty(e.target.value)}
               min={isDecimalUnit(qtyDialogProduct.unit || 'PCS') ? '0.001' : '1'}
@@ -397,39 +408,39 @@ export default function Sales() {
               onKeyDown={e => { if (e.key === 'Enter') handleQtyDialogConfirm(); }}
             />
             {qtyDialogError && (
-              <div className="text-red-600 mb-2">
+              <div className="text-red-600 mb-2 text-sm">
                 {isDecimalUnit(qtyDialogProduct.unit || 'PCS')
                   ? 'Enter a valid decimal quantity (e.g., 1.25)'
                   : 'Enter a valid whole number quantity (e.g., 2)'}
               </div>
             )}
-            <div className="flex gap-4">
-              <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded" onClick={() => setIsQtyDialogOpen(false)}>Cancel</button>
-              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded" onClick={handleQtyDialogConfirm}>Add to Cart</button>
+            <div className="flex gap-2 sm:gap-4">
+              <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base" onClick={() => setIsQtyDialogOpen(false)}>Cancel</button>
+              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm sm:text-base" onClick={handleQtyDialogConfirm}>Add to Cart</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Checkout Dialog */}
+      {/* Checkout Dialog - Responsive */}
       {isCheckoutOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Complete Transaction</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Complete Transaction</h2>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span>Total Amount:</span>
-                <span className="font-bold">₹{cart.getTotal().toFixed(2)}</span>
+                <span className="text-sm sm:text-base">Total Amount:</span>
+                <span className="font-bold text-sm sm:text-base">₹{cart.getTotal().toFixed(2)}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 sm:gap-4">
                 <button 
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded" 
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base" 
                   onClick={() => setIsCheckoutOpen(false)}
                 >
                   Cancel
                 </button>
                 <button 
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded" 
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-sm sm:text-base" 
                   onClick={() => {
                     // Create transaction and complete
                     const transaction: Transaction = {
