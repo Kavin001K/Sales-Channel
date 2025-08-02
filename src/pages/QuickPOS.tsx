@@ -651,76 +651,76 @@ export default function QuickPOS() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
-      {/* Top Bar - Compact */}
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-white border-b px-1 sm:px-2 py-1 h-auto sm:h-10 gap-1 sm:gap-0">
+      {/* Top Bar - Properly Aligned */}
+      <div className="flex flex-col lg:flex-row items-center justify-between bg-white border-b px-4 py-3 h-auto lg:h-14 gap-3">
         {/* Logo/Company Name */}
         <div className="flex items-center">
-          <div className="text-base sm:text-lg font-bold text-blue-700">ACE-PoS</div>
+          <div className="text-xl font-bold text-blue-700">ACE-PoS</div>
         </div>
         
-        {/* Search Bar with Radio Buttons - Responsive */}
-        <div className="flex flex-col items-center flex-1 mx-2 sm:mx-4 w-full sm:w-auto">
-          <div className="flex gap-2 sm:gap-4 mb-1">
-            <label className="flex items-center gap-1 cursor-pointer">
+        {/* Search Bar with Radio Buttons - Properly Aligned */}
+        <div className="flex flex-col items-center flex-1 mx-4 w-full lg:w-auto">
+          <div className="flex gap-4 mb-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'serial' ? 'text-blue-700 font-bold' : ''}`}>Serial No.</span>
+              <span className={`text-sm ${searchType === 'serial' ? 'text-blue-700 font-bold' : ''}`}>Serial No.</span>
             </label>
-            <label className="flex items-center gap-1 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'code' ? 'text-blue-700 font-bold' : ''}`}>Item Code</span>
+              <span className={`text-sm ${searchType === 'code' ? 'text-blue-700 font-bold' : ''}`}>Item Code</span>
             </label>
-            <label className="flex items-center gap-1 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'name' ? 'text-red-600 font-bold' : ''}`}>Item Name</span>
+              <span className={`text-sm ${searchType === 'name' ? 'text-red-600 font-bold' : ''}`}>Item Name</span>
             </label>
           </div>
           <div className="flex items-center w-full max-w-lg">
             <input
               ref={searchRef}
-              className="border rounded-l px-2 sm:px-3 py-1 w-full text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button className="bg-blue-700 text-white px-2 sm:px-3 py-1 rounded-r">
-              <Search className="w-3 h-3 sm:w-4 sm:h-4" />
+            <button className="bg-blue-700 text-white px-3 py-2 rounded-r">
+              <Search className="w-5 h-5" />
             </button>
           </div>
         </div>
         
-        {/* Bill/Tax Invoice Toggle and Date/Time - Responsive */}
-        <div className="flex flex-col items-end min-w-[120px] sm:min-w-[180px]">
-          <div className="flex gap-1 mb-1">
+        {/* Bill/Tax Invoice Toggle and Date/Time - Properly Aligned */}
+        <div className="flex flex-col items-end min-w-[200px]">
+          <div className="flex gap-2 mb-2">
             <button
-              className={`px-2 sm:px-3 py-1 rounded-t text-xs sm:text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('bill')}
             >
               Bill
             </button>
             <button
-              className={`px-2 sm:px-3 py-1 rounded-t text-xs sm:text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('tax')}
             >
               Tax Invoice
             </button>
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-500">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-            <div className="text-xs sm:text-sm font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+            <span className="text-sm text-gray-500">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+            <div className="text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
           </div>
         </div>
       </div>
       {/* Main Content (Category Sidebar + Product Grid) - Responsive */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Compact */}
+        {/* Category Sidebar - Properly Aligned */}
         <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0 min-h-0 lg:min-h-0">
-          <div className="font-bold text-xs sm:text-sm mb-1 sm:mb-2 tracking-widest text-center p-1 sm:p-2 border-b border-blue-700">CATEGORY</div>
+          <div className="font-bold text-lg mb-4 tracking-widest text-center p-4 border-b border-blue-700">CATEGORY</div>
           <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 p-2 lg:p-0">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 p-4 lg:p-0">
               {categories.map(category => (
                 <button
                   key={category}
-                  className={`w-full text-left px-2 sm:px-3 py-1 sm:py-2 mb-1 transition font-medium text-xs sm:text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                  className={`w-full text-left px-4 py-3 mb-2 transition font-medium text-base ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
                   onClick={() => setSelectedCategory(category)}
                 >
                   {category}
