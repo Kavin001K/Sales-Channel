@@ -617,11 +617,12 @@ export default function QuickPOS() {
     
     requestFullscreen();
     
-    // Prevent exiting fullscreen with ESC
+    // Handle ESC key to navigate to dashboard
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && document.fullscreenElement) {
+      if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        navigate('/dashboard');
       }
     };
     
@@ -649,16 +650,16 @@ export default function QuickPOS() {
   }, []);
 
   return (
-    <div className="w-screen h-screen min-h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Top Bar */}
-      <div className="flex items-center justify-between bg-white border-b px-6 py-2 shadow-sm">
+      <div className="flex items-center justify-between bg-white border-b px-4 py-1 h-12">
         {/* Logo/Company Name */}
-        <div className="flex items-center gap-3">
-          <div className="text-xl font-bold text-blue-700">ACE-PoS</div>
+        <div className="flex items-center">
+          <div className="text-lg font-bold text-blue-700">ACE-PoS</div>
         </div>
         {/* Search Bar with Radio Buttons */}
-        <div className="flex flex-col items-center flex-1 mx-8">
-          <div className="flex gap-6 mb-1">
+        <div className="flex flex-col items-center flex-1 mx-4">
+          <div className="flex gap-4 mb-1">
             <label className="flex items-center gap-1 cursor-pointer">
               <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
               <span className={searchType === 'serial' ? 'text-blue-700 font-bold' : ''}>Serial No.</span>
@@ -672,60 +673,62 @@ export default function QuickPOS() {
               <span className={searchType === 'name' ? 'text-red-600 font-bold' : ''}>Item Name</span>
             </label>
           </div>
-          <div className="flex items-center w-full max-w-xl">
+          <div className="flex items-center w-full max-w-lg">
             <input
-              className="border rounded-l px-4 py-2 w-full text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border rounded-l px-3 py-1 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button className="bg-blue-700 text-white px-4 py-2 rounded-r">
-              <Search className="w-5 h-5" />
+            <button className="bg-blue-700 text-white px-3 py-1 rounded-r">
+              <Search className="w-4 h-4" />
             </button>
-              </div>
-                    </div>
+          </div>
+        </div>
         {/* Bill/Tax Invoice Toggle and Date/Time */}
-        <div className="flex flex-col items-end min-w-[200px]">
-          <div className="flex gap-2 mb-2">
+        <div className="flex flex-col items-end min-w-[180px]">
+          <div className="flex gap-1 mb-1">
             <button
-              className={`px-4 py-2 rounded-t ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('bill')}
             >
               Bill
             </button>
             <button
-              className={`px-4 py-2 rounded-t ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded-t text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('tax')}
             >
               Tax Invoice
             </button>
-                      </div>
-                      <div className="text-right">
+          </div>
+          <div className="text-right">
             <span className="text-xs text-gray-500">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-            <div className="text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
-                      </div>
-                    </div>
+            <div className="text-sm font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+          </div>
+        </div>
                   </div>
       {/* Main Content (Category Sidebar + Product Grid) */}
       <div className="flex-1 flex flex-row min-h-0 min-w-0 overflow-hidden">
         {/* Category Sidebar - Always Visible */}
-        <div className="bg-blue-800 text-white w-56 flex flex-col py-6 px-2 flex-shrink-0 min-h-0">
-          <div className="font-bold text-lg mb-6 tracking-widest text-center">CATEGORY</div>
-          {categories.map(category => (
-            <button
-              key={category}
-              className={`w-full text-left px-4 py-3 mb-2 rounded-lg transition font-semibold text-lg ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
+        <div className="bg-blue-800 text-white w-48 flex flex-col flex-shrink-0 min-h-0">
+          <div className="font-bold text-base mb-4 tracking-widest text-center p-3 border-b border-blue-700">CATEGORY</div>
+          <div className="flex-1 overflow-y-auto">
+            {categories.map(category => (
+              <button
+                key={category}
+                className={`w-full text-left px-3 py-2 mb-1 transition font-medium text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
           
           {/* Logout Button at bottom of sidebar */}
-          <div className="mt-auto pt-4 border-t border-blue-700">
+          <div className="p-3 border-t border-blue-700">
             <button 
               onClick={logout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white hover:bg-red-600 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-white hover:bg-red-600 rounded transition-colors text-sm"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -734,7 +737,8 @@ export default function QuickPOS() {
         </div>
         
         {/* Product Grid */}
-        <div className="flex-1 bg-gray-50 p-8 overflow-auto min-w-0 min-h-0">
+        <div className="flex-1 bg-gray-50 p-4 overflow-hidden min-w-0 min-h-0">
+          <div className="h-full overflow-y-auto">
           <table className="min-w-full bg-white rounded shadow text-left">
             <thead>
               <tr className="bg-blue-100 text-blue-900">
@@ -764,25 +768,26 @@ export default function QuickPOS() {
             </tbody>
           </table>
           </div>
+        </div>
 
         {/* Cart/Invoice Panel */}
-        <div className="w-96 bg-white border-l flex flex-col h-full flex-shrink-0 min-h-0">
-          <div className="p-4 border-b">
+        <div className="w-80 bg-white border-l flex flex-col h-full flex-shrink-0 min-h-0">
+          <div className="p-3 border-b">
             <div className="flex gap-2 mb-2">
               <input
-                className="border rounded px-2 py-1 flex-1"
+                className="border rounded px-2 py-1 flex-1 text-sm"
                 placeholder="Mobile No."
                 value={customerPhone}
                 onChange={e => setCustomerPhone(e.target.value)}
               />
               <input
-                className="border rounded px-2 py-1 flex-1"
+                className="border rounded px-2 py-1 flex-1 text-sm"
                 placeholder="Client Name"
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
               />
-        </div>
-      </div>
+            </div>
+          </div>
           {/* Cart Table */}
           <div className="flex-1 overflow-y-auto p-4">
             <table className="w-full text-sm">
