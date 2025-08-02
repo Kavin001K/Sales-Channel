@@ -23,11 +23,13 @@ import {
   Calculator,
   X,
   Package,
-  ArrowLeft
+  ArrowLeft,
+  LogOut
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function QuickPOS() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -65,6 +67,7 @@ export default function QuickPOS() {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const { companySettings, printSettings } = useSettings();
+  const { logout } = useAuth();
 
   // Add state for search type and invoice type
   const [searchType, setSearchType] = useState<'serial' | 'code' | 'name'>('name');
@@ -600,33 +603,50 @@ export default function QuickPOS() {
   // 3. Filter products by selected category
   const displayedProducts = selectedCategory === 'All' ? products : products.filter(p => p.category === selectedCategory);
 
-  // 1. Request fullscreen on mount
+  // Always request fullscreen on mount
   useEffect(() => {
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  }, []);
-  // 2. Exit fullscreen on ESC
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && document.fullscreenElement) {
-        document.exitFullscreen();
+    const requestFullscreen = async () => {
+      try {
+        if (document.fullscreenEnabled && !document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (error) {
+        console.log('Fullscreen request failed:', error);
       }
     };
+    
+    requestFullscreen();
+    
+    // Prevent exiting fullscreen with ESC
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  // 1. Add fullscreen state
+  // Track fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const handleFullscreenChange = () => {
+      const isFull = !!document.fullscreenElement;
+      setIsFullscreen(isFull);
+      
+      // If user exits fullscreen, request it again
+      if (!isFull) {
+        setTimeout(() => {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }, 100);
+      }
+    };
+    
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
-
-  // Add state for showing nav in fullscreen
-  const [showNav, setShowNav] = useState(false);
 
   return (
     <div className="w-screen h-screen min-h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -634,12 +654,8 @@ export default function QuickPOS() {
       <div className="flex items-center justify-between bg-white border-b px-6 py-2 shadow-sm">
         {/* Logo/Company Name */}
         <div className="flex items-center gap-3">
-          {isFullscreen && (
-            <button className="absolute top-4 left-4 z-50 bg-blue-700 text-white p-2 rounded" onClick={() => setShowNav(v => !v)}>
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-            </button>
-              )}
-            </div>
+          <div className="text-xl font-bold text-blue-700">ACE-PoS</div>
+        </div>
         {/* Search Bar with Radio Buttons */}
         <div className="flex flex-col items-center flex-1 mx-8">
           <div className="flex gap-6 mb-1">
@@ -690,24 +706,34 @@ export default function QuickPOS() {
                       </div>
                     </div>
                   </div>
-      {/* Main Content (Sidebar + Product Grid) */}
+      {/* Main Content (Category Sidebar + Product Grid) */}
       <div className="flex-1 flex flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Sidebar */}
-        {(isFullscreen && showNav) && (
-          <div className="bg-blue-800 text-white w-56 flex flex-col py-6 px-2 flex-shrink-0 min-h-0">
-            <div className="font-bold text-lg mb-6 tracking-widest text-center">CATEGORY</div>
-            {categories.map(category => (
-              <button
-                key={category}
-                className={`w-full text-left px-4 py-3 mb-2 rounded-lg transition font-semibold text-lg ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </button>
-                ))}
-              </div>
-            )}
-        {/* Main Content Placeholder */}
+        {/* Category Sidebar - Always Visible */}
+        <div className="bg-blue-800 text-white w-56 flex flex-col py-6 px-2 flex-shrink-0 min-h-0">
+          <div className="font-bold text-lg mb-6 tracking-widest text-center">CATEGORY</div>
+          {categories.map(category => (
+            <button
+              key={category}
+              className={`w-full text-left px-4 py-3 mb-2 rounded-lg transition font-semibold text-lg ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+          
+          {/* Logout Button at bottom of sidebar */}
+          <div className="mt-auto pt-4 border-t border-blue-700">
+            <button 
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white hover:bg-red-600 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          </div>
+        </div>
+        
+        {/* Product Grid */}
         <div className="flex-1 bg-gray-50 p-8 overflow-auto min-w-0 min-h-0">
           <table className="min-w-full bg-white rounded shadow text-left">
             <thead>
