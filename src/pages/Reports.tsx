@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { TrendingUp, DollarSign, Package, Users, Calendar, Download, FileSpreadsheet, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Users, Calendar, Download, FileSpreadsheet } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, eachDayOfInterval, getHours } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { printDriver } from '@/lib/printDrivers';
@@ -19,23 +19,12 @@ export default function Reports() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('month');
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setTransactions(getTransactions());
     setProducts(getProducts());
     setEmployees(getEmployees());
     setCustomers(getCustomers());
-
-    // Check screen size for mobile detection
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const filteredTransactions = useMemo(() => {
@@ -385,38 +374,35 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
-      {/* Header Section - Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold">Reports & Analytics</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Comprehensive sales and performance insights</p>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+          <p className="text-muted-foreground">Comprehensive sales and performance insights</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button onClick={exportReport} variant="outline" size={isMobile ? "sm" : "default"} className="w-full sm:w-auto">
+        <div className="flex items-center gap-2">
+          <Button onClick={exportReport} variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Export Excel</span>
-            <span className="sm:hidden">Export</span>
+            Export Excel
           </Button>
-          <Button onClick={printReport} variant="outline" size={isMobile ? "sm" : "default"} className="w-full sm:w-auto">
+          <Button onClick={printReport} variant="outline">
             <FileSpreadsheet className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Print Report</span>
-            <span className="sm:hidden">Print</span>
+            Print Report
           </Button>
         </div>
       </div>
 
-      {/* Date Filter - Responsive */}
+      {/* Date Filter */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
             Filter by Date Range
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Select date range" />
             </SelectTrigger>
             <SelectContent>
@@ -429,15 +415,15 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Overview Cards - Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Sales</CardTitle>
-            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.totalSales.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{salesOverview.totalSales.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               {salesOverview.totalTransactions} transactions
             </p>
@@ -446,11 +432,11 @@ export default function Reports() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Average Transaction</CardTitle>
-            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Average Transaction</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.averageTransaction.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{salesOverview.averageTransaction.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               per transaction
             </p>
@@ -459,11 +445,11 @@ export default function Reports() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Profit</CardTitle>
-            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.totalProfit.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{salesOverview.totalProfit.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               {((salesOverview.totalProfit / salesOverview.totalSales) * 100).toFixed(1)}% margin
             </p>
@@ -472,11 +458,11 @@ export default function Reports() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Top Products</CardTitle>
-            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Top Products</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">{itemWiseSales.length}</div>
+            <div className="text-2xl font-bold">{itemWiseSales.length}</div>
             <p className="text-xs text-muted-foreground">
               products sold
             </p>
@@ -484,62 +470,56 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Detailed Reports - Responsive Tabs */}
+      {/* Detailed Reports */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">Overview</TabsTrigger>
-          <TabsTrigger value="items" className="text-xs sm:text-sm py-2">Item Sales</TabsTrigger>
-          <TabsTrigger value="employees" className="text-xs sm:text-sm py-2">Employees</TabsTrigger>
-          <TabsTrigger value="trends" className="text-xs sm:text-sm py-2">Trends</TabsTrigger>
-          <TabsTrigger value="payments" className="text-xs sm:text-sm py-2">Payments</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="items">Item Sales</TabsTrigger>
+          <TabsTrigger value="employees">Employee Performance</TabsTrigger>
+          <TabsTrigger value="trends">Sales Trends</TabsTrigger>
+          <TabsTrigger value="payments">Payment Methods</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Top Selling Products</CardTitle>
-                <CardDescription className="text-sm">Best performing products by revenue</CardDescription>
+                <CardTitle>Top Selling Products</CardTitle>
+                <CardDescription>Best performing products by revenue</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs sm:text-sm">Product</TableHead>
-                        <TableHead className="text-xs sm:text-sm">Qty</TableHead>
-                        <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
-                        <TableHead className="text-xs sm:text-sm">Profit</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Revenue</TableHead>
+                      <TableHead>Profit</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemWiseSales.slice(0, 5).map((item) => (
+                      <TableRow key={item.product.id}>
+                        <TableCell className="font-medium">{item.product.name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.revenue.toFixed(2)}</TableCell>
+                        <TableCell className={item.profit > 0 ? 'text-green-600' : 'text-red-600'}>
+                          ₹{item.profit.toFixed(2)}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {itemWiseSales.slice(0, 5).map((item) => (
-                        <TableRow key={item.product.id}>
-                          <TableCell className="font-medium text-xs sm:text-sm">
-                            <div className="max-w-[120px] sm:max-w-none truncate" title={item.product.name}>
-                              {item.product.name}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
-                          <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{item.profit.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Payment Methods</CardTitle>
-                <CardDescription className="text-sm">Sales breakdown by payment type</CardDescription>
+                <CardTitle>Payment Methods</CardTitle>
+                <CardDescription>Sales breakdown by payment type</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={paymentBreakdown}
@@ -547,8 +527,7 @@ export default function Reports() {
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={60}
-                      className="sm:outerRadius-80"
+                      outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -567,49 +546,40 @@ export default function Reports() {
         <TabsContent value="items">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Item-wise Sales Report</CardTitle>
-              <CardDescription className="text-sm">Performance of individual products</CardDescription>
+              <CardTitle>Item-wise Sales Report</CardTitle>
+              <CardDescription>Performance of individual products</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm">Product</TableHead>
-                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Category</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Qty</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Profit</TableHead>
-                      <TableHead className="text-xs sm:text-sm hidden md:table-cell">Margin</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Quantity Sold</TableHead>
+                    <TableHead>Revenue</TableHead>
+                    <TableHead>Profit</TableHead>
+                    <TableHead>Profit Margin</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itemWiseSales.map((item) => (
+                    <TableRow key={item.product.id}>
+                      <TableCell className="font-medium">{item.product.name}</TableCell>
+                      <TableCell>{item.product.category}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>₹{item.revenue.toFixed(2)}</TableCell>
+                      <TableCell className={item.profit > 0 ? 'text-green-600' : 'text-red-600'}>
+                        ₹{item.profit.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={item.profit > 0 ? 'default' : 'destructive'}>
+                          {((item.profit / item.revenue) * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itemWiseSales.map((item) => (
-                      <TableRow key={item.product.id}>
-                        <TableCell className="font-medium text-xs sm:text-sm">
-                          <div className="max-w-[100px] sm:max-w-none truncate" title={item.product.name}>
-                            {item.product.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground sm:hidden">
-                            {item.product.category}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm hidden sm:table-cell">{item.product.category}</TableCell>
-                        <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
-                        <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
-                        <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ₹{item.profit.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant={item.profit > 0 ? 'default' : 'destructive'} className="text-xs">
-                            {((item.profit / item.revenue) * 100).toFixed(1)}%
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -617,38 +587,30 @@ export default function Reports() {
         <TabsContent value="employees">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Employee Performance</CardTitle>
-              <CardDescription className="text-sm">Sales performance by employee</CardDescription>
+              <CardTitle>Employee Performance</CardTitle>
+              <CardDescription>Sales performance by employee</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm">Employee</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Transactions</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
-                      <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Avg Transaction</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Transactions</TableHead>
+                    <TableHead>Total Revenue</TableHead>
+                    <TableHead>Average Transaction</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {employeeWiseSales.map((employee) => (
+                    <TableRow key={employee.name}>
+                      <TableCell className="font-medium">{employee.name}</TableCell>
+                      <TableCell>{employee.transactions}</TableCell>
+                      <TableCell>₹{employee.revenue.toFixed(2)}</TableCell>
+                      <TableCell>₹{(employee.revenue / employee.transactions).toFixed(2)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employeeWiseSales.map((employee) => (
-                      <TableRow key={employee.name}>
-                        <TableCell className="font-medium text-xs sm:text-sm">
-                          <div className="max-w-[100px] sm:max-w-none truncate" title={employee.name}>
-                            {employee.name}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">{employee.transactions}</TableCell>
-                        <TableCell className="text-xs sm:text-sm">₹{employee.revenue.toFixed(2)}</TableCell>
-                        <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
-                          ₹{(employee.revenue / employee.transactions).toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -656,18 +618,15 @@ export default function Reports() {
         <TabsContent value="trends">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Sales Trends</CardTitle>
-              <CardDescription className="text-sm">Revenue and transaction trends over time</CardDescription>
+              <CardTitle>Sales Trends</CardTitle>
+              <CardDescription>Revenue and transaction trends over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
+              <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={dailySales}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey={dateFilter === 'today' ? 'time' : 'date'} 
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
-                  />
-                  <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} />
+                  <XAxis dataKey={dateFilter === 'today' ? 'time' : 'date'} />
+                  <YAxis />
                   <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Sales']} />
                   <Bar dataKey="sales" fill="#8884d8" />
                 </BarChart>
@@ -677,57 +636,56 @@ export default function Reports() {
         </TabsContent>
 
         <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Payment Method Analysis</CardTitle>
-              <CardDescription className="text-sm">Detailed breakdown of payment methods</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <Card>
+              <CardHeader>
+              <CardTitle>Payment Method Analysis</CardTitle>
+              <CardDescription>Detailed breakdown of payment methods</CardDescription>
+              </CardHeader>
+              <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Distribution</h3>
-                  <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-                    <PieChart>
-                      <Pie
-                        data={paymentBreakdown}
-                        cx="50%"
-                        cy="50%"
+                  <h3 className="text-lg font-semibold mb-4">Payment Distribution</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={paymentBreakdown}
+                      cx="50%"
+                      cy="50%"
                         labelLine={false}
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={60}
-                        className="sm:outerRadius-80"
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {paymentBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                  </PieChart>
+                </ResponsiveContainer>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Summary</h3>
-                  <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
+                <div className="space-y-4">
                     {paymentBreakdown.map((method) => (
                       <div key={method.name} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                         <div>
-                          <p className="font-medium text-sm sm:text-base">{method.name}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
+                          <p className="font-medium">{method.name}</p>
+                          <p className="text-sm text-muted-foreground">
                             {((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales
                           </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-sm sm:text-base">₹{method.value.toFixed(2)}</p>
+                      </div>
+                      <div className="text-right">
+                          <p className="font-semibold">₹{method.value.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
+                    </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

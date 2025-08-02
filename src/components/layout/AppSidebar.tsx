@@ -9,9 +9,7 @@ import {
   Receipt,
   TrendingUp,
   Store,
-  Settings,
-  Menu,
-  X
+  Settings
 } from "lucide-react";
 
 import {
@@ -30,7 +28,7 @@ import {
 const navigationItems = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/",
     icon: BarChart3,
     description: "Overview & Analytics"
   },
@@ -41,7 +39,7 @@ const navigationItems = [
     description: "Process Transactions"
   },
   {
-    title: "Quick POS",
+    title: "Quick Sales",
     url: "/quickpos",
     icon: ShoppingCart,
     description: "Quick POS Billing"
@@ -85,7 +83,7 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -96,44 +94,35 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="hidden md:block"
     >
       <SidebarContent>
         {/* Header */}
-        <div className="p-3 md:p-4 border-b border-sidebar-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Store className="w-5 h-5 md:w-6 md:h-6 text-sidebar-primary" />
-              {state !== "collapsed" && (
-                <div>
-                  <h1 className="text-base md:text-lg font-bold text-sidebar-foreground">Ace-Bill</h1>
-                  <p className="text-xs text-sidebar-foreground/70">Professional Billing</p>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setOpen(!state.open)}
-              className="p-1 rounded hover:bg-sidebar-accent/50 md:hidden"
-            >
-              {state.open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <Store className="w-6 h-6 text-sidebar-primary" />
+            {state !== "collapsed" && (
+              <div>
+                <h1 className="text-lg font-bold text-sidebar-foreground">Ace-Bill</h1>
+                <p className="text-xs text-sidebar-foreground/70">Professional Billing</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs md:text-sm">Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="w-4 h-4 md:w-5 md:h-5" />
+                      <item.icon className="w-5 h-5" />
                       {state !== "collapsed" && (
                         <div className="flex flex-col">
-                          <span className="font-medium text-sm md:text-base">{item.title}</span>
-                          <span className="text-xs text-sidebar-foreground/70 hidden lg:block">{item.description}</span>
+                          <span className="font-medium">{item.title}</span>
+                          <span className="text-xs text-sidebar-foreground/70">{item.description}</span>
                         </div>
                       )}
                     </NavLink>

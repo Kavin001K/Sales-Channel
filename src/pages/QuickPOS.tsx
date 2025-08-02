@@ -652,71 +652,71 @@ export default function QuickPOS() {
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Top Bar */}
-      <div className="flex items-center justify-between bg-white border-b px-2 sm:px-4 py-1 h-12 sm:h-14">
+      <div className="flex items-center justify-between bg-white border-b px-4 py-1 h-12">
         {/* Logo/Company Name */}
         <div className="flex items-center">
-          <div className="text-base sm:text-lg font-bold text-blue-700">ACE-PoS</div>
+          <div className="text-lg font-bold text-blue-700">ACE-PoS</div>
         </div>
         {/* Search Bar with Radio Buttons */}
-        <div className="flex flex-col items-center flex-1 mx-2 sm:mx-4">
-          <div className="flex gap-2 sm:gap-4 mb-1">
+        <div className="flex flex-col items-center flex-1 mx-4">
+          <div className="flex gap-4 mb-1">
             <label className="flex items-center gap-1 cursor-pointer">
               <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'serial' ? 'text-blue-700 font-bold' : ''}`}>Serial No.</span>
+              <span className={searchType === 'serial' ? 'text-blue-700 font-bold' : ''}>Serial No.</span>
             </label>
             <label className="flex items-center gap-1 cursor-pointer">
               <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'code' ? 'text-blue-700 font-bold' : ''}`}>Item Code</span>
+              <span className={searchType === 'code' ? 'text-blue-700 font-bold' : ''}>Item Code</span>
             </label>
             <label className="flex items-center gap-1 cursor-pointer">
               <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-              <span className={`text-xs sm:text-sm ${searchType === 'name' ? 'text-red-600 font-bold' : ''}`}>Item Name</span>
+              <span className={searchType === 'name' ? 'text-red-600 font-bold' : ''}>Item Name</span>
             </label>
           </div>
-          <div className="flex items-center w-full max-w-xs sm:max-w-lg">
+          <div className="flex items-center w-full max-w-lg">
             <input
-              className="border rounded-l px-2 sm:px-3 py-1 w-full text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border rounded-l px-3 py-1 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button className="bg-blue-700 text-white px-2 sm:px-3 py-1 rounded-r">
-              <Search className="w-3 h-3 sm:w-4 sm:h-4" />
+            <button className="bg-blue-700 text-white px-3 py-1 rounded-r">
+              <Search className="w-4 h-4" />
             </button>
           </div>
         </div>
         {/* Bill/Tax Invoice Toggle and Date/Time */}
-        <div className="flex flex-col items-end min-w-[140px] sm:min-w-[180px]">
+        <div className="flex flex-col items-end min-w-[180px]">
           <div className="flex gap-1 mb-1">
             <button
-              className={`px-2 sm:px-3 py-1 rounded-t text-xs sm:text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('bill')}
             >
               Bill
             </button>
             <button
-              className={`px-2 sm:px-3 py-1 rounded-t text-xs sm:text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded-t text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('tax')}
             >
               Tax Invoice
             </button>
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-500 hidden sm:block">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-            <div className="text-xs sm:text-sm font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+            <span className="text-xs text-gray-500">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+            <div className="text-sm font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
           </div>
         </div>
                   </div>
       {/* Main Content (Category Sidebar + Product Grid) */}
       <div className="flex-1 flex flex-row min-h-0 min-w-0 overflow-hidden">
         {/* Category Sidebar - Always Visible */}
-        <div className="bg-blue-800 text-white w-40 sm:w-48 flex flex-col flex-shrink-0 min-h-0">
-          <div className="font-bold text-sm sm:text-base mb-3 sm:mb-4 tracking-widest text-center p-2 sm:p-3 border-b border-blue-700">CATEGORY</div>
+        <div className="bg-blue-800 text-white w-48 flex flex-col flex-shrink-0 min-h-0">
+          <div className="font-bold text-base mb-4 tracking-widest text-center p-3 border-b border-blue-700">CATEGORY</div>
           <div className="flex-1 overflow-y-auto">
             {categories.map(category => (
               <button
                 key={category}
-                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 mb-1 transition font-medium text-xs sm:text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                className={`w-full text-left px-3 py-2 mb-1 transition font-medium text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -725,27 +725,27 @@ export default function QuickPOS() {
           </div>
           
           {/* Logout Button at bottom of sidebar */}
-          <div className="p-2 sm:p-3 border-t border-blue-700">
+          <div className="p-3 border-t border-blue-700">
             <button 
               onClick={logout}
-              className="w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-white hover:bg-red-600 rounded transition-colors text-xs sm:text-sm"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-white hover:bg-red-600 rounded transition-colors text-sm"
             >
-              <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+              <LogOut className="w-4 h-4" />
               Logout
             </button>
           </div>
         </div>
         
         {/* Product Grid */}
-        <div className="flex-1 bg-gray-50 p-2 sm:p-4 overflow-hidden min-w-0 min-h-0">
+        <div className="flex-1 bg-gray-50 p-4 overflow-hidden min-w-0 min-h-0">
           <div className="h-full overflow-y-auto">
           <table className="min-w-full bg-white rounded shadow text-left">
             <thead>
               <tr className="bg-blue-100 text-blue-900">
-                <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">Item Name</th>
-                <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">Tag</th>
-                <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">Sale Price</th>
-                <th className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">MRP</th>
+                <th className="px-4 py-2">Item Name</th>
+                <th className="px-4 py-2">Tag</th>
+                <th className="px-4 py-2">Sale Price</th>
+                <th className="px-4 py-2">MRP</th>
               </tr>
             </thead>
             <tbody>
@@ -758,10 +758,10 @@ export default function QuickPOS() {
                     className="hover:bg-blue-50 cursor-pointer border-b"
                     onClick={() => handleProductSelect(product)}
                   >
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm">{product.name}</td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{product.sku || '-'}</td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">₹{product.price.toFixed(2)}</td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
+                    <td className="px-4 py-3 font-semibold">{product.name}</td>
+                    <td className="px-4 py-3">{product.sku || '-'}</td>
+                    <td className="px-4 py-3">₹{product.price.toFixed(2)}</td>
+                    <td className="px-4 py-3">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
                   </tr>
                 ))
               )}
@@ -771,7 +771,7 @@ export default function QuickPOS() {
         </div>
 
         {/* Cart/Invoice Panel */}
-        <div className="w-64 sm:w-80 bg-white border-l flex flex-col h-full flex-shrink-0 min-h-0">
+        <div className="w-80 bg-white border-l flex flex-col h-full flex-shrink-0 min-h-0">
           <div className="p-3 border-b">
             <div className="flex gap-2 mb-2">
               <input

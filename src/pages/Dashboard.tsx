@@ -107,19 +107,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-2 sm:p-4 space-y-3 sm:space-y-4 h-full overflow-auto pb-20 md:pb-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 sm:p-4 rounded-lg shadow-sm border gap-3">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 text-xs sm:text-sm">Welcome back! Here's what's happening today.</p>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             {new Date().toLocaleDateString('en-US', { 
-              weekday: 'short', 
+              weekday: 'long', 
               year: 'numeric', 
-              month: 'short', 
+              month: 'long', 
               day: 'numeric' 
             })}
           </div>
@@ -127,102 +127,97 @@ export default function Dashboard() {
             variant="outline" 
             size="sm" 
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 text-xs sm:text-sm"
+            className="flex items-center gap-2"
           >
-            <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">{employee ? 'Logout Employee' : 'Logout'}</span>
-            <span className="sm:hidden">Logout</span>
+            <LogOut className="w-4 h-4" />
+            {employee ? 'Logout Employee' : 'Logout'}
           </Button>
         </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <Card className="bg-white shadow-sm border-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Today's Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-gray-800">₹{todayStats.sales.toFixed(2)}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="text-2xl font-bold">₹{todayStats.sales.toFixed(2)}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
               <TrendingUp className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">+12.5% from yesterday</span>
-              <span className="sm:hidden">+12.5%</span>
+              +12.5% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Transactions</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-gray-800">{todayStats.transactions}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="text-2xl font-bold">{todayStats.transactions}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
               <TrendingUp className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">+8.2% from yesterday</span>
-              <span className="sm:hidden">+8.2%</span>
+              +8.2% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Customers</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium">Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-gray-800">{todayStats.customers}</div>
-            <div className="flex items-center text-xs text-green-600">
+            <div className="text-2xl font-bold">{todayStats.customers}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
               <TrendingUp className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">+5.1% from yesterday</span>
-              <span className="sm:hidden">+5.1%</span>
+              +5.1% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm border-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Avg. Transaction</CardTitle>
-            <TrendingUp className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-medium">Avg. Transaction</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-2xl font-bold text-gray-800">₹{todayStats.averageTransaction.toFixed(2)}</div>
-            <div className="flex items-center text-xs text-red-600">
+            <div className="text-2xl font-bold">₹{todayStats.averageTransaction.toFixed(2)}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
               <TrendingDown className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">-2.3% from yesterday</span>
-              <span className="sm:hidden">-2.3%</span>
+              -2.3% from yesterday
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Transactions */}
-        <Card className="bg-white shadow-sm border-0">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-gray-800">Recent Transactions</CardTitle>
-            <CardDescription className="text-gray-600">Latest sales activity</CardDescription>
+            <CardTitle>Recent Transactions</CardTitle>
+            <CardDescription>Latest sales activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {getRecentTransactions().map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-2 sm:p-3 border rounded-lg">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <ShoppingCart className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm sm:text-base">{transaction.customerName || 'Guest'}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
+                      <p className="font-medium">{transaction.customerName || 'Guest'}</p>
+                      <p className="text-sm text-muted-foreground">
                         {new Date(transaction.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-sm sm:text-base">₹{transaction.total.toFixed(2)}</p>
+                    <p className="font-medium">₹{transaction.total.toFixed(2)}</p>
                     <Badge variant="outline" className="text-xs">
                       {transaction.paymentMethod}
                     </Badge>
@@ -230,10 +225,10 @@ export default function Dashboard() {
                 </div>
               ))}
               {getRecentTransactions().length === 0 && (
-                <div className="text-center py-6 sm:py-8 text-muted-foreground">
-                  <ShoppingCart className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                  <p className="text-sm sm:text-base">No recent transactions</p>
-                  <p className="text-xs sm:text-sm">Start making sales to see them here</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent transactions</p>
+                  <p className="text-sm">Start making sales to see them here</p>
                 </div>
               )}
             </div>
@@ -241,39 +236,39 @@ export default function Dashboard() {
         </Card>
 
         {/* Inventory Alerts */}
-        <Card className="bg-white shadow-sm border-0">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-800">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
               Inventory Alerts
             </CardTitle>
-            <CardDescription className="text-gray-600">Products requiring attention</CardDescription>
+            <CardDescription>Products requiring attention</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {inventoryAlerts.map((alert) => (
-                <div key={alert.product.id} className="flex items-center justify-between p-2 sm:p-3 border rounded-lg">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-full flex items-center justify-center">
-                      <Package className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                <div key={alert.product.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <Package className="w-5 h-5 text-red-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm sm:text-base">{alert.product.name}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
+                      <p className="font-medium">{alert.product.name}</p>
+                      <p className="text-sm text-muted-foreground">
                         Stock: {alert.currentStock} {alert.product.unit}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={alert.type === 'out_of_stock' ? 'destructive' : 'secondary'} className="text-xs">
+                  <Badge variant={alert.type === 'out_of_stock' ? 'destructive' : 'secondary'}>
                     {alert.type === 'out_of_stock' ? 'Out of Stock' : 'Low Stock'}
                   </Badge>
                 </div>
               ))}
               {inventoryAlerts.length === 0 && (
-                <div className="text-center py-6 sm:py-8 text-muted-foreground">
-                  <Package className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                  <p className="text-sm sm:text-base">No inventory alerts</p>
-                  <p className="text-xs sm:text-sm">All products are well stocked!</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No inventory alerts</p>
+                  <p className="text-sm">All products are well stocked!</p>
                 </div>
               )}
             </div>
@@ -282,26 +277,26 @@ export default function Dashboard() {
       </div>
 
       {/* Weekly Overview */}
-      <Card className="bg-white shadow-sm border-0">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-gray-800">Weekly Overview</CardTitle>
-          <CardDescription className="text-gray-600">Performance summary for the last 7 days</CardDescription>
+          <CardTitle>Weekly Overview</CardTitle>
+          <CardDescription>Performance summary for the last 7 days</CardDescription>
         </CardHeader>
-                  <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-green-600">₹{weeklyStats.sales.toFixed(2)}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Total Sales</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-blue-600">{weeklyStats.transactions}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Transactions</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-green-600">+{weeklyStats.growth}%</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Growth</div>
-              </div>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">₹{weeklyStats.sales.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground">Total Sales</div>
             </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">{weeklyStats.transactions}</div>
+              <div className="text-sm text-muted-foreground">Transactions</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">+{weeklyStats.growth}%</div>
+              <div className="text-sm text-muted-foreground">Growth</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
