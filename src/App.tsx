@@ -46,11 +46,16 @@ function AppRoutes() {
       {!(isFullscreen && location.pathname === '/quickpos') && !isLoginPage && <AppSidebar />}
       <div className="flex-1 flex flex-col">
         {!isLoginPage && (
-          <header className="h-12 flex items-center border-b px-4">
+          <header className="h-12 flex items-center justify-between border-b px-4">
             <SidebarTrigger />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {location.pathname === '/quickpos' ? 'Quick POS Mode' : 'Navigation Mode'}
+              </span>
+            </div>
           </header>
         )}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-50">
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<CompanyLogin />} />

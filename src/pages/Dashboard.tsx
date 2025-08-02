@@ -107,19 +107,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 space-y-4 h-full overflow-auto">
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p className="text-gray-600 text-sm">Welcome back! Here's what's happening today.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded">
             <Calendar className="w-4 h-4" />
             {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
+              weekday: 'short', 
               year: 'numeric', 
-              month: 'long', 
+              month: 'short', 
               day: 'numeric' 
             })}
           </div>
@@ -127,7 +127,7 @@ export default function Dashboard() {
             variant="outline" 
             size="sm" 
             onClick={handleLogout}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
           >
             <LogOut className="w-4 h-4" />
             {employee ? 'Logout Employee' : 'Logout'}
@@ -136,57 +136,57 @@ export default function Dashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Today's Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{todayStats.sales.toFixed(2)}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-800">₹{todayStats.sales.toFixed(2)}</div>
+            <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="w-3 h-3 mr-1" />
               +12.5% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Transactions</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{todayStats.transactions}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-800">{todayStats.transactions}</div>
+            <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="w-3 h-3 mr-1" />
               +8.2% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Customers</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{todayStats.customers}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-800">{todayStats.customers}</div>
+            <div className="flex items-center text-xs text-green-600">
               <TrendingUp className="w-3 h-3 mr-1" />
               +5.1% from yesterday
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Transaction</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Avg. Transaction</CardTitle>
+            <TrendingUp className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{todayStats.averageTransaction.toFixed(2)}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-800">₹{todayStats.averageTransaction.toFixed(2)}</div>
+            <div className="flex items-center text-xs text-red-600">
               <TrendingDown className="w-3 h-3 mr-1" />
               -2.3% from yesterday
             </div>
@@ -194,12 +194,12 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Transactions */}
-        <Card>
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Latest sales activity</CardDescription>
+            <CardTitle className="text-gray-800">Recent Transactions</CardTitle>
+            <CardDescription className="text-gray-600">Latest sales activity</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -236,13 +236,13 @@ export default function Dashboard() {
         </Card>
 
         {/* Inventory Alerts */}
-        <Card>
+        <Card className="bg-white shadow-sm border-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-gray-800">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
               Inventory Alerts
             </CardTitle>
-            <CardDescription>Products requiring attention</CardDescription>
+            <CardDescription className="text-gray-600">Products requiring attention</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -277,13 +277,13 @@ export default function Dashboard() {
       </div>
 
       {/* Weekly Overview */}
-      <Card>
+      <Card className="bg-white shadow-sm border-0">
         <CardHeader>
-          <CardTitle>Weekly Overview</CardTitle>
-          <CardDescription>Performance summary for the last 7 days</CardDescription>
+          <CardTitle className="text-gray-800">Weekly Overview</CardTitle>
+          <CardDescription className="text-gray-600">Performance summary for the last 7 days</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">₹{weeklyStats.sales.toFixed(2)}</div>
               <div className="text-sm text-muted-foreground">Total Sales</div>

@@ -9,7 +9,9 @@ import {
   Receipt,
   TrendingUp,
   Store,
-  Settings
+  Settings,
+  Menu,
+  X
 } from "lucide-react";
 
 import {
@@ -28,7 +30,7 @@ import {
 const navigationItems = [
   {
     title: "Dashboard",
-    url: "/",
+    url: "/dashboard",
     icon: BarChart3,
     description: "Overview & Analytics"
   },
@@ -39,7 +41,7 @@ const navigationItems = [
     description: "Process Transactions"
   },
   {
-    title: "Quick Sales",
+    title: "Quick POS",
     url: "/quickpos",
     icon: ShoppingCart,
     description: "Quick POS Billing"
@@ -83,7 +85,7 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -98,14 +100,22 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Header */}
         <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <Store className="w-6 h-6 text-sidebar-primary" />
-            {state !== "collapsed" && (
-              <div>
-                <h1 className="text-lg font-bold text-sidebar-foreground">Ace-Bill</h1>
-                <p className="text-xs text-sidebar-foreground/70">Professional Billing</p>
-              </div>
-            )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Store className="w-6 h-6 text-sidebar-primary" />
+              {state !== "collapsed" && (
+                <div>
+                  <h1 className="text-lg font-bold text-sidebar-foreground">Ace-Bill</h1>
+                  <p className="text-xs text-sidebar-foreground/70">Professional Billing</p>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setOpen(!state.open)}
+              className="p-1 rounded hover:bg-sidebar-accent/50"
+            >
+              {state.open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
