@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { MobileNav } from "@/components/layout/MobileNav";
 import Dashboard from "./pages/Dashboard";
 import Sales from "./pages/Sales";
 import QuickPOS from "./pages/QuickPOS";
@@ -44,18 +45,18 @@ function AppRoutes() {
     <div className="min-h-screen flex w-full">
       {/* Only show AppSidebar if not in fullscreen on /quickpos and not on login pages */}
       {!(isFullscreen && location.pathname === '/quickpos') && !isLoginPage && <AppSidebar />}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {!isLoginPage && (
-          <header className="h-12 flex items-center justify-between border-b px-4">
-            <SidebarTrigger />
+          <header className="h-12 md:h-14 flex items-center justify-between border-b px-3 md:px-4 bg-white">
+            <SidebarTrigger className="md:hidden" />
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+              <span className="hidden sm:block text-xs md:text-sm text-muted-foreground">
                 {location.pathname === '/quickpos' ? 'Quick POS Mode' : 'Navigation Mode'}
               </span>
             </div>
           </header>
         )}
-        <main className="flex-1 overflow-auto bg-gray-50">
+        <main className="flex-1 overflow-auto bg-gray-50 min-w-0">
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<CompanyLogin />} />
@@ -132,6 +133,8 @@ function AppRoutes() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        {/* Mobile Navigation */}
+        {!isLoginPage && <MobileNav />}
       </div>
     </div>
   );
