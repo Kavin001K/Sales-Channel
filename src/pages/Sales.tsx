@@ -188,8 +188,8 @@ export default function Sales() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Header - Responsive */}
-      <header className="bg-blue-800 text-white p-2 sm:p-4 flex-shrink-0">
+      {/* Header - Compact */}
+      <header className="bg-blue-800 text-white p-1 sm:p-2 flex-shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
@@ -248,9 +248,9 @@ export default function Sales() {
 
       {/* Main Content - Responsive */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Collapsible on Mobile */}
-        <div className="bg-blue-800 text-white w-full lg:w-56 flex flex-col py-3 sm:py-6 px-2 flex-shrink-0 min-h-0 lg:min-h-0">
-          <div className="font-bold text-base sm:text-lg mb-3 sm:mb-6 tracking-widest text-center">CATEGORY</div>
+        {/* Category Sidebar - Compact */}
+        <div className="bg-blue-800 text-white w-full lg:w-56 flex flex-col py-2 sm:py-3 px-2 flex-shrink-0 min-h-0 lg:min-h-0">
+          <div className="font-bold text-sm sm:text-base mb-2 sm:mb-3 tracking-widest text-center">CATEGORY</div>
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 lg:gap-0">
             {categories.map(category => (
               <button
@@ -264,8 +264,8 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Product Grid - Responsive */}
-        <div className="flex-1 bg-gray-50 p-2 sm:p-4 lg:p-8 overflow-auto min-w-0 min-h-0">
+        {/* Product Grid - Compact */}
+        <div className="flex-1 bg-gray-50 p-1 sm:p-2 lg:p-4 overflow-auto min-w-0 min-h-0">
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white rounded shadow text-left">
               <thead>

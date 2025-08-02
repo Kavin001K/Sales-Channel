@@ -651,8 +651,8 @@ export default function QuickPOS() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
-      {/* Top Bar - Responsive */}
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-white border-b px-2 sm:px-4 py-1 h-auto sm:h-12 gap-2 sm:gap-0">
+      {/* Top Bar - Compact */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white border-b px-1 sm:px-2 py-1 h-auto sm:h-10 gap-1 sm:gap-0">
         {/* Logo/Company Name */}
         <div className="flex items-center">
           <div className="text-base sm:text-lg font-bold text-blue-700">ACE-PoS</div>
@@ -712,9 +712,9 @@ export default function QuickPOS() {
       </div>
       {/* Main Content (Category Sidebar + Product Grid) - Responsive */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Collapsible on Mobile */}
+        {/* Category Sidebar - Compact */}
         <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0 min-h-0 lg:min-h-0">
-          <div className="font-bold text-sm sm:text-base mb-2 sm:mb-4 tracking-widest text-center p-2 sm:p-3 border-b border-blue-700">CATEGORY</div>
+          <div className="font-bold text-xs sm:text-sm mb-1 sm:mb-2 tracking-widest text-center p-1 sm:p-2 border-b border-blue-700">CATEGORY</div>
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 p-2 lg:p-0">
               {categories.map(category => (
@@ -741,8 +741,8 @@ export default function QuickPOS() {
           </div>
         </div>
         
-        {/* Product Grid - Responsive */}
-        <div className="flex-1 bg-gray-50 p-2 sm:p-4 overflow-hidden min-w-0 min-h-0">
+        {/* Product Grid - Compact */}
+        <div className="flex-1 bg-gray-50 p-1 sm:p-2 overflow-hidden min-w-0 min-h-0">
           <div className="h-full overflow-y-auto">
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white rounded shadow text-left">
@@ -782,9 +782,9 @@ export default function QuickPOS() {
           </div>
         </div>
 
-        {/* Cart/Invoice Panel - Responsive */}
+        {/* Cart/Invoice Panel - Compact */}
         <div className="w-full lg:w-80 bg-white border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
-          <div className="p-2 sm:p-3 border-b">
+          <div className="p-1 sm:p-2 border-b">
             <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <input
                 className="border rounded px-2 py-1 flex-1 text-xs sm:text-sm"
@@ -801,7 +801,7 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Cart Table */}
-          <div className="flex-1 overflow-y-auto p-2 sm:p-4">
+          <div className="flex-1 overflow-y-auto p-1 sm:p-2">
             <div className="overflow-x-auto">
               <table className="w-full text-xs sm:text-sm">
                 <thead>
@@ -832,7 +832,7 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Bill Summary & Payment */}
-          <div className="p-2 sm:p-4 border-t space-y-2">
+          <div className="p-1 sm:p-2 border-t space-y-2">
             <div className="flex justify-between text-xs text-gray-500">
               <span>Savings</span><span>0.00</span>
             </div>
