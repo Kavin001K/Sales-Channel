@@ -163,27 +163,28 @@ export default function Customers() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer database and relationships</p>
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
+      {/* Header Section - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Customers</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database and relationships</p>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingCustomer(null); }}>
+            <Button onClick={() => { resetForm(); setEditingCustomer(null); }} size="sm" className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Customer
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-3 gap-8">
-                {/* All form fields here, replacing grid-cols-5 gap-4 with grid-cols-3 gap-8 for better desktop usability */}
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-8">
+                  {/* All form fields here, responsive grid for better mobile and desktop usability */}
                 <div>
                   <Label htmlFor="name">Full Name *</Label>
                   <Input id="name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} maxLength={50} required />
@@ -273,11 +274,12 @@ export default function Customers() {
       </div>
 
       <Tabs defaultValue="customers" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="customers">Customer List</TabsTrigger>
-          <TabsTrigger value="import">
-            <Upload className="w-4 h-4 mr-2" />
-            Import from Excel
+        <TabsList className="grid w-full grid-cols-2 h-auto">
+          <TabsTrigger value="customers" className="text-xs sm:text-sm py-2">Customer List</TabsTrigger>
+          <TabsTrigger value="import" className="text-xs sm:text-sm py-2">
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Import from Excel</span>
+            <span className="sm:hidden">Import</span>
           </TabsTrigger>
         </TabsList>
 
@@ -291,71 +293,71 @@ export default function Customers() {
           />
         </TabsContent>
 
-        <TabsContent value="customers" className="space-y-6">
+        <TabsContent value="customers" className="space-y-4 sm:space-y-6">
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Stats Cards - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">{stats.totalCustomers}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalSpent.toFixed(2)}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">${stats.totalSpent.toFixed(2)}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Spent</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Average Spent</CardTitle>
+            <Star className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.averageSpent.toFixed(2)}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">${stats.averageSpent.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search - Responsive */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder="Search customers..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 text-sm sm:text-base"
         />
       </div>
 
-      {/* Customers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Customers Grid - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredCustomers.map((customer) => (
           <Card key={customer.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{customer.name}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{customer.name}</CardTitle>
                   {customer.email && (
-                    <p className="text-sm text-muted-foreground">{customer.email}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{customer.email}</p>
                   )}
                 </div>
-                <Badge variant={customer.visits > 5 ? 'default' : 'secondary'}>
+                <Badge variant={customer.visits > 5 ? 'default' : 'secondary'} className="text-xs">
                   {customer.visits > 5 ? 'VIP' : 'Regular'}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <p className="text-muted-foreground">Total Spent</p>
                   <p className="font-semibold">${customer.totalSpent.toFixed(2)}</p>
@@ -377,17 +379,17 @@ export default function Customers() {
               </div>
               
               {customer.phone && (
-                <p className="text-sm text-muted-foreground">Phone: {customer.phone}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Phone: {customer.phone}</p>
               )}
               
               {customer.address && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {customer.address.street}, {customer.address.city}, {customer.address.state} {customer.address.zipCode}
                 </p>
               )}
               
               {customer.notes && (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-xs sm:text-sm text-muted-foreground italic">
                   "{customer.notes}"
                 </p>
               )}
@@ -397,15 +399,15 @@ export default function Customers() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleEdit(customer)}
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm"
                 >
-                  <Edit className="w-4 h-4 mr-1" />
+                  <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   Edit
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
