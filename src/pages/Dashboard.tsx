@@ -14,7 +14,9 @@ import {
   TrendingDown,
   AlertTriangle,
   Calendar,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -22,6 +24,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlert[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [todayStats, setTodayStats] = useState({
     sales: 0,
     transactions: 0,
@@ -106,6 +109,16 @@ export default function Dashboard() {
     }
   };
 
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    // Toggle dark mode class on document
+    if (!isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -123,6 +136,15 @@ export default function Dashboard() {
               day: 'numeric' 
             })}
           </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleDarkMode}
+            className="flex items-center gap-2"
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 

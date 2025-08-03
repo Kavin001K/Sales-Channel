@@ -650,17 +650,17 @@ export default function QuickPOS() {
   }, []);
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
-      {/* Top Bar - Properly Aligned */}
-      <div className="flex flex-col lg:flex-row items-center justify-between bg-white border-b px-4 py-3 h-auto lg:h-14 gap-3">
+    <div className="w-screen h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Top Bar - No Waste Space */}
+      <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-2 py-2 h-auto lg:h-12 gap-2">
         {/* Logo/Company Name */}
         <div className="flex items-center">
           <div className="text-xl font-bold text-blue-700">ACE-PoS</div>
         </div>
         
-        {/* Search Bar with Radio Buttons - Properly Aligned */}
-        <div className="flex flex-col items-center flex-1 mx-4 w-full lg:w-auto">
-          <div className="flex gap-4 mb-2">
+        {/* Search Bar with Radio Buttons - Compact */}
+        <div className="flex flex-col items-center flex-1 mx-2 w-full lg:w-auto">
+          <div className="flex gap-3 mb-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
               <span className={`text-sm ${searchType === 'serial' ? 'text-blue-700 font-bold' : ''}`}>Serial No.</span>
@@ -688,9 +688,9 @@ export default function QuickPOS() {
           </div>
         </div>
         
-        {/* Bill/Tax Invoice Toggle and Date/Time - Properly Aligned */}
-        <div className="flex flex-col items-end min-w-[200px]">
-          <div className="flex gap-2 mb-2">
+        {/* Bill/Tax Invoice Toggle and Date/Time - Compact */}
+        <div className="flex flex-col items-end min-w-[180px]">
+          <div className="flex gap-1 mb-1">
             <button
               className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('bill')}
@@ -712,15 +712,15 @@ export default function QuickPOS() {
       </div>
       {/* Main Content (Category Sidebar + Product Grid) - Responsive */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Properly Aligned */}
+        {/* Category Sidebar - No Waste Space */}
         <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0 min-h-0 lg:min-h-0">
-          <div className="font-bold text-lg mb-4 tracking-widest text-center p-4 border-b border-blue-700">CATEGORY</div>
+          <div className="font-bold text-base mb-2 tracking-widest text-center p-2 border-b border-blue-700">CATEGORY</div>
           <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 p-4 lg:p-0">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 p-2 lg:p-0">
               {categories.map(category => (
                 <button
                   key={category}
-                  className={`w-full text-left px-4 py-3 mb-2 transition font-medium text-base ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                  className={`w-full text-left px-3 py-2 mb-1 transition font-medium text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
                   onClick={() => setSelectedCategory(category)}
                 >
                   {category}
@@ -741,8 +741,8 @@ export default function QuickPOS() {
           </div>
         </div>
         
-        {/* Product Grid - Properly Aligned */}
-        <div className="flex-1 bg-gray-50 p-4 overflow-hidden min-w-0 min-h-0">
+        {/* Product Grid - No Waste Space */}
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-2 overflow-hidden min-w-0 min-h-0">
           <div className="h-full overflow-y-auto">
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white rounded shadow text-left">
@@ -782,18 +782,18 @@ export default function QuickPOS() {
           </div>
         </div>
 
-        {/* Cart/Invoice Panel - Properly Aligned */}
-        <div className="w-full lg:w-80 bg-white border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
-          <div className="p-4 border-b">
-            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+        {/* Cart/Invoice Panel - No Waste Space */}
+        <div className="w-full lg:w-80 bg-white dark:bg-gray-800 border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
+          <div className="p-2 border-b">
+            <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm"
+                className="border rounded px-2 py-1 flex-1 text-sm"
                 placeholder="Mobile No."
                 value={customerPhone}
                 onChange={e => setCustomerPhone(e.target.value)}
               />
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm"
+                className="border rounded px-2 py-1 flex-1 text-sm"
                 placeholder="Client Name"
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
@@ -801,7 +801,7 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Cart Table */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-2">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -832,7 +832,7 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Bill Summary & Payment */}
-          <div className="p-4 border-t space-y-3">
+          <div className="p-2 border-t space-y-2">
             <div className="flex justify-between text-sm text-gray-500">
               <span>Savings</span><span>0.00</span>
             </div>
