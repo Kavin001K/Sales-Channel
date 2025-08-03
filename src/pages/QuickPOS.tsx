@@ -651,33 +651,33 @@ export default function QuickPOS() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Top Bar - Properly Spaced */}
-      <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-4 py-3 h-auto lg:h-14 gap-4">
-        {/* Logo/Company Name */}
-        <div className="flex items-center">
-          <div className="text-xl font-bold text-blue-700">ACE-PoS</div>
-        </div>
+              {/* Top Bar - Properly Spaced */}
+        <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-4 py-3 h-auto lg:h-14 gap-4">
+          {/* Logo/Company Name */}
+          <div className="flex items-center">
+            <div className="text-xl font-bold text-blue-700 dark:text-blue-400">ACE-PoS</div>
+          </div>
         
         {/* Search Bar with Radio Buttons - Properly Visible */}
         <div className="flex flex-col items-center flex-1 mx-4 w-full lg:w-auto">
           <div className="flex gap-4 mb-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-              <span className={`text-sm ${searchType === 'serial' ? 'text-blue-700 font-bold' : ''}`}>Serial No.</span>
+              <span className={`text-sm dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Serial No.</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-              <span className={`text-sm ${searchType === 'code' ? 'text-blue-700 font-bold' : ''}`}>Item Code</span>
+              <span className={`text-sm dark:text-gray-300 ${searchType === 'code' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Item Code</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-              <span className={`text-sm ${searchType === 'name' ? 'text-red-600 font-bold' : ''}`}>Item Name</span>
+              <span className={`text-sm dark:text-gray-300 ${searchType === 'name' ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>Item Name</span>
             </label>
           </div>
           <div className="flex items-center w-full max-w-lg">
             <input
               ref={searchRef}
-              className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -705,8 +705,8 @@ export default function QuickPOS() {
             </button>
           </div>
           <div className="text-right">
-            <span className="text-sm text-gray-500">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-            <div className="text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+            <div className="text-lg font-mono font-bold dark:text-white">{currentTime.toLocaleTimeString()}</div>
           </div>
         </div>
       </div>
@@ -745,9 +745,9 @@ export default function QuickPOS() {
         <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-3 overflow-hidden min-w-0 min-h-0">
           <div className="h-full overflow-y-auto">
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded shadow text-left">
+              <table className="min-w-full bg-white dark:bg-gray-800 rounded shadow text-left">
                 <thead>
-                  <tr className="bg-blue-100 text-blue-900">
+                  <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
                     <th className="px-4 py-3 text-sm font-semibold">Item Name</th>
                     <th className="px-4 py-3 text-sm font-semibold hidden sm:table-cell">Tag</th>
                     <th className="px-4 py-3 text-sm font-semibold">Sale Price</th>
@@ -764,15 +764,15 @@ export default function QuickPOS() {
                         className="hover:bg-blue-50 cursor-pointer border-b"
                         onClick={() => handleProductSelect(product)}
                       >
-                        <td className="px-4 py-3 font-semibold text-sm">
-                          <div className="max-w-[200px] truncate" title={product.name}>
-                            {product.name}
-                          </div>
-                          <div className="text-xs text-gray-500 sm:hidden">{product.sku || '-'}</div>
-                        </td>
-                        <td className="px-4 py-3 text-sm hidden sm:table-cell">{product.sku || '-'}</td>
-                        <td className="px-4 py-3 text-sm">₹{product.price.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-sm hidden md:table-cell">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
+                                              <td className="px-4 py-3 font-semibold text-sm dark:text-white">
+                        <div className="max-w-[200px] truncate" title={product.name}>
+                          {product.name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
+                      </td>
+                        <td className="px-4 py-3 text-sm hidden sm:table-cell dark:text-white">{product.sku || '-'}</td>
+                        <td className="px-4 py-3 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
                       </tr>
                     ))
                   )}
@@ -787,13 +787,13 @@ export default function QuickPOS() {
           <div className="p-3 border-b">
             <div className="flex flex-col sm:flex-row gap-3 mb-3">
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm"
+                className="border rounded px-3 py-2 flex-1 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Mobile No."
                 value={customerPhone}
                 onChange={e => setCustomerPhone(e.target.value)}
               />
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm"
+                className="border rounded px-3 py-2 flex-1 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Client Name"
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
