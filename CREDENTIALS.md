@@ -57,7 +57,7 @@
 
 ### Products (Company 2 - Retail Store Plus)
 - **Office Chair**: ₹199.99
-
+ 
 ### Customers
 - John Smith, Sarah Johnson, Mike Davis
 
