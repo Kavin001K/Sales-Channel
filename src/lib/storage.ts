@@ -212,3 +212,11 @@ export const initializeSampleData = async () => {
         }
     }
 };
+
+// Save or update a product (for Excel import compatibility)
+export const saveProduct = async (product: Product): Promise<Product> => {
+  if (product.id) {
+    return updateProduct(product.id, product);
+  }
+  return addProduct(product);
+};
