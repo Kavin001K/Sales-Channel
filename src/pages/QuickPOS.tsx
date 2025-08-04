@@ -803,27 +803,27 @@ export default function QuickPOS() {
           {/* Cart Table */}
           <div className="flex-1 overflow-y-auto p-3">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm dark:text-white">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left px-2 py-2 font-semibold">Item Name</th>
-                    <th className="text-center px-2 py-2 font-semibold">Qty</th>
-                    <th className="text-right px-2 py-2 font-semibold">Rate</th>
-                    <th className="text-right px-2 py-2 font-semibold">Amount</th>
-                    <th className="text-center px-2 py-2 font-semibold"></th>
+                  <tr className="border-b dark:border-gray-600">
+                    <th className="text-left px-2 py-2 font-semibold dark:text-white">Item Name</th>
+                    <th className="text-center px-2 py-2 font-semibold dark:text-white">Qty</th>
+                    <th className="text-right px-2 py-2 font-semibold dark:text-white">Rate</th>
+                    <th className="text-right px-2 py-2 font-semibold dark:text-white">Amount</th>
+                    <th className="text-center px-2 py-2 font-semibold dark:text-white"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {cart.items.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center text-gray-400 py-8">No items</td></tr>
+                    <tr><td colSpan={5} className="text-center text-gray-400 dark:text-gray-500 py-8">No items</td></tr>
                   ) : cart.items.map((item, idx) => (
-                    <tr key={item.product.id} className="border-b">
-                      <td className="px-2 py-2 max-w-[120px] truncate" title={item.product.name}>{item.product.name}</td>
-                      <td className="px-2 py-2 text-center">{item.quantity}</td>
-                      <td className="px-2 py-2 text-right">₹{item.product.price.toFixed(2)}</td>
-                      <td className="px-2 py-2 text-right">₹{(item.product.price * item.quantity).toFixed(2)}</td>
+                    <tr key={item.product.id} className="border-b dark:border-gray-600">
+                      <td className="px-2 py-2 max-w-[120px] truncate dark:text-white" title={item.product.name}>{item.product.name}</td>
+                      <td className="px-2 py-2 text-center dark:text-white">{item.quantity}</td>
+                      <td className="px-2 py-2 text-right dark:text-white">₹{item.product.price.toFixed(2)}</td>
+                      <td className="px-2 py-2 text-right dark:text-white">₹{(item.product.price * item.quantity).toFixed(2)}</td>
                       <td className="px-2 py-2 text-center">
-                        <button onClick={() => cart.removeItem(item.product.id)} className="text-red-600 hover:text-red-800"><X className="w-5 h-5" /></button>
+                        <button onClick={() => cart.removeItem(item.product.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><X className="w-5 h-5" /></button>
                       </td>
                     </tr>
                   ))}
@@ -833,23 +833,23 @@ export default function QuickPOS() {
           </div>
           {/* Bill Summary & Payment */}
           <div className="p-3 border-t space-y-3">
-            <div className="flex justify-between text-sm text-gray-500">
+            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
               <span>Savings</span><span>0.00</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500">
+            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
               <span>Round Off</span><span>0.00</span>
             </div>
-            <div className="flex justify-between text-lg font-bold">
+            <div className="flex justify-between text-lg font-bold dark:text-white">
               <span>Total</span><span>₹{cart.getTotal().toFixed(2)}</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 mt-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <label className="flex items-center gap-2 cursor-pointer text-sm dark:text-white">
                 <input type="radio" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} /> Cash
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <label className="flex items-center gap-2 cursor-pointer text-sm dark:text-white">
                 <input type="radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} /> Card
               </label>
-              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm">
+              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm dark:text-white">
                 <input type="radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} /> Wallet
               </label>
             </div>
@@ -861,18 +861,18 @@ export default function QuickPOS() {
       {/* Quantity Dialog - Responsive */}
       {isQtyDialogOpen && qtyDialogProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg relative">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg relative">
             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-600 text-2xl" onClick={() => setIsQtyDialogOpen(false)}>&times;</button>
-            <h2 className="text-lg sm:text-xl font-bold mb-2">{qtyDialogProduct.name}</h2>
-            <div className="mb-2 text-sm text-gray-600">
+            <h2 className="text-lg sm:text-xl font-bold mb-2 dark:text-white">{qtyDialogProduct.name}</h2>
+            <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
               <span className="font-semibold">Unit:</span> {qtyDialogProduct.unit || 'PCS'}
             </div>
             {qtyDialogProduct.description && (
-              <div className="mb-2 text-xs text-gray-500">{qtyDialogProduct.description}</div>
+              <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">{qtyDialogProduct.description}</div>
             )}
             <input
               type="number"
-              className="border rounded px-3 sm:px-4 py-2 w-full mb-4 text-sm sm:text-base"
+              className="border rounded px-3 sm:px-4 py-2 w-full mb-4 text-sm sm:text-base dark:bg-gray-700 dark:text-white dark:border-gray-600"
               value={qtyDialogQty}
               onChange={e => setQtyDialogQty(e.target.value)}
               min={isDecimalUnit(qtyDialogProduct.unit || 'PCS') ? '0.001' : '1'}
@@ -881,14 +881,14 @@ export default function QuickPOS() {
               onKeyDown={e => { if (e.key === 'Enter') handleQtyDialogConfirm(); }}
             />
             {qtyDialogError && (
-              <div className="text-red-600 mb-2 text-sm">
+              <div className="text-red-600 dark:text-red-400 mb-2 text-sm">
                 {isDecimalUnit(qtyDialogProduct.unit || 'PCS')
                   ? 'Enter a valid decimal quantity (e.g., 1.25)'
                   : 'Enter a valid whole number quantity (e.g., 2)'}
               </div>
             )}
             <div className="flex gap-2 sm:gap-4">
-              <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base" onClick={() => setIsQtyDialogOpen(false)}>Cancel</button>
+              <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500" onClick={() => setIsQtyDialogOpen(false)}>Cancel</button>
               <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm sm:text-base" onClick={handleQtyDialogConfirm}>Add to Cart</button>
             </div>
           </div>
