@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
-import { databaseService } from '@/lib/database';
+import { transactionService } from '@/lib/database';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,9 @@ export default function Transactions() {
       
       try {
         setLoading(true);
-        const data = await databaseService.getTransactions(company.id);
+        const data = await transactionService.getAll();
+        // If you want to filter by company, uncomment the next line:
+        // const filtered = data.filter((t: Transaction) => t.companyId === company.id);
         setTransactions(data);
       } catch (error) {
         console.error('Error loading transactions:', error);
