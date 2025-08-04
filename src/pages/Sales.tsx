@@ -188,59 +188,59 @@ export default function Sales() {
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Header - Properly Aligned */}
-      <header className="bg-blue-800 text-white p-3 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
+      {/* Header - Compact */}
+      <header className="bg-blue-800 text-white p-2 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+          <div className="flex flex-col md:flex-row md:items-center gap-2">
             <div className="flex items-center gap-3">
               <ShoppingCart className="w-7 h-7" />
               <h1 className="text-2xl font-bold tracking-wide">Ace-Bill</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-                <span className={`text-sm dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-200 font-bold' : ''}`}>Serial No.</span>
+                <span className={`text-xs dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-200 font-bold' : ''}`}>Serial No.</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-                <span className={`text-sm dark:text-gray-300 ${searchType === 'code' ? 'text-blue-200 font-bold' : ''}`}>Item Code</span>
+                <span className={`text-xs dark:text-gray-300 ${searchType === 'code' ? 'text-blue-200 font-bold' : ''}`}>Item Code</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-1 cursor-pointer">
                 <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-                <span className={`text-sm dark:text-gray-300 ${searchType === 'name' ? 'text-blue-200 font-bold' : ''}`}>Item Name</span>
+                <span className={`text-xs dark:text-gray-300 ${searchType === 'name' ? 'text-blue-200 font-bold' : ''}`}>Item Name</span>
               </label>
             </div>
             <div className="flex items-center w-full max-w-md">
               <input
-                className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                className="border rounded-l px-2 py-1 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
-              <button className="bg-blue-700 text-white px-3 py-2 rounded-r">
-                <Search className="w-5 h-5" />
+              <button className="bg-blue-700 text-white px-2 py-1 rounded-r">
+                <Search className="w-4 h-4" />
               </button>
             </div>
           </div>
-          {/* Bill/Tax Invoice Toggle and Date/Time - Properly Aligned */}
-          <div className="flex flex-col items-end min-w-[200px]">
-            <div className="flex gap-2 mb-2">
+          {/* Bill/Tax Invoice Toggle and Date/Time - Compact */}
+          <div className="flex flex-col items-end min-w-[180px]">
+            <div className="flex gap-1 mb-1">
               <button
-                className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
+                className={`px-2 py-1 rounded-t text-xs ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
                 onClick={() => setInvoiceType('bill')}
               >
                 Bill
               </button>
               <button
-                className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
+                className={`px-2 py-1 rounded-t text-xs ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'}`}
                 onClick={() => setInvoiceType('tax')}
               >
                 Tax Invoice
               </button>
             </div>
             <div className="text-right">
-              <span className="text-sm text-gray-300">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              <div className="text-lg font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
+              <span className="text-xs text-gray-300">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+              <div className="text-sm font-mono font-bold">{currentTime.toLocaleTimeString()}</div>
             </div>
           </div>
         </div>
@@ -248,14 +248,14 @@ export default function Sales() {
 
       {/* Main Content - Responsive */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Properly Aligned */}
-        <div className="bg-blue-800 text-white w-full lg:w-56 flex flex-col py-4 px-3 flex-shrink-0 min-h-0 lg:min-h-0">
-          <div className="font-bold text-lg mb-4 tracking-widest text-center">CATEGORY</div>
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-0">
+        {/* Category Sidebar - Compact */}
+        <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col py-2 px-2 flex-shrink-0 min-h-0 lg:min-h-0">
+          <div className="font-bold text-base mb-2 tracking-widest text-center">CATEGORY</div>
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 lg:gap-0">
             {categories.map(category => (
               <button
                 key={category}
-                className={`w-full text-left px-4 py-3 mb-2 rounded-lg transition font-semibold text-base ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                className={`w-full text-left px-2 py-2 mb-1 rounded transition font-semibold text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -264,16 +264,16 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Product Grid - Properly Aligned */}
-        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-4 overflow-auto min-w-0 min-h-0">
+        {/* Product Grid - Compact */}
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-2 overflow-auto min-w-0 min-h-0">
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white dark:bg-gray-800 rounded shadow text-left">
               <thead>
                 <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
-                  <th className="px-4 py-3 text-sm font-semibold">Item Name</th>
-                  <th className="px-4 py-3 text-sm font-semibold hidden sm:table-cell">Tag</th>
-                  <th className="px-4 py-3 text-sm font-semibold">Sale Price</th>
-                  <th className="px-4 py-3 text-sm font-semibold hidden md:table-cell">MRP</th>
+                  <th className="px-2 py-2 text-xs font-semibold">Item Name</th>
+                  <th className="px-2 py-2 text-xs font-semibold hidden sm:table-cell">Tag</th>
+                  <th className="px-2 py-2 text-xs font-semibold">Sale Price</th>
+                  <th className="px-2 py-2 text-xs font-semibold hidden md:table-cell">MRP</th>
                 </tr>
               </thead>
               <tbody>
@@ -286,15 +286,15 @@ export default function Sales() {
                       className="hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer border-b dark:border-gray-700"
                       onClick={() => handleProductSelect(product, 1)}
                     >
-                      <td className="px-4 py-3 font-semibold text-sm dark:text-white">
+                      <td className="px-2 py-2 font-semibold text-xs dark:text-white">
                         <div className="max-w-[200px] truncate" title={product.name}>
                           {product.name}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm hidden sm:table-cell dark:text-white">{product.sku || '-'}</td>
-                      <td className="px-4 py-3 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm hidden md:table-cell dark:text-white">-</td>
+                      <td className="px-2 py-2 text-xs hidden sm:table-cell dark:text-white">{product.sku || '-'}</td>
+                      <td className="px-2 py-2 text-xs dark:text-white">₹{product.price.toFixed(2)}</td>
+                      <td className="px-2 py-2 text-xs hidden md:table-cell dark:text-white">-</td>
                     </tr>
                   ))
                 )}
@@ -303,18 +303,18 @@ export default function Sales() {
           </div>
         </div>
 
-        {/* Cart/Invoice Panel - Properly Aligned */}
-        <div className="w-full lg:w-96 bg-white dark:bg-gray-800 border-t lg:border-l dark:border-gray-700 flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
-          <div className="p-4 border-b dark:border-gray-700">
-            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+        {/* Cart/Invoice Panel - Compact */}
+        <div className="w-full lg:w-80 bg-white dark:bg-gray-800 border-t lg:border-l dark:border-gray-700 flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
+          <div className="p-2 border-b dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                className="border rounded px-2 py-1 flex-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Mobile No."
                 value={barcodeQuery}
                 onChange={e => setBarcodeQuery(e.target.value)}
               />
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                className="border rounded px-2 py-1 flex-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Client Name"
                 value={skuQuery}
                 onChange={e => setSkuQuery(e.target.value)}
