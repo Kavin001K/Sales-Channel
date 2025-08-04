@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminCRM from "./pages/AdminCRM";
+import CompanyDetails from "./pages/CompanyDetails";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 import Sales from "./pages/Sales";
 import QuickPOS from "./pages/QuickPOS";
 import Products from "./pages/Products";
@@ -66,6 +70,30 @@ function AppRoutes() {
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/crm" element={
+              <ProtectedRoute>
+                <AdminCRM />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/company/:companyId" element={
+              <ProtectedRoute>
+                <CompanyDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/employee-dashboard" element={
+              <ProtectedRoute>
+                <EmployeeDashboard />
               </ProtectedRoute>
             } />
             

@@ -651,8 +651,8 @@ export default function QuickPOS() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-              {/* Top Bar - Properly Spaced */}
-        <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-4 py-3 h-auto lg:h-14 gap-4">
+      {/* Top Bar - Fixed Height */}
+      <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-4 py-2 h-16 lg:h-12 gap-2 flex-shrink-0">
           {/* Logo/Company Name */}
           <div className="flex items-center">
             <div className="text-xl font-bold text-blue-700 dark:text-blue-400">ACE-PoS</div>
@@ -710,10 +710,10 @@ export default function QuickPOS() {
           </div>
         </div>
       </div>
-      {/* Main Content (Category Sidebar + Product Grid) - Responsive */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        {/* Category Sidebar - Optimized */}
-        <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0 min-h-0 lg:min-h-0">
+      {/* Main Content (Category Sidebar + Product Grid) - No Overflow */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0">
+        {/* Category Sidebar - Fixed Width */}
+        <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0">
           <div className="font-bold text-base mb-3 tracking-widest text-center p-3 border-b border-blue-700">CATEGORY</div>
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 p-3 lg:p-0">
@@ -741,17 +741,17 @@ export default function QuickPOS() {
           </div>
         </div>
         
-        {/* Product Grid - Optimized */}
-        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-3 overflow-hidden min-w-0 min-h-0">
-          <div className="h-full overflow-y-auto">
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white dark:bg-gray-800 rounded shadow text-left">
+        {/* Product Grid - No Overflow */}
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-3 min-w-0 min-h-0">
+          <div className="h-full">
+            <div className="overflow-x-auto overflow-y-auto h-full">
+              <table className="w-full bg-white dark:bg-gray-800 rounded shadow text-left table-fixed">
                 <thead>
                   <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
-                    <th className="px-4 py-3 text-sm font-semibold">Item Name</th>
-                    <th className="px-4 py-3 text-sm font-semibold hidden sm:table-cell">Tag</th>
-                    <th className="px-4 py-3 text-sm font-semibold">Sale Price</th>
-                    <th className="px-4 py-3 text-sm font-semibold hidden md:table-cell">MRP</th>
+                    <th className="px-2 py-2 text-xs font-semibold w-2/5">Item Name</th>
+                    <th className="px-2 py-2 text-xs font-semibold hidden sm:table-cell w-1/5">Tag</th>
+                    <th className="px-2 py-2 text-xs font-semibold w-1/5">Sale Price</th>
+                    <th className="px-2 py-2 text-xs font-semibold hidden md:table-cell w-1/5">MRP</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -764,15 +764,15 @@ export default function QuickPOS() {
                         className="hover:bg-blue-50 cursor-pointer border-b"
                         onClick={() => handleProductSelect(product)}
                       >
-                                              <td className="px-4 py-3 font-semibold text-sm dark:text-white">
-                        <div className="max-w-[200px] truncate" title={product.name}>
-                          {product.name}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
-                      </td>
-                        <td className="px-4 py-3 text-sm hidden sm:table-cell dark:text-white">{product.sku || '-'}</td>
-                        <td className="px-4 py-3 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-sm hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
+                        <td className="px-2 py-2 font-semibold text-xs dark:text-white">
+                          <div className="truncate" title={product.name}>
+                            {product.name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
+                        </td>
+                        <td className="px-2 py-2 text-xs hidden sm:table-cell dark:text-white truncate">{product.sku || '-'}</td>
+                        <td className="px-2 py-2 text-xs dark:text-white">₹{product.price.toFixed(2)}</td>
+                        <td className="px-2 py-2 text-xs hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
                       </tr>
                     ))
                   )}
@@ -782,8 +782,8 @@ export default function QuickPOS() {
           </div>
         </div>
 
-        {/* Cart/Invoice Panel - Optimized */}
-        <div className="w-full lg:w-80 bg-white dark:bg-gray-800 border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0 min-h-0">
+        {/* Cart/Invoice Panel - Fixed Width */}
+        <div className="w-full lg:w-80 bg-white dark:bg-gray-800 border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0">
           <div className="p-3 border-b">
             <div className="flex flex-col sm:flex-row gap-3 mb-3">
               <input
@@ -801,29 +801,29 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Cart Table */}
-          <div className="flex-1 overflow-y-auto p-3">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm dark:text-white">
+          <div className="flex-1 p-3">
+            <div className="overflow-x-auto overflow-y-auto h-full">
+              <table className="w-full text-xs dark:text-white table-fixed">
                 <thead>
                   <tr className="border-b dark:border-gray-600">
-                    <th className="text-left px-2 py-2 font-semibold dark:text-white">Item Name</th>
-                    <th className="text-center px-2 py-2 font-semibold dark:text-white">Qty</th>
-                    <th className="text-right px-2 py-2 font-semibold dark:text-white">Rate</th>
-                    <th className="text-right px-2 py-2 font-semibold dark:text-white">Amount</th>
-                    <th className="text-center px-2 py-2 font-semibold dark:text-white"></th>
+                    <th className="text-left px-1 py-1 font-semibold dark:text-white w-2/5">Item Name</th>
+                    <th className="text-center px-1 py-1 font-semibold dark:text-white w-1/6">Qty</th>
+                    <th className="text-right px-1 py-1 font-semibold dark:text-white w-1/6">Rate</th>
+                    <th className="text-right px-1 py-1 font-semibold dark:text-white w-1/6">Amount</th>
+                    <th className="text-center px-1 py-1 font-semibold dark:text-white w-1/12"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {cart.items.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center text-gray-400 dark:text-gray-500 py-8">No items</td></tr>
+                    <tr><td colSpan={5} className="text-center text-gray-400 dark:text-gray-500 py-4">No items</td></tr>
                   ) : cart.items.map((item, idx) => (
                     <tr key={item.product.id} className="border-b dark:border-gray-600">
-                      <td className="px-2 py-2 max-w-[120px] truncate dark:text-white" title={item.product.name}>{item.product.name}</td>
-                      <td className="px-2 py-2 text-center dark:text-white">{item.quantity}</td>
-                      <td className="px-2 py-2 text-right dark:text-white">₹{item.product.price.toFixed(2)}</td>
-                      <td className="px-2 py-2 text-right dark:text-white">₹{(item.product.price * item.quantity).toFixed(2)}</td>
-                      <td className="px-2 py-2 text-center">
-                        <button onClick={() => cart.removeItem(item.product.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><X className="w-5 h-5" /></button>
+                      <td className="px-1 py-1 truncate dark:text-white" title={item.product.name}>{item.product.name}</td>
+                      <td className="px-1 py-1 text-center dark:text-white">{item.quantity}</td>
+                      <td className="px-1 py-1 text-right dark:text-white">₹{item.product.price.toFixed(2)}</td>
+                      <td className="px-1 py-1 text-right dark:text-white">₹{(item.product.price * item.quantity).toFixed(2)}</td>
+                      <td className="px-1 py-1 text-center">
+                        <button onClick={() => cart.removeItem(item.product.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><X className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))}
@@ -832,28 +832,28 @@ export default function QuickPOS() {
             </div>
           </div>
           {/* Bill Summary & Payment */}
-          <div className="p-3 border-t space-y-3">
-            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+          <div className="p-2 border-t space-y-2">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>Savings</span><span>0.00</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>Round Off</span><span>0.00</span>
             </div>
-            <div className="flex justify-between text-lg font-bold dark:text-white">
+            <div className="flex justify-between text-base font-bold dark:text-white">
               <span>Total</span><span>₹{cart.getTotal().toFixed(2)}</span>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 mt-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm dark:text-white">
+            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
                 <input type="radio" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} /> Cash
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm dark:text-white">
+              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
                 <input type="radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} /> Card
               </label>
-              <label className="flex items-center gap-1 cursor-pointer text-xs sm:text-sm dark:text-white">
+              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
                 <input type="radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} /> Wallet
               </label>
             </div>
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-3 rounded text-sm sm:text-lg mt-2" onClick={handleGenerateBill}>Generate Bill</button>
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-sm mt-2" onClick={handleGenerateBill}>Generate Bill</button>
           </div>
         </div>
       </div>

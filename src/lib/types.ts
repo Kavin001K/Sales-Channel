@@ -143,3 +143,139 @@ export interface InventoryAlert {
   minStock: number;
   type: 'low_stock' | 'out_of_stock';
 }
+
+// Admin System Types
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  role: 'super_admin' | 'admin' | 'support' | 'sales';
+  permissions: string[];
+  isActive: boolean;
+  lastLogin?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SoftwareCompanyEmployee {
+  id: string;
+  employeeId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  department: 'sales' | 'support' | 'technical' | 'marketing' | 'finance' | 'hr';
+  position: string;
+  managerId?: string;
+  salary?: number;
+  hireDate: Date;
+  isActive: boolean;
+  avatar?: string;
+  skills?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AdminLoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface AdminAuthState {
+  isAuthenticated: boolean;
+  adminUser: AdminUser | null;
+  loading: boolean;
+}
+
+// CRM Types for Software Company
+export interface Lead {
+  id: string;
+  companyName: string;
+  contactPerson: string;
+  email: string;
+  phone?: string;
+  industry: string;
+  companySize: 'small' | 'medium' | 'large';
+  source: 'website' | 'referral' | 'cold_call' | 'social_media' | 'other';
+  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+  assignedTo?: string;
+  estimatedValue?: number;
+  notes?: string;
+  nextFollowUp?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Opportunity {
+  id: string;
+  leadId: string;
+  title: string;
+  description?: string;
+  value: number;
+  probability: number; // 0-100
+  stage: 'discovery' | 'qualification' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+  expectedCloseDate?: Date;
+  assignedTo?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'call' | 'email' | 'meeting' | 'follow_up' | 'proposal' | 'other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  assignedTo?: string;
+  relatedTo?: {
+    type: 'lead' | 'opportunity' | 'company';
+    id: string;
+  };
+  dueDate?: Date;
+  completedAt?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Activity {
+  id: string;
+  type: 'call' | 'email' | 'meeting' | 'note' | 'task_completed';
+  title: string;
+  description?: string;
+  performedBy: string;
+  relatedTo?: {
+    type: 'lead' | 'opportunity' | 'company' | 'employee';
+    id: string;
+  };
+  timestamp: Date;
+  duration?: number; // in minutes
+  outcome?: string;
+}
+
+// Extended Company interface for admin management
+export interface CompanyWithSubscription extends Company {
+  subscriptionPlan: 'basic' | 'professional' | 'enterprise';
+  subscriptionStatus: 'active' | 'suspended' | 'cancelled' | 'expired';
+  monthlyFee: number;
+  employees: number;
+  lastLogin?: Date;
+  billingInfo?: {
+    nextPaymentDate: Date;
+    lastPaymentDate?: Date;
+    paymentMethod?: string;
+    outstandingAmount?: number;
+  };
+  usage?: {
+    storageUsed: number;
+    storageLimit: number;
+    transactionsThisMonth: number;
+    activeUsers: number;
+  };
+  owner?: {
+    name: string;
+    email: string;
+    phone?: string;
+  };
+}

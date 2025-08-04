@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthState, Company, Employee, LoginCredentials, EmployeeLoginCredentials } from '../lib/types';
+import { 
+  AuthState, 
+  Company, 
+  Employee, 
+  LoginCredentials, 
+  EmployeeLoginCredentials,
+  AdminUser,
+  AdminLoginCredentials,
+  AdminAuthState
+} from '../lib/types';
 import { databaseService } from '../lib/database';
 
 interface AuthContextType extends AuthState {
@@ -8,6 +17,10 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   logoutEmployee: () => void;
   refreshAuth: () => void;
+  // Admin authentication
+  loginAdmin: (credentials: AdminLoginCredentials) => Promise<boolean>;
+  logoutAdmin: () => void;
+  adminAuth: AdminAuthState;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,11 +45,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading: true
   });
 
+  const [adminAuth, setAdminAuth] = useState<AdminAuthState>({
+    isAuthenticated: false,
+    adminUser: null,
+    loading: true
+  });
+
   // Load authentication state from localStorage on mount
   useEffect(() => {
     const loadAuthState = () => {
       try {
         const savedAuth = localStorage.getItem('auth_state');
+        const savedAdminAuth = localStorage.getItem('admin_auth_state');
+        
         if (savedAuth) {
           const parsed = JSON.parse(savedAuth);
           setAuthState({
@@ -46,9 +67,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
           setAuthState(prev => ({ ...prev, loading: false }));
         }
+
+        if (savedAdminAuth) {
+          const parsed = JSON.parse(savedAdminAuth);
+          setAdminAuth({
+            ...parsed,
+            loading: false
+          });
+        } else {
+          setAdminAuth(prev => ({ ...prev, loading: false }));
+        }
       } catch (error) {
         console.error('Error loading auth state:', error);
         setAuthState(prev => ({ ...prev, loading: false }));
+        setAdminAuth(prev => ({ ...prev, loading: false }));
       }
     };
 
@@ -61,6 +93,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       localStorage.setItem('auth_state', JSON.stringify(state));
     } catch (error) {
       console.error('Error saving auth state:', error);
+    }
+  };
+
+  const saveAdminAuthState = (state: AdminAuthState) => {
+    try {
+      localStorage.setItem('admin_auth_state', JSON.stringify(state));
+    } catch (error) {
+      console.error('Error saving admin auth state:', error);
     }
   };
 
@@ -127,6 +167,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const loginAdmin = async (credentials: AdminLoginCredentials): Promise<boolean> => {
+    try {
+      setAdminAuth(prev => ({ ...prev, loading: true }));
+      
+      // Mock admin authentication - in real app, this would call the database service
+      const mockAdminUser: AdminUser = {
+        id: 'admin-1',
+        username: credentials.username,
+        email: 'admin@possystem.com',
+        role: 'super_admin',
+        permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
+        isActive: true,
+        lastLogin: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Simple validation for demo
+      if (credentials.username === 'superadmin' && credentials.password === 'admin123') {
+        const newState: AdminAuthState = {
+          isAuthenticated: true,
+          adminUser: mockAdminUser,
+          loading: false
+        };
+        
+        setAdminAuth(newState);
+        saveAdminAuthState(newState);
+        return true;
+      } else {
+        setAdminAuth(prev => ({ ...prev, loading: false }));
+        return false;
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setAdminAuth(prev => ({ ...prev, loading: false }));
+      return false;
+    }
+  };
+
   const logout = () => {
     const newState: AuthState = {
       isAuthenticated: false,
@@ -151,10 +230,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     saveAuthState(newState);
   };
 
+  const logoutAdmin = () => {
+    const newState: AdminAuthState = {
+      isAuthenticated: false,
+      adminUser: null,
+      loading: false
+    };
+    
+    setAdminAuth(newState);
+    localStorage.removeItem('admin_auth_state');
+  };
+
   const refreshAuth = () => {
     // This could be used to refresh tokens or validate current session
     // For now, we'll just reload from localStorage
     const savedAuth = localStorage.getItem('auth_state');
+    const savedAdminAuth = localStorage.getItem('admin_auth_state');
+    
     if (savedAuth) {
       try {
         const parsed = JSON.parse(savedAuth);
@@ -167,6 +259,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout();
       }
     }
+
+    if (savedAdminAuth) {
+      try {
+        const parsed = JSON.parse(savedAdminAuth);
+        setAdminAuth({
+          ...parsed,
+          loading: false
+        });
+      } catch (error) {
+        console.error('Error refreshing admin auth:', error);
+        logoutAdmin();
+      }
+    }
   };
 
   const value: AuthContextType = {
@@ -175,7 +280,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loginEmployee,
     logout,
     logoutEmployee,
-    refreshAuth
+    refreshAuth,
+    loginAdmin,
+    logoutAdmin,
+    adminAuth
   };
 
   return (

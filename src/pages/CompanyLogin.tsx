@@ -6,18 +6,21 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Loader2, Building2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Loader2, Building2, Shield, User } from 'lucide-react';
 
 export default function CompanyLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginMode, setLoginMode] = useState<'company' | 'admin'>('company');
   
-  const { loginCompany } = useAuth();
+  const { loginCompany, loginAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -26,9 +29,34 @@ export default function CompanyLogin() {
       const success = await loginCompany({ email, password });
       
       if (success) {
-        navigate('/employee-login');
+        // Check if user is admin or regular employee
+        if (email.includes('admin') || email.includes('superadmin')) {
+          navigate('/admin');
+        } else {
+          navigate('/employee-dashboard');
+        }
       } else {
         setError('Invalid email or password');
+      }
+    } catch (err) {
+      setError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAdminSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const success = await loginAdmin({ username, password });
+      
+      if (success) {
+        navigate('/admin');
+      } else {
+        setError('Invalid username or password');
       }
     } catch (err) {
       setError('An error occurred during login');
@@ -44,68 +72,142 @@ export default function CompanyLogin() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
             <Building2 className="h-6 w-6 text-blue-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Company Login</CardTitle>
+          <CardTitle className="text-2xl font-bold">Login Portal</CardTitle>
           <CardDescription>
-            Enter your company credentials to access the POS system
+            Access your company POS system or admin panel
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Company Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
+          <Tabs value={loginMode} onValueChange={(value) => setLoginMode(value as 'company' | 'admin')} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="company" className="flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Company
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Admin
+              </TabsTrigger>
+            </TabsList>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            <TabsContent value="company" className="space-y-4 mt-4">
+              <form onSubmit={handleCompanySubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company-email">Company Email</Label>
+                  <Input
+                    id="company-email"
+                    type="email"
+                    placeholder="admin@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="company-password">Password</Label>
+                  <Input
+                    id="company-password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Login to Company'
-              )}
-            </Button>
-          </form>
+                {error && loginMode === 'company' && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Demo Credentials:</p>
-            <p className="font-mono text-xs mt-1">
-              Email: admin@techsolutions.com<br />
-              Password: admin123
-            </p>
-          </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    'Login to Company'
+                  )}
+                </Button>
+              </form>
+
+              <div className="text-center text-sm text-gray-600">
+                <p>Demo Company Credentials:</p>
+                <p className="font-mono text-xs mt-1">
+                  Email: admin@techsolutions.com<br />
+                  Password: admin123
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="admin" className="space-y-4 mt-4">
+              <form onSubmit={handleAdminSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-username">Admin Username</Label>
+                  <Input
+                    id="admin-username"
+                    type="text"
+                    placeholder="admin"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <Input
+                    id="admin-password"
+                    type="password"
+                    placeholder="Enter admin password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {error && loginMode === 'admin' && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    'Login to Admin Panel'
+                  )}
+                </Button>
+              </form>
+
+              <div className="text-center text-sm text-gray-600">
+                <p>Demo Admin Credentials:</p>
+                <p className="font-mono text-xs mt-1">
+                  Username: superadmin<br />
+                  Password: admin123
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

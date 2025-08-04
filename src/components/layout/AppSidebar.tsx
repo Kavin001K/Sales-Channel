@@ -9,7 +9,8 @@ import {
   Receipt,
   TrendingUp,
   Store,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
 
 import {
@@ -31,6 +32,12 @@ const navigationItems = [
     url: "/",
     icon: BarChart3,
     description: "Overview & Analytics"
+  },
+  {
+    title: "Employee Dashboard",
+    url: "/employee-dashboard",
+    icon: Users,
+    description: "CRM & Customer Management"
   },
   {
     title: "Sales",
@@ -79,6 +86,18 @@ const navigationItems = [
     url: "/reports",
     icon: TrendingUp,
     description: "Sales Analytics"
+  },
+  {
+    title: "Admin Panel",
+    url: "/admin",
+    icon: Shield,
+    description: "System Administration"
+  },
+  {
+    title: "Admin CRM",
+    url: "/admin/crm",
+    icon: Users,
+    description: "Customer Relationship Management"
   }
 ];
 
