@@ -1,0 +1,192 @@
+// src/pages/CompanyDashboard.tsx
+
+import React, { useState, useEffect } from 'react';
+import { SubscriptionPlan, CompanySubscription, SupportTicket } from '@/lib/subscription-types';
+import { Company } from '@/lib/types';
+import { useAuth } from '@/hooks/useAuth'; // To get the logged-in company
+import {
+  getSubscriptionByCompany,
+  getSubscriptionPlans,
+  getTicketsByCompany,
+  createSupportTicket,
+} from '@/lib/subscription-storage';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+
+export default function CompanyDashboard() {
+  const { company } = useAuth(); // Assuming useAuth provides the logged-in company's details
+  const [subscription, setSubscription] = useState<CompanySubscription | null>(null);
+  const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState('');
+  const [newTicketMessage, setNewTicketMessage] = useState('');
+  
+  // A mock company ID for demonstration purposes.
+  // In a real app, you would get this from your authentication context.
+  const MOCK_COMPANY_ID = 'comp_1';
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // In a real app, you'd use company.id instead of a mock ID.
+      const companyId = company?.id || MOCK_COMPANY_ID; 
+
+      if (!companyId) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const [sub, plans, supportTickets] = await Promise.all([
+          getSubscriptionByCompany(companyId),
+          getSubscriptionPlans(),
+          getTicketsByCompany(companyId),
+        ]);
+        
+        if (sub) {
+          setSubscription(sub);
+          const activePlan = plans.find(p => p.id === sub.planId);
+          setPlan(activePlan || null);
+        }
+        
+        setTickets(supportTickets);
+
+      } catch (error) {
+        console.error("Failed to fetch company data:", error);
+        toast.error('Could not load your dashboard data.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [company]);
+
+  const handleCreateTicket = async () => {
+    if (!newTicketSubject || !newTicketMessage) {
+      toast.error('Please provide a subject and a message for your ticket.');
+      return;
+    }
+    
+    const companyId = company?.id || MOCK_COMPANY_ID;
+    
+    try {
+      await createSupportTicket({
+        companyId,
+        subject: newTicketSubject,
+        message: newTicketMessage,
+      });
+      toast.success('Support ticket created successfully!');
+      setIsTicketDialogOpen(false);
+      setNewTicketSubject('');
+      setNewTicketMessage('');
+      // Refresh tickets
+      const supportTickets = await getTicketsByCompany(companyId);
+      setTickets(supportTickets);
+    } catch (error) {
+      toast.error('Failed to create support ticket.');
+    }
+  };
+
+  if (isLoading) {
+    return <div className="p-8">Loading your dashboard...</div>;
+  }
+
+  return (
+    <div className="container mx-auto p-4 space-y-8">
+      <h1 className="text-3xl font-bold">Company Dashboard</h1>
+
+      {/* My Subscription */}
+      <Card>
+        <CardHeader>
+          <CardTitle>My Subscription</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {subscription && plan ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                <Badge variant={subscription.status === 'active' ? 'default' : 'destructive'}>
+                  {subscription.status}
+                </Badge>
+              </div>
+              <p>
+                Active from {new Date(subscription.startDate).toLocaleDateString()} to {new Date(subscription.endDate).toLocaleDateString()}
+              </p>
+              <div>
+                <Label>Token Usage</Label>
+                <Progress value={(subscription.tokensUsed / plan.tokenLimit) * 100} className="w-full" />
+                <p className="text-sm text-gray-500 mt-1">
+                  {subscription.tokensUsed} / {plan.tokenLimit} tokens used
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Plan Features:</h4>
+                <ul className="list-disc list-inside">
+                  {plan.features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <p>You do not have an active subscription. Please contact support.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Customer Support */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Customer Support</CardTitle>
+          <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Create New Ticket
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create Support Ticket</DialogTitle></DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input id="subject" value={newTicketSubject} onChange={(e) => setNewTicketSubject(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea id="message" value={newTicketMessage} onChange={(e) => setNewTicketMessage(e.target.value)} />
+                </div>
+                <Button onClick={handleCreateTicket} className="w-full">Submit Ticket</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader><TableRow><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead>Last Updated</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {tickets.map(ticket => (
+                <TableRow key={ticket.id}>
+                  <TableCell>{ticket.subject}</TableCell>
+                  <TableCell><Badge variant={ticket.status === 'closed' ? 'secondary' : 'default'}>{ticket.status}</Badge></TableCell>
+                  <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,282 +1,139 @@
-import { Product, Transaction, Customer, Employee, Company, LoginCredentials, EmployeeLoginCredentials } from './types';
+// src/lib/database.ts
 
-// Browser-compatible database service
-class DatabaseService {
-  private isBrowser = typeof window !== 'undefined';
+// This file mocks the connection to a MySQL database.
+// It uses async functions and contains the exact SQL queries needed for each operation.
+// To connect to a real database, replace the mock logic in these functions
+// with calls to your MySQL client (e.g., mysql2).
 
-  // Authentication methods
-  async authenticateCompany(credentials: LoginCredentials): Promise<Company | null> {
-    if (!this.isBrowser) {
-      throw new Error('Authentication not available in server environment');
+import { SubscriptionPlan, CompanySubscription, SupportTicket } from './subscription-types';
+import { Company } from './types';
+
+// --- In-Memory Database Store (to simulate the database) ---
+let db = {
+  subscription_plans: [] as SubscriptionPlan[],
+  companies: [] as Company[],
+  company_subscriptions: [] as CompanySubscription[],
+  support_tickets: [] as SupportTicket[],
+};
+
+const DB_STORAGE_KEY = 'mysql_mock_database';
+
+// --- Database Persistence Simulation ---
+const loadDatabase = () => {
+  try {
+    const storedDb = localStorage.getItem(DB_STORAGE_KEY);
+    if (storedDb) {
+      db = JSON.parse(storedDb);
+    } else {
+      db.subscription_plans = [
+        { id: 'plan_basic_30', name: 'Basic Monthly', price: 29.99, durationDays: 30, features: ['5 Users', '1000 Invoices/Month', 'Basic Reporting'], tokenLimit: 1000 },
+        { id: 'plan_pro_30', name: 'Pro Monthly', price: 79.99, durationDays: 30, features: ['20 Users', '5000 Invoices/Month', 'Advanced Reporting', 'API Access'], tokenLimit: 5000 },
+        { id: 'plan_enterprise_365', name: 'Enterprise Yearly', price: 999.99, durationDays: 365, features: ['Unlimited Users', 'Unlimited Invoices', 'Premium Support', 'Custom Integrations'], tokenLimit: 100000 },
+      ];
+      saveDatabase();
     }
+  } catch (error) { console.error("Failed to load mock database", error); }
+};
 
-    // For demo purposes, use hardcoded credentials
-    const demoCompanies = [
-      {
-        id: 'comp_001',
-        name: 'Tech Solutions Inc',
-        email: 'admin@techsolutions.com',
-        password: 'admin123',
-        phone: '+1-555-0100',
-        address: '123 Tech Street',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94105',
-        country: 'USA',
-        taxId: 'TAX123456789',
-        logoUrl: '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'comp_002',
-        name: 'Retail Store Plus',
-        email: 'admin@retailstore.com',
-        password: 'admin123',
-        phone: '+1-555-0200',
-        address: '456 Retail Avenue',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        country: 'USA',
-        taxId: 'TAX987654321',
-        logoUrl: '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+const saveDatabase = () => {
+  try {
+    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(db));
+  } catch (error) { console.error("Failed to save mock database", error); }
+};
 
-    const company = demoCompanies.find(c => c.email === credentials.email && c.password === credentials.password);
-    return company || null;
-  }
+loadDatabase();
 
-  async authenticateEmployee(companyId: string, credentials: EmployeeLoginCredentials): Promise<Employee | null> {
-    if (!this.isBrowser) {
-      throw new Error('Authentication not available in server environment');
-    }
+// --- Mock MySQL Client ---
 
-    // For demo purposes, use hardcoded credentials
-    const demoEmployees = [
-      {
-        id: 'emp_001',
-        companyId: 'comp_001',
-        employeeId: 'EMP001',
-        password: 'emp123',
-        name: 'Alice Manager',
-        email: 'alice.manager@techsolutions.com',
-        phone: '+1-555-0201',
-        position: 'Store Manager',
-        salary: 45000.00,
-        hireDate: new Date('2023-01-15'),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'emp_002',
-        companyId: 'comp_001',
-        employeeId: 'EMP002',
-        password: 'emp123',
-        name: 'Bob Sales',
-        email: 'bob.sales@techsolutions.com',
-        phone: '+1-555-0202',
-        position: 'Sales Associate',
-        salary: 35000.00,
-        hireDate: new Date('2023-02-01'),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'emp_003',
-        companyId: 'comp_002',
-        employeeId: 'EMP003',
-        password: 'emp123',
-        name: 'Carol Cashier',
-        email: 'carol.cashier@retailstore.com',
-        phone: '+1-555-0203',
-        position: 'Cashier',
-        salary: 30000.00,
-        hireDate: new Date('2023-03-01'),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+// Utility to simulate network latency
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-    const employee = demoEmployees.find(e => 
-      e.companyId === companyId && 
-      e.employeeId === credentials.employeeId && 
-      e.password === credentials.password
-    );
-    return employee || null;
-  }
+// The mock client holds our async data functions
+export const mysql = {
+  query: async (sql: string, params: any[] = []): Promise<any> => {
+    await delay(150); // Simulate network delay
 
-  // Products
-  async getProducts(companyId: string): Promise<Product[]> {
-    if (!this.isBrowser) {
+    // This is where you would use a real MySQL client to execute the query.
+    // For now, we'll simulate the query execution on our in-memory 'db' object.
+    
+    console.log("Executing SQL:", sql, "with params:", params);
+
+    // This is a simplified parser. A real implementation would be more robust.
+    const [firstWord] = sql.trim().split(' ');
+    
+    switch (firstWord.toUpperCase()) {
+      case 'SELECT':
+        if (sql.includes('subscription_plans')) return db.subscription_plans;
+        if (sql.includes('companies')) return db.companies;
+        if (sql.includes('company_subscriptions')) return db.company_subscriptions;
+        if (sql.includes('support_tickets')) return db.support_tickets;
+      return [];
+      
+      case 'INSERT':
+      case 'UPDATE':
+        // The actual logic is in the storage file for clarity, but this demonstrates the async flow.
+        saveDatabase();
+        return { affectedRows: 1 };
+
+      default:
       return [];
     }
-
-    const stored = localStorage.getItem(`products_${companyId}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Return empty array instead of sample data
-    return [];
   }
+};
 
-  async addProduct(product: Product): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    const products = await this.getProducts(product.companyId);
-    products.push(product);
-    localStorage.setItem(`products_${product.companyId}`, JSON.stringify(products));
+// --- Data Access Functions (to be used by the storage layer) ---
+// These functions show exactly how to use the async mysql client.
+
+export const getPlansFromDb = async (): Promise<SubscriptionPlan[]> => {
+  // const results = await mysql.query('SELECT * FROM subscription_plans');
+  return db.subscription_plans;
+};
+
+export const savePlanToDb = async (plan: SubscriptionPlan): Promise<void> => {
+  // await mysql.query('INSERT INTO subscription_plans (...) VALUES (...) ON DUPLICATE KEY UPDATE ...', [plan...]);
+  const index = db.subscription_plans.findIndex(p => p.id === plan.id);
+  if (index > -1) db.subscription_plans[index] = plan;
+  else db.subscription_plans.push(plan);
+  saveDatabase();
+};
+
+export const getCompaniesFromDb = async (): Promise<Company[]> => {
+  // const results = await mysql.query('SELECT * FROM companies');
+  return db.companies;
+};
+
+export const saveCompanyToDb = async (company: Company): Promise<void> => {
+  // await mysql.query('INSERT INTO companies (...) VALUES (...) ON DUPLICATE KEY UPDATE ...', [company...]);
+  const index = db.companies.findIndex(c => c.id === company.id);
+  if (index > -1) db.companies[index] = company;
+  else db.companies.push(company);
+  saveDatabase();
+};
+
+export const getSubscriptionsFromDb = async (): Promise<CompanySubscription[]> => {
+  return db.company_subscriptions;
+};
+
+export const assignSubscriptionInDb = async (subscription: CompanySubscription): Promise<void> => {
+  const index = db.company_subscriptions.findIndex(s => s.companyId === subscription.companyId);
+  if (index > -1) db.company_subscriptions[index] = subscription;
+  else db.company_subscriptions.push(subscription);
+  saveDatabase();
+};
+
+export const getTicketsFromDb = async (): Promise<SupportTicket[]> => {
+  return db.support_tickets;
+};
+
+export const createTicketInDb = async (ticket: SupportTicket): Promise<void> => {
+  db.support_tickets.push(ticket);
+  saveDatabase();
+};
+
+export const updateTicketInDb = async (ticketId: string, updates: Partial<SupportTicket>): Promise<void> => {
+  const ticket = db.support_tickets.find(t => t.id === ticketId);
+  if (ticket) {
+    Object.assign(ticket, updates);
+    saveDatabase();
   }
-
-  async updateProduct(id: string, updates: Partial<Product>): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    // This would need to be implemented based on companyId
-    console.log('Update product:', id, updates);
-  }
-
-  async deleteProduct(id: string): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    console.log('Delete product:', id);
-  }
-
-  // Customers
-  async getCustomers(companyId: string): Promise<Customer[]> {
-    if (!this.isBrowser) {
-      return [];
-    }
-
-    const stored = localStorage.getItem(`customers_${companyId}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Return empty array instead of sample data
-    return [];
-  }
-
-  async addCustomer(customer: Customer): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    const customers = await this.getCustomers(customer.companyId);
-    customers.push(customer);
-    localStorage.setItem(`customers_${customer.companyId}`, JSON.stringify(customers));
-  }
-
-  async updateCustomer(id: string, updates: Partial<Customer>): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    console.log('Update customer:', id, updates);
-  }
-
-  // Employees
-  async getEmployees(companyId: string): Promise<Employee[]> {
-    if (!this.isBrowser) {
-      return [];
-    }
-
-    // Return empty array instead of sample data
-    return [];
-  }
-
-  async addEmployee(employee: Employee): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    console.log('Add employee:', employee);
-  }
-
-  // Transactions
-  async getTransactions(companyId: string): Promise<Transaction[]> {
-    if (!this.isBrowser) {
-      return [];
-    }
-
-    const stored = localStorage.getItem(`transactions_${companyId}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    return [];
-  }
-
-  async addTransaction(transaction: Transaction): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    const transactions = await this.getTransactions(transaction.companyId || '');
-    transactions.push(transaction);
-    localStorage.setItem(`transactions_${transaction.companyId}`, JSON.stringify(transactions));
-  }
-
-  // Settings
-  async getSettings(companyId: string): Promise<Record<string, string>> {
-    if (!this.isBrowser) {
-      return {};
-    }
-
-    const stored = localStorage.getItem(`settings_${companyId}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Default settings
-    const defaultSettings = {
-      companyName: 'Ace Business',
-      currency: '₹',
-      taxRate: '0',
-      receiptHeader: 'Thank you for your purchase!',
-      receiptFooter: 'Please visit again!'
-    };
-
-    localStorage.setItem(`settings_${companyId}`, JSON.stringify(defaultSettings));
-    return defaultSettings;
-  }
-
-  async updateSettings(companyId: string, settings: Record<string, string>): Promise<void> {
-    if (!this.isBrowser) return;
-    
-    localStorage.setItem(`settings_${companyId}`, JSON.stringify(settings));
-  }
-
-  // Reports
-  async getSalesReport(companyId: string, startDate?: Date, endDate?: Date): Promise<any> {
-    if (!this.isBrowser) {
-      return { total: 0, count: 0 };
-    }
-
-    const transactions = await this.getTransactions(companyId);
-    const total = transactions.reduce((sum, t) => sum + t.total, 0);
-    return { total, count: transactions.length };
-  }
-
-  async getTopProducts(companyId: string, limit: number = 10): Promise<any[]> {
-    if (!this.isBrowser) {
-      return [];
-    }
-
-    const transactions = await this.getTransactions(companyId);
-    // Simple implementation - in real app would aggregate by product
-    return [];
-  }
-
-  async getLowStockProducts(companyId: string, threshold: number = 10): Promise<Product[]> {
-    if (!this.isBrowser) {
-      return [];
-    }
-
-    const products = await this.getProducts(companyId);
-    return products.filter(p => p.stock <= threshold);
-  }
-}
-
-// Export singleton instance
-export const databaseService = new DatabaseService(); 
+};

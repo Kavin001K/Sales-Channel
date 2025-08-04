@@ -19,6 +19,8 @@ import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import SubscriptionAdminDashboard from "./pages/SubscriptionAdminDashboard";
+import CompanyDashboard from "./pages/CompanyDashboard";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
@@ -148,6 +150,18 @@ function AppRoutes() {
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin/subscriptions" element={
+              <ProtectedRoute>
+                <SubscriptionAdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/company/dashboard" element={
+              <ProtectedRoute>
+                <CompanyDashboard />
               </ProtectedRoute>
             } />
             

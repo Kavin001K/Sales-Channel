@@ -1,80 +1,42 @@
+// src/lib/subscription-storage.ts
+
+// This file is the central API for managing subscription-related data.
+// It uses the async database functions from database.ts and provides
+// a clean, high-level interface for the UI components.
+
 import { SubscriptionPlan, CompanySubscription, SupportTicket } from './subscription-types';
-import { Company } from './types'; // Assuming Company type is defined in types.ts
+import { Company } from './types';
+import * as db from './database';
 
-// --- Mock Data Initialization ---
-const initialPlans: SubscriptionPlan[] = [
-  { id: 'plan_basic_30', name: 'Basic Monthly', price: 29.99, durationDays: 30, features: ['5 Users', '1000 Invoices/Month', 'Basic Reporting'], tokenLimit: 1000 },
-  { id: 'plan_pro_30', name: 'Pro Monthly', price: 79.99, durationDays: 30, features: ['20 Users', '5000 Invoices/Month', 'Advanced Reporting', 'API Access'], tokenLimit: 5000 },
-  { id: 'plan_enterprise_365', name: 'Enterprise Yearly', price: 999.99, durationDays: 365, features: ['Unlimited Users', 'Unlimited Invoices', 'Premium Support', 'Custom Integrations'], tokenLimit: 100000 },
-];
-
-const initialCompanies: Company[] = [
-  // This can be expanded or fetched from existing company storage
-];
-
-const initialSubscriptions: CompanySubscription[] = [];
-const initialTickets: SupportTicket[] = [];
-
-// --- Local Storage Abstraction ---
-const getFromStorage = <T>(key: string, defaultValue: T): T => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultValue;
-  } catch (error) {
-    console.error(`Error reading from localStorage key “${key}”:`, error);
-    return defaultValue;
-  }
+// --- Subscription Plans ---
+export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
+  return await db.getPlansFromDb();
+};
+export const saveSubscriptionPlan = async (plan: SubscriptionPlan): Promise<void> => {
+  await db.savePlanToDb(plan);
 };
 
-const saveToStorage = <T>(key: string, value: T) => {
-  try {
-    const item = JSON.stringify(value);
-    localStorage.setItem(key, item);
-  } catch (error) {
-    console.error(`Error writing to localStorage key “${key}”:`, error);
-  }
+// --- Companies ---
+export const getSubscribedCompanies = async (): Promise<Company[]> => {
+  return await db.getCompaniesFromDb();
+};
+export const saveSubscribedCompany = async (company: Company): Promise<void> => {
+  await db.saveCompanyToDb(company);
 };
 
-// --- API Functions ---
-
-// Subscription Plans
-export const getSubscriptionPlans = (): SubscriptionPlan[] => getFromStorage('subscription_plans', initialPlans);
-export const saveSubscriptionPlan = (plan: SubscriptionPlan): void => {
-  const plans = getSubscriptionPlans();
-  const index = plans.findIndex(p => p.id === plan.id);
-  if (index > -1) {
-    plans[index] = plan;
-  } else {
-    plans.push(plan);
-  }
-  saveToStorage('subscription_plans', plans);
+// --- Company Subscriptions ---
+export const getCompanySubscriptions = async (): Promise<CompanySubscription[]> => {
+  return await db.getSubscriptionsFromDb();
 };
-
-// Companies (assuming basic company management for this module)
-export const getSubscribedCompanies = (): Company[] => getFromStorage('subscribed_companies', initialCompanies);
-export const saveSubscribedCompany = (company: Company): void => {
-  const companies = getSubscribedCompanies();
-  const index = companies.findIndex(c => c.id === company.id);
-  if (index > -1) {
-    companies[index] = company;
-  } else {
-    companies.push(company);
-  }
-  saveToStorage('subscribed_companies', companies);
+export const getSubscriptionByCompany = async (companyId: string): Promise<CompanySubscription | undefined> => {
+  const subscriptions = await db.getSubscriptionsFromDb();
+  return subscriptions.find(sub => sub.companyId === companyId);
 };
-
-
-// Company Subscriptions
-export const getCompanySubscriptions = (): CompanySubscription[] => getFromStorage('company_subscriptions', initialSubscriptions);
-export const getSubscriptionByCompany = (companyId: string): CompanySubscription | undefined => {
-  return getCompanySubscriptions().find(sub => sub.companyId === companyId);
-};
-export const assignSubscriptionToCompany = (companyId: string, planId: string): void => {
-  const plans = getSubscriptionPlans();
+export const assignSubscriptionToCompany = async (companyId: string, planId: string): Promise<void> => {
+  const plans = await db.getPlansFromDb();
   const plan = plans.find(p => p.id === planId);
   if (!plan) throw new Error('Subscription plan not found');
 
-  const subscriptions = getCompanySubscriptions();
   const now = new Date();
   const endDate = new Date(now);
   endDate.setDate(now.getDate() + plan.durationDays);
@@ -88,22 +50,18 @@ export const assignSubscriptionToCompany = (companyId: string, planId: string): 
     tokensUsed: 0,
   };
 
-  const existingSubIndex = subscriptions.findIndex(s => s.companyId === companyId);
-  if (existingSubIndex > -1) {
-    subscriptions[existingSubIndex] = newSubscription;
-  } else {
-    subscriptions.push(newSubscription);
-  }
-  saveToStorage('company_subscriptions', subscriptions);
+  await db.assignSubscriptionInDb(newSubscription);
 };
 
-// Support Tickets
-export const getSupportTickets = (): SupportTicket[] => getFromStorage('support_tickets', initialTickets);
-export const getTicketsByCompany = (companyId: string): SupportTicket[] => {
-  return getSupportTickets().filter(t => t.companyId === companyId);
+// --- Support Tickets ---
+export const getSupportTickets = async (): Promise<SupportTicket[]> => {
+  return await db.getTicketsFromDb();
 };
-export const createSupportTicket = (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'status'>): SupportTicket => {
-  const tickets = getSupportTickets();
+export const getTicketsByCompany = async (companyId: string): Promise<SupportTicket[]> => {
+  const tickets = await db.getTicketsFromDb();
+  return tickets.filter(t => t.companyId === companyId);
+};
+export const createSupportTicket = async (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<SupportTicket> => {
   const newTicket: SupportTicket = {
     ...ticketData,
     id: `TICKET_${Date.now()}`,
@@ -111,16 +69,9 @@ export const createSupportTicket = (ticketData: Omit<SupportTicket, 'id' | 'crea
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  tickets.push(newTicket);
-  saveToStorage('support_tickets', tickets);
+  await db.createTicketInDb(newTicket);
   return newTicket;
 };
-export const updateSupportTicketStatus = (ticketId: string, status: 'open' | 'in_progress' | 'closed'): void => {
-  const tickets = getSupportTickets();
-  const ticket = tickets.find(t => t.id === ticketId);
-  if (ticket) {
-    ticket.status = status;
-    ticket.updatedAt = new Date();
-    saveToStorage('support_tickets', tickets);
-  }
+export const updateSupportTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed'): Promise<void> => {
+  await db.updateTicketInDb(ticketId, { status, updatedAt: new Date() });
 };

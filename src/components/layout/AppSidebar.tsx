@@ -98,6 +98,18 @@ const navigationItems = [
     url: "/admin/crm",
     icon: Users,
     description: "Customer Relationship Management"
+  },
+  {
+    title: "Subscription Admin",
+    url: "/admin/subscriptions",
+    icon: Shield,
+    description: "Manage Subscriptions"
+  },
+  {
+    title: "Company Dashboard",
+    url: "/company/dashboard",
+    icon: Store,
+    description: "View Subscription & Support"
   }
 ];
 
