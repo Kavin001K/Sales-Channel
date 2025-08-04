@@ -32,6 +32,7 @@ export default function SubscriptionAdminDashboard() {
   
   const [currentPlan, setCurrentPlan] = useState<Partial<SubscriptionPlan>>({});
   const [currentCompany, setCurrentCompany] = useState<Partial<Company>>({});
+  const [subscriptions, setSubscriptions] = useState<CompanySubscription[]>([]);
   
   useEffect(() => {
     reloadData();
@@ -40,14 +41,16 @@ export default function SubscriptionAdminDashboard() {
   const reloadData = async () => {
     setIsLoading(true);
     try {
-      const [plansData, companiesData, ticketsData] = await Promise.all([
+      const [plansData, companiesData, ticketsData, subscriptionsData] = await Promise.all([
         getSubscriptionPlans(),
         getSubscribedCompanies(),
-        getSupportTickets()
+        getSupportTickets(),
+        getCompanySubscriptions()
       ]);
       setPlans(plansData);
       setCompanies(companiesData);
       setTickets(ticketsData);
+      setSubscriptions(subscriptionsData);
     } catch (error) {
       toast.error("Failed to load dashboard data.");
     } finally {
@@ -118,7 +121,7 @@ export default function SubscriptionAdminDashboard() {
     await reloadData();
   };
   
-  const getCompanyPlan = (companyId: string, subscriptions: CompanySubscription[]) => {
+  const getCompanyPlanInfo = (companyId: string) => {
     const subscription = subscriptions.find(s => s.companyId === companyId);
     if (!subscription) return { name: 'No Plan', status: 'inactive' };
     const plan = plans.find(p => p.id === subscription.planId);
@@ -198,15 +201,7 @@ export default function SubscriptionAdminDashboard() {
             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Subscription</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
             <TableBody>
               {companies.map(company => {
-                const [subscriptions, setSubscriptions] = useState<CompanySubscription[]>([]);
-                useEffect(() => {
-                  const fetchSubs = async () => {
-                    const subs = await getCompanySubscriptions();
-                    setSubscriptions(subs);
-                  }
-                  fetchSubs();
-                }, []);
-                const planInfo = getCompanyPlan(company.id, subscriptions);
+                const planInfo = getCompanyPlanInfo(company.id);
                 return (
                   <TableRow key={company.id}>
                     <TableCell>{company.name}</TableCell>
@@ -239,7 +234,7 @@ export default function SubscriptionAdminDashboard() {
                   <TableCell>{ticket.subject}</TableCell>
                   <TableCell><Badge variant={ticket.status === 'closed' ? 'secondary' : 'default'}>{ticket.status}</Badge></TableCell>
                   <TableCell>
-                    <select value={ticket.status} onChange={e => handleTicketStatusChange(ticket.id, e.target.value as any)} className="p-1 border rounded text-sm">
+                    <select value={ticket.status} onChange={e => handleTicketStatusChange(ticket.id, e.target.value as 'open' | 'in_progress' | 'closed')} className="p-1 border rounded text-sm">
                       <option value="open">Open</option>
                       <option value="in_progress">In Progress</option>
                       <option value="closed">Closed</option>

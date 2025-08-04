@@ -7,14 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ShoppingCart, Zap, X, CreditCard, DollarSign, Keyboard, Printer, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
-import dayjs from 'dayjs';
 
 export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [barcodeQuery, setBarcodeQuery] = useState('');
-  const [skuQuery, setSkuQuery] = useState('');
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const cart = useCart();
   const [isMoUDialogOpen, setIsMoUDialogOpen] = useState(false);
@@ -144,35 +141,6 @@ export default function Sales() {
     setTimeout(() => {
       window.location.href = 'https://acebusiness.shop/sales';
     }, 1500); // 1.5 second delay to allow printing to complete
-  };
-
-  const DECIMAL_MOUS = ['KGS', 'GMS', 'LTR', 'MLT', 'TON', 'SQM', 'SQF', 'MTR', 'CMS', 'CCM', 'CBM'];
-  const isDecimalMoU = (mou: string) => DECIMAL_MOUS.includes(mou.toUpperCase());
-
-  const handleQuickSaleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setSelectedMoU(product.unit || 'PCS');
-    setMouValue('');
-    setInputErrors({});
-    setIsMoUDialogOpen(true);
-  };
-
-  const handleMoUDialogKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const value = parseFloat(mouValue);
-      if (!value || value <= 0) {
-        setInputErrors({ ...inputErrors, [selectedProduct!.id]: 'Enter a valid quantity' });
-        return;
-      }
-      if (selectedProduct) {
-        cart.addItem(selectedProduct, value);
-        setIsMoUDialogOpen(false);
-        setSelectedProduct(null);
-        setMouValue('');
-        toast.success(`${selectedProduct.name} added to cart`);
-      }
-    }
   };
 
   const handleRemoveCartItem = (idx: number) => {

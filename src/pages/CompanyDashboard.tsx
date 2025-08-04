@@ -33,25 +33,18 @@ export default function CompanyDashboard() {
   const [newTicketSubject, setNewTicketSubject] = useState('');
   const [newTicketMessage, setNewTicketMessage] = useState('');
   
-  // A mock company ID for demonstration purposes.
-  // In a real app, you would get this from your authentication context.
-  const MOCK_COMPANY_ID = 'comp_1';
-
   useEffect(() => {
     const fetchData = async () => {
-      // In a real app, you'd use company.id instead of a mock ID.
-      const companyId = company?.id || MOCK_COMPANY_ID; 
-
-      if (!companyId) {
+      if (!company) {
         setIsLoading(false);
         return;
       }
       
       try {
         const [sub, plans, supportTickets] = await Promise.all([
-          getSubscriptionByCompany(companyId),
+          getSubscriptionByCompany(company.id),
           getSubscriptionPlans(),
-          getTicketsByCompany(companyId),
+          getTicketsByCompany(company.id),
         ]);
         
         if (sub) {
@@ -79,11 +72,14 @@ export default function CompanyDashboard() {
       return;
     }
     
-    const companyId = company?.id || MOCK_COMPANY_ID;
+    if (!company) {
+      toast.error('You must be logged in to create a ticket.');
+      return;
+    }
     
     try {
       await createSupportTicket({
-        companyId,
+        companyId: company.id,
         subject: newTicketSubject,
         message: newTicketMessage,
       });
@@ -92,7 +88,7 @@ export default function CompanyDashboard() {
       setNewTicketSubject('');
       setNewTicketMessage('');
       // Refresh tickets
-      const supportTickets = await getTicketsByCompany(companyId);
+      const supportTickets = await getTicketsByCompany(company.id);
       setTickets(supportTickets);
     } catch (error) {
       toast.error('Failed to create support ticket.');

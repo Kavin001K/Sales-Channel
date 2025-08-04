@@ -124,7 +124,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+          <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening today.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -161,7 +161,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Today&apos;s Sales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

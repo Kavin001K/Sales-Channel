@@ -51,7 +51,7 @@ export const ExcelImport = ({ type, onImportComplete }: ExcelImportProps) => {
             'Type* (Product / Service)', 'Group* (Max. 50 Chars)', 'Brand* (Max. 50 Chars)',
             'Product Name* (Max. 50 Chars)', 'Sale Price* (Max. 10 Chars) (Numeric)', 'Unit (Max. 10 Chars)'
           ];
-          let missing = requiredFields.filter(f => !row[f] || row[f] === '');
+          const missing = requiredFields.filter(f => !row[f] || row[f] === '');
           if (missing.length) {
             errors.push(`Row ${rowNum + 2}: Missing required fields: ${missing.join(', ')}`);
             continue;
@@ -121,30 +121,30 @@ export const ExcelImport = ({ type, onImportComplete }: ExcelImportProps) => {
           try {
             // Trim all string fields
             Object.keys(row).forEach(key => {
-              if (typeof row[key] === 'string') row[key] = row[key].trim();
+              if (typeof (row as Record<string, unknown>)[key] === 'string') (row as Record<string, unknown>)[key] = ((row as Record<string, unknown>)[key] as string).trim();
             });
-            const phone = (row as any).phone || (row as any).Phone || '';
-            const email = (row as any).email || (row as any).Email || '';
+            const phone = (row as Record<string, unknown>).phone || (row as Record<string, unknown>).Phone || '';
+            const email = (row as Record<string, unknown>).email || (row as Record<string, unknown>).Email || '';
             // Check for duplicate phone or email
-            if (existingCustomers.some((c: any) => c.phone === phone && phone !== '' || c.email === email && email !== '')) {
+            if (existingCustomers.some((c: Customer) => c.phone === phone && phone !== '' || c.email === email && email !== '')) {
               errors.push(`Duplicate customer with phone/email: ${phone || email}`);
               continue;
             }
             const customer: Customer = {
               id: Date.now().toString() + Math.random().toString(36),
-              name: (row as any).name || (row as any).Name || '',
-              email: email,
-              phone: phone,
+              name: (row as Record<string, unknown>).name as string || (row as Record<string, unknown>).Name as string || '',
+              email: email as string,
+              phone: phone as string,
               address: {
-                street: (row as any).street || (row as any).Street || '',
-                city: (row as any).city || (row as any).City || '',
-                state: (row as any).state || (row as any).State || '',
-                zipCode: (row as any).zipCode || (row as any).ZipCode || ''
+                street: (row as Record<string, unknown>).street as string || (row as Record<string, unknown>).Street as string || '',
+                city: (row as Record<string, unknown>).city as string || (row as Record<string, unknown>).City as string || '',
+                state: (row as Record<string, unknown>).state as string || (row as Record<string, unknown>).State as string || '',
+                zipCode: (row as Record<string, unknown>).zipCode as string || (row as Record<string, unknown>).ZipCode as string || ''
               },
-              loyaltyPoints: parseInt((row as any).loyaltyPoints || (row as any).LoyaltyPoints || '0'),
-              totalSpent: parseFloat((row as any).totalSpent || (row as any).TotalSpent || '0'),
-              visits: parseInt((row as any).visits || (row as any).Visits || '0'),
-              notes: (row as any).notes || (row as any).Notes || '',
+              loyaltyPoints: parseInt((row as Record<string, unknown>).loyaltyPoints as string || (row as Record<string, unknown>).LoyaltyPoints as string || '0'),
+              totalSpent: parseFloat((row as Record<string, unknown>).totalSpent as string || (row as Record<string, unknown>).TotalSpent as string || '0'),
+              visits: parseInt((row as Record<string, unknown>).visits as string || (row as Record<string, unknown>).Visits as string || '0'),
+              notes: (row as Record<string, unknown>).notes as string || (row as Record<string, unknown>).Notes as string || '',
               isActive: true,
               createdAt: new Date(),
               updatedAt: new Date()
@@ -174,7 +174,7 @@ export const ExcelImport = ({ type, onImportComplete }: ExcelImportProps) => {
   };
 
   const downloadTemplate = () => {
-    let templateData: any[] = [];
+    let templateData: Record<string, unknown>[] = [];
     
     // UOM dropdown list
     const UOM_OPTIONS = [

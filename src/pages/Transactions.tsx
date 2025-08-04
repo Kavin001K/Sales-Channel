@@ -170,7 +170,7 @@ export default function Transactions() {
               </div>
             </div>
             
-            <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+            <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as 'all' | 'today' | 'week' | 'month')}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by date" />
               </SelectTrigger>
@@ -182,7 +182,7 @@ export default function Transactions() {
               </SelectContent>
             </Select>
 
-            <Select value={paymentFilter} onValueChange={(value: any) => setPaymentFilter(value)}>
+            <Select value={paymentFilter} onValueChange={(value) => setPaymentFilter(value as 'all' | 'cash' | 'card')}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Payment method" />
               </SelectTrigger>

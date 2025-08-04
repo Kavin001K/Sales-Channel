@@ -341,7 +341,7 @@ class PostgresDatabaseService {
   }
 
   // Analytics and Reports
-  async getSalesReport(companyId: string, startDate?: Date, endDate?: Date): Promise<any> {
+  async getSalesReport(companyId: string, startDate?: Date, endDate?: Date): Promise<unknown> {
     await this.connect();
     let query = `
       SELECT 
@@ -354,7 +354,7 @@ class PostgresDatabaseService {
       WHERE company_id = $1 AND status = 'completed'
     `;
     
-    const params: any[] = [companyId];
+    const params: (string | Date)[] = [companyId];
     if (startDate && endDate) {
       query += ` AND timestamp BETWEEN $2 AND $3`;
       params.push(startDate, endDate);
@@ -366,7 +366,7 @@ class PostgresDatabaseService {
     return result.rows;
   }
 
-  async getTopProducts(companyId: string, limit: number = 10): Promise<any[]> {
+  async getTopProducts(companyId: string, limit: number = 10): Promise<unknown[]> {
     await this.connect();
     const result = await this.client.query(`
       SELECT 

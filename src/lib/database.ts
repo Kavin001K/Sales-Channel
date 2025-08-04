@@ -1,139 +1,175 @@
 // src/lib/database.ts
 
-// This file mocks the connection to a MySQL database.
-// It uses async functions and contains the exact SQL queries needed for each operation.
-// To connect to a real database, replace the mock logic in these functions
-// with calls to your MySQL client (e.g., mysql2).
+const isOnline = () => navigator.onLine;
 
-import { SubscriptionPlan, CompanySubscription, SupportTicket } from './subscription-types';
-import { Company } from './types';
-
-// --- In-Memory Database Store (to simulate the database) ---
-let db = {
-  subscription_plans: [] as SubscriptionPlan[],
-  companies: [] as Company[],
-  company_subscriptions: [] as CompanySubscription[],
-  support_tickets: [] as SupportTicket[],
+const getElectronApi = () => {
+  if (window.electronAPI) {
+    return window.electronAPI;
+  }
+  return null;
 };
 
-const DB_STORAGE_KEY = 'mysql_mock_database';
+// --- Hybrid Data Service ---
 
-// --- Database Persistence Simulation ---
-const loadDatabase = () => {
-  try {
-    const storedDb = localStorage.getItem(DB_STORAGE_KEY);
-    if (storedDb) {
-      db = JSON.parse(storedDb);
-    } else {
-      db.subscription_plans = [
-        { id: 'plan_basic_30', name: 'Basic Monthly', price: 29.99, durationDays: 30, features: ['5 Users', '1000 Invoices/Month', 'Basic Reporting'], tokenLimit: 1000 },
-        { id: 'plan_pro_30', name: 'Pro Monthly', price: 79.99, durationDays: 30, features: ['20 Users', '5000 Invoices/Month', 'Advanced Reporting', 'API Access'], tokenLimit: 5000 },
-        { id: 'plan_enterprise_365', name: 'Enterprise Yearly', price: 999.99, durationDays: 365, features: ['Unlimited Users', 'Unlimited Invoices', 'Premium Support', 'Custom Integrations'], tokenLimit: 100000 },
-      ];
-      saveDatabase();
+const localDB = {
+  getItem: (key: string) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error(`Error getting item ${key} from localStorage`, error);
+      return null;
     }
-  } catch (error) { console.error("Failed to load mock database", error); }
-};
-
-const saveDatabase = () => {
-  try {
-    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(db));
-  } catch (error) { console.error("Failed to save mock database", error); }
-};
-
-loadDatabase();
-
-// --- Mock MySQL Client ---
-
-// Utility to simulate network latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-// The mock client holds our async data functions
-export const mysql = {
-  query: async (sql: string, params: any[] = []): Promise<any> => {
-    await delay(150); // Simulate network delay
-
-    // This is where you would use a real MySQL client to execute the query.
-    // For now, we'll simulate the query execution on our in-memory 'db' object.
-    
-    console.log("Executing SQL:", sql, "with params:", params);
-
-    // This is a simplified parser. A real implementation would be more robust.
-    const [firstWord] = sql.trim().split(' ');
-    
-    switch (firstWord.toUpperCase()) {
-      case 'SELECT':
-        if (sql.includes('subscription_plans')) return db.subscription_plans;
-        if (sql.includes('companies')) return db.companies;
-        if (sql.includes('company_subscriptions')) return db.company_subscriptions;
-        if (sql.includes('support_tickets')) return db.support_tickets;
-      return [];
-      
-      case 'INSERT':
-      case 'UPDATE':
-        // The actual logic is in the storage file for clarity, but this demonstrates the async flow.
-        saveDatabase();
-        return { affectedRows: 1 };
-
-      default:
-      return [];
+  },
+  setItem: (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error setting item ${key} in localStorage`, error);
     }
   }
 };
 
-// --- Data Access Functions (to be used by the storage layer) ---
-// These functions show exactly how to use the async mysql client.
-
-export const getPlansFromDb = async (): Promise<SubscriptionPlan[]> => {
-  // const results = await mysql.query('SELECT * FROM subscription_plans');
-  return db.subscription_plans;
-};
-
-export const savePlanToDb = async (plan: SubscriptionPlan): Promise<void> => {
-  // await mysql.query('INSERT INTO subscription_plans (...) VALUES (...) ON DUPLICATE KEY UPDATE ...', [plan...]);
-  const index = db.subscription_plans.findIndex(p => p.id === plan.id);
-  if (index > -1) db.subscription_plans[index] = plan;
-  else db.subscription_plans.push(plan);
-  saveDatabase();
-};
-
-export const getCompaniesFromDb = async (): Promise<Company[]> => {
-  // const results = await mysql.query('SELECT * FROM companies');
-  return db.companies;
-};
-
-export const saveCompanyToDb = async (company: Company): Promise<void> => {
-  // await mysql.query('INSERT INTO companies (...) VALUES (...) ON DUPLICATE KEY UPDATE ...', [company...]);
-  const index = db.companies.findIndex(c => c.id === company.id);
-  if (index > -1) db.companies[index] = company;
-  else db.companies.push(company);
-  saveDatabase();
-};
-
-export const getSubscriptionsFromDb = async (): Promise<CompanySubscription[]> => {
-  return db.company_subscriptions;
-};
-
-export const assignSubscriptionInDb = async (subscription: CompanySubscription): Promise<void> => {
-  const index = db.company_subscriptions.findIndex(s => s.companyId === subscription.companyId);
-  if (index > -1) db.company_subscriptions[index] = subscription;
-  else db.company_subscriptions.push(subscription);
-  saveDatabase();
-};
-
-export const getTicketsFromDb = async (): Promise<SupportTicket[]> => {
-  return db.support_tickets;
-};
-
-export const createTicketInDb = async (ticket: SupportTicket): Promise<void> => {
-  db.support_tickets.push(ticket);
-  saveDatabase();
-};
-
-export const updateTicketInDb = async (ticketId: string, updates: Partial<SupportTicket>): Promise<void> => {
-  const ticket = db.support_tickets.find(t => t.id === ticketId);
-  if (ticket) {
-    Object.assign(ticket, updates);
-    saveDatabase();
+const cloudDB = {
+  query: async (text: string, params?: any[]) => {
+    const electronAPI = getElectronApi();
+    if (!electronAPI) {
+      throw new Error("Electron API is not available.");
+    }
+    return electronAPI.dbQuery(text, params);
   }
 };
+
+const createHybridService = (entityName: string, localKey: string) => {
+  const pluralEntityName = `${entityName}s`;
+
+  return {
+    getAll: async () => {
+      if (isOnline() && getElectronApi()) {
+        try {
+          const data = await cloudDB.query(`SELECT * FROM ${pluralEntityName}`);
+          localDB.setItem(localKey, data);
+          return data;
+        } catch (error) {
+          console.warn(`Could not fetch ${pluralEntityName} from cloud, falling back to local.`, error);
+          return localDB.getItem(localKey) || [];
+        }
+      } else {
+        return localDB.getItem(localKey) || [];
+      }
+    },
+    
+    getById: async (id: string) => {
+       if (isOnline() && getElectronApi()) {
+        try {
+          const data = await cloudDB.query(`SELECT * FROM ${pluralEntityName} WHERE id = $1`, [id]);
+          return data[0] || null;
+        } catch (error) {
+          console.warn(`Could not fetch ${entityName} from cloud, falling back to local.`, error);
+        }
+      }
+      const allItems = localDB.getItem(localKey) || [];
+      return allItems.find((item: any) => item.id === id) || null;
+    },
+
+    add: async (item: any) => {
+        const newItem = { ...item, id: item.id || `local_${Date.now()}`, createdAt: new Date(), updatedAt: new Date() };
+      if (isOnline() && getElectronApi()) {
+        try {
+            const columns = Object.keys(newItem).join(', ');
+            const placeholders = Object.keys(newItem).map((_, i) => `$${i + 1}`).join(', ');
+            const values = Object.values(newItem);
+          await cloudDB.query(`INSERT INTO ${pluralEntityName} (${columns}) VALUES (${placeholders})`, values);
+        } catch (error) {
+          console.warn(`Could not add ${entityName} to cloud, saving locally.`, error);
+        }
+      }
+      const allItems = localDB.getItem(localKey) || [];
+      localDB.setItem(localKey, [...allItems, newItem]);
+      return newItem;
+    },
+
+    update: async (id: string, updates: any) => {
+        const updatedItemData = { ...updates, updatedAt: new Date() };
+      if (isOnline() && getElectronApi()) {
+        try {
+            const setClauses = Object.keys(updatedItemData).map((key, i) => `${key} = $${i + 1}`).join(', ');
+            const values = [...Object.values(updatedItemData), id];
+          await cloudDB.query(`UPDATE ${pluralEntityName} SET ${setClauses} WHERE id = $${Object.keys(updatedItemData).length + 1}`, values);
+        } catch (error) {
+          console.warn(`Could not update ${entityName} in cloud, updating locally.`, error);
+        }
+      }
+      const allItems = localDB.getItem(localKey) || [];
+      const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, ...updatedItemData } : item);
+      localDB.setItem(localKey, updatedItems);
+       return updatedItems.find((item: any) => item.id === id);
+    },
+
+    delete: async (id: string) => {
+      if (isOnline() && getElectronApi()) {
+        try {
+          await cloudDB.query(`UPDATE ${pluralEntityName} SET isActive = false WHERE id = $1`, [id]);
+        } catch (error) {
+          console.warn(`Could not delete ${entityName} in cloud, deleting locally.`, error);
+        }
+      }
+      const allItems = localDB.getItem(localKey) || [];
+      const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, isActive: false } : item);
+      localDB.setItem(localKey, updatedItems);
+    }
+  };
+};
+
+export const productService = createHybridService('product', 'products');
+export const customerService = createHybridService('customer', 'customers');
+export const employeeService = createHybridService('employee', 'employees');
+export const transactionService = createHybridService('transaction', 'transactions');
+export const settingsService = {
+    getAll: async () => {
+        if (isOnline() && getElectronApi()) {
+            try {
+                const data = await cloudDB.query(`SELECT key, value FROM settings`);
+                const settingsObject = data.reduce((acc: any, row: any) => {
+                    acc[row.key] = row.value;
+                    return acc;
+                }, {});
+                localDB.setItem('settings', settingsObject);
+                return settingsObject;
+            } catch (error) {
+                console.warn('Could not fetch settings from cloud, falling back to local.', error);
+                return localDB.getItem('settings') || {};
+            }
+        } else {
+            return localDB.getItem('settings') || {};
+        }
+    },
+    update: async (settings: any) => {
+        if (isOnline() && getElectronApi()) {
+            try {
+                const client = await getElectronApi().dbQuery('BEGIN');
+                for(const [key, value] of Object.entries(settings)) {
+                    await getElectronApi().dbQuery('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2', [key, value]);
+                }
+                await getElectronApi().dbQuery('COMMIT');
+
+            } catch (error) {
+                 await getElectronApi().dbQuery('ROLLBACK');
+                console.warn('Could not update settings in cloud, updating locally.', error);
+            }
+        }
+        const currentSettings = localDB.getItem('settings') || {};
+        const newSettings = { ...currentSettings, ...settings };
+        localDB.setItem('settings', newSettings);
+        return newSettings;
+    }
+};
+
+// Extend the window interface
+declare global {
+  interface Window {
+    electronAPI: {
+      dbQuery: (text: string, params?: any[]) => Promise<any>;
+    };
+  }
+}

@@ -35,7 +35,6 @@ export default function QuickPOS() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'wallet'>('cash');
   const [customerName, setCustomerName] = useState('');
@@ -55,11 +54,6 @@ export default function QuickPOS() {
   const [qtyDialogError, setQtyDialogError] = useState('');
   
   // Add sub-unit logic for the quantity dialog
-  const MOU_SUBUNITS = {
-    KGS: { label: 'kg', sub: 'gm', factor: 1000 },
-    LTR: { label: 'ltr', sub: 'ml', factor: 1000 },
-    MTR: { label: 'mtr', sub: 'cm', factor: 100 },
-  };
   const [mainQty, setMainQty] = useState('');
   const [subQty, setSubQty] = useState('');
   
@@ -118,7 +112,7 @@ export default function QuickPOS() {
         setSearchQuery('');
       }
     }
-  }, [searchQuery, products]);
+  }, [searchQuery, products, handleQuickAdd]);
 
   // Auto-fetch customer by phone
   useEffect(() => {
@@ -141,20 +135,6 @@ export default function QuickPOS() {
         searchRef.current?.focus();
       }
       
-      // Quick checkout with F5
-      if (e.key === 'F5') {
-        e.preventDefault();
-        if (cart.items.length > 0) {
-          handleCheckout();
-        }
-      }
-      
-      // Clear cart with F8
-      if (e.key === 'F8') {
-        e.preventDefault();
-        cart.clearCart();
-      }
-      
       // Show shortcuts with F1
       if (e.key === 'F1') {
         e.preventDefault();
@@ -163,14 +143,13 @@ export default function QuickPOS() {
       
       // ESC to close dialogs
       if (e.key === 'Escape') {
-        setIsCheckoutOpen(false);
         setShowKeyboardShortcuts(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart]);
+  }, []);
 
   // Update dialog open logic
   useEffect(() => {
@@ -204,21 +183,13 @@ export default function QuickPOS() {
   const handleQtyDialogConfirm = () => {
     if (!qtyDialogProduct) return;
     const unit = qtyDialogProduct.unit || 'PCS';
-    let qty = isDecimalUnit(unit) ? parseFloat(qtyDialogQty) : parseInt(qtyDialogQty);
+    const qty = isDecimalUnit(unit) ? parseFloat(qtyDialogQty) : parseInt(qtyDialogQty);
     if (!qty || qty <= 0 || (isDecimalUnit(unit) ? isNaN(qty) : !Number.isInteger(qty))) {
       setQtyDialogError('invalid');
       return;
     }
     cart.addItem({ ...qtyDialogProduct, unit }, qty);
     setIsQtyDialogOpen(false);
-  };
-
-  const handleCheckout = () => {
-    if (cart.items.length === 0) {
-      toast.error('Cart is empty');
-      return;
-    }
-    setIsCheckoutOpen(true);
   };
 
   const handlePrint = (transaction: Transaction) => {
@@ -369,7 +340,7 @@ export default function QuickPOS() {
     setIsProcessing(true);
 
     let customerId = '';
-    let customers = getCustomers();
+    const customers = getCustomers();
     let customer = customers.find(c => c.phone === customerPhone);
     if (!customer) {
       customer = {
@@ -572,7 +543,6 @@ export default function QuickPOS() {
     setCardTransactionId('');
     setPaymentMethod('cash');
     setIsProcessing(false);
-    setIsCheckoutOpen(false);
     
     // Focus back to search
     setTimeout(() => searchRef.current?.focus(), 100);
@@ -628,7 +598,7 @@ export default function QuickPOS() {
     
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
+  }, [navigate]);
 
   // Track fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);

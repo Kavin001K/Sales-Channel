@@ -390,7 +390,7 @@ export default function Customers() {
               
               {customer.notes && (
                 <p className="text-xs sm:text-sm text-muted-foreground italic">
-                  "{customer.notes}"
+                  &quot;{customer.notes}&quot;
                 </p>
               )}
               
@@ -414,7 +414,7 @@ export default function Customers() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Customer</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "{customer.name}"? This action cannot be undone.
+                        Are you sure you want to delete &quot;{customer.name}&quot;? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

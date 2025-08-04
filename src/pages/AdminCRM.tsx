@@ -738,7 +738,7 @@ export default function AdminCRM() {
                     </div>
                     <div>
                       <Label htmlFor="companySize">Company Size</Label>
-                      <Select value={leadForm.companySize} onValueChange={(value) => setLeadForm({...leadForm, companySize: value as any})}>
+                      <Select value={leadForm.companySize} onValueChange={(value) => setLeadForm({...leadForm, companySize: value as 'small' | 'medium' | 'large'})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -932,7 +932,7 @@ export default function AdminCRM() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="opportunityStage">Stage</Label>
-                      <Select value={opportunityForm.stage} onValueChange={(value) => setOpportunityForm({...opportunityForm, stage: value as any})}>
+                      <Select value={opportunityForm.stage} onValueChange={(value) => setOpportunityForm({...opportunityForm, stage: value as 'discovery' | 'qualification' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost'})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -1115,7 +1115,7 @@ export default function AdminCRM() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="taskType">Type</Label>
-                      <Select value={taskForm.type} onValueChange={(value) => setTaskForm({...taskForm, type: value as any})}>
+                      <Select value={taskForm.type} onValueChange={(value) => setTaskForm({...taskForm, type: value as 'call' | 'email' | 'meeting' | 'follow_up' | 'proposal' | 'other'})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -1131,7 +1131,7 @@ export default function AdminCRM() {
                     </div>
                     <div>
                       <Label htmlFor="taskPriority">Priority</Label>
-                      <Select value={taskForm.priority} onValueChange={(value) => setTaskForm({...taskForm, priority: value as any})}>
+                      <Select value={taskForm.priority} onValueChange={(value) => setTaskForm({...taskForm, priority: value as 'low' | 'medium' | 'high' | 'urgent'})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>

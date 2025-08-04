@@ -679,17 +679,17 @@ export default function AdminDashboard() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>New company "Tech Cafe" registered</span>
+                    <span>New company &quot;Tech Cafe&quot; registered</span>
                     <span className="text-muted-foreground">2 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Subscription renewed for "Bakery Delight"</span>
+                    <span>Subscription renewed for &quot;Bakery Delight&quot;</span>
                     <span className="text-muted-foreground">4 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span>Payment failed for "Restaurant Elite"</span>
+                    <span>Payment failed for &quot;Restaurant Elite&quot;</span>
                     <span className="text-muted-foreground">6 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">

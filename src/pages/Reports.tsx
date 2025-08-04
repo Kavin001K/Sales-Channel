@@ -59,20 +59,25 @@ export default function Reports() {
 
   // Sales Overview
   const salesOverview = useMemo(() => {
+    if (filteredTransactions.length === 0) {
+      return { totalSales: 0, totalTransactions: 0, averageTransaction: 0, totalProfit: 0 };
+    }
+
     const totalSales = filteredTransactions.reduce((sum, t) => sum + t.total, 0);
     const totalTransactions = filteredTransactions.length;
     const averageTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
     
     const totalCost = filteredTransactions.reduce((sum, transaction) => {
-      return sum + transaction.items.reduce((itemSum, item) => {
-        return itemSum + (item.product.cost * item.quantity);
-      }, 0);
+      return sum + (transaction.items.reduce((itemSum, item) => {
+        const product = products.find(p => p.id === item.productId);
+        return itemSum + ((product?.cost || 0) * item.quantity);
+      }, 0) || 0);
     }, 0);
     
     const totalProfit = totalSales - totalCost;
 
     return { totalSales, totalTransactions, averageTransaction, totalProfit };
-  }, [filteredTransactions]);
+  }, [filteredTransactions, products]);
 
   // Item-wise Sales
   const itemWiseSales = useMemo(() => {
@@ -80,10 +85,13 @@ export default function Reports() {
     
     filteredTransactions.forEach(transaction => {
       transaction.items.forEach(item => {
-        const key = item.product.id;
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return;
+
+        const key = product.id;
         const existing = itemMap.get(key);
-        const revenue = item.product.price * item.quantity;
-        const cost = item.product.cost * item.quantity;
+        const revenue = item.price * item.quantity;
+        const cost = (product.cost || 0) * item.quantity;
         const profit = revenue - cost;
         
         if (existing) {
@@ -92,7 +100,7 @@ export default function Reports() {
           existing.profit += profit;
         } else {
           itemMap.set(key, {
-            product: item.product,
+            product,
             quantity: item.quantity,
             revenue,
             profit
@@ -102,7 +110,7 @@ export default function Reports() {
     });
     
     return Array.from(itemMap.values()).sort((a, b) => b.revenue - a.revenue);
-  }, [filteredTransactions]);
+  }, [filteredTransactions, products]);
 
   // Employee-wise Sales
   const employeeWiseSales = useMemo(() => {
@@ -404,7 +412,7 @@ export default function Reports() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+          <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as 'today' | 'week' | 'month' | 'all')}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Select date range" />
             </SelectTrigger>
@@ -426,7 +434,9 @@ export default function Reports() {
             <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.totalSales.toFixed(2)}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
+              {salesOverview.totalSales > 0 ? `₹${salesOverview.totalSales.toFixed(2)}` : 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
               {salesOverview.totalTransactions} transactions
             </p>
@@ -439,7 +449,9 @@ export default function Reports() {
             <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.averageTransaction.toFixed(2)}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
+              {salesOverview.averageTransaction > 0 ? `₹${salesOverview.averageTransaction.toFixed(2)}` : 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
               per transaction
             </p>
@@ -452,9 +464,11 @@ export default function Reports() {
             <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">₹{salesOverview.totalProfit.toFixed(2)}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
+              {salesOverview.totalProfit ? `₹${salesOverview.totalProfit.toFixed(2)}` : 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {((salesOverview.totalProfit / salesOverview.totalSales) * 100).toFixed(1)}% margin
+              {salesOverview.totalSales > 0 ? `${((salesOverview.totalProfit / salesOverview.totalSales) * 100).toFixed(1)}% margin` : 'N/A'}
             </p>
           </CardContent>
         </Card>
@@ -465,7 +479,7 @@ export default function Reports() {
             <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold">{itemWiseSales.length}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">{itemWiseSales.length || 'N/A'}</div>
             <p className="text-xs text-muted-foreground">
               products sold
             </p>
@@ -502,20 +516,24 @@ export default function Reports() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {itemWiseSales.slice(0, 5).map((item) => (
-                      <TableRow key={item.product.id}>
-                          <TableCell className="font-medium text-xs sm:text-sm">
-                            <div className="max-w-[120px] sm:max-w-none truncate" title={item.product.name}>
-                              {item.product.name}
-                            </div>
+                    {itemWiseSales.length === 0 ? (
+                      <TableRow><TableCell colSpan={4} className="text-center">N/A</TableCell></TableRow>
+                    ) : (
+                      itemWiseSales.slice(0, 5).map((item) => (
+                        <TableRow key={item.product.id}>
+                            <TableCell className="font-medium text-xs sm:text-sm">
+                              <div className="max-w-[120px] sm:max-w-none truncate" title={item.product.name}>
+                                {item.product.name}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
+                            <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ₹{item.profit.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
-                          <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ₹{item.profit.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
                 </div>
@@ -649,18 +667,24 @@ export default function Reports() {
               <CardDescription className="text-sm">Revenue and transaction trends over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
-                <BarChart data={dailySales}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey={dateFilter === 'today' ? 'time' : 'date'} 
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Sales']} />
-                  <Bar dataKey="sales" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ height: '400px' }}>
+                {dailySales.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">N/A</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dailySales}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey={dateFilter === 'today' ? 'time' : 'date'} 
+                        tick={{ fontSize: 10 }}
+                      />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Sales']} />
+                      <Bar dataKey="sales" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -675,43 +699,52 @@ export default function Reports() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Distribution</h3>
-                  <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-                  <PieChart>
-                    <Pie
-                      data={paymentBreakdown}
-                      cx="50%"
-                      cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={60}
-                        className="sm:outerRadius-80"
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {paymentBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
-                  </PieChart>
-                </ResponsiveContainer>
+                  <div style={{ height: '300px' }}>
+                    {paymentBreakdown.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">N/A</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={paymentBreakdown}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {paymentBreakdown.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Summary</h3>
                   <div className="space-y-3 sm:space-y-4">
-                    {paymentBreakdown.map((method) => (
-                      <div key={method.name} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm sm:text-base">{method.name}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales
-                          </p>
-                      </div>
-                      <div className="text-right">
-                          <p className="font-semibold text-sm sm:text-base">₹{method.value.toFixed(2)}</p>
+                    {paymentBreakdown.length === 0 ? (
+                      <div className="text-center text-muted-foreground">N/A</div>
+                    ) : (
+                      paymentBreakdown.map((method) => (
+                        <div key={method.name} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm sm:text-base">{method.name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              {salesOverview.totalSales > 0 ? `${((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales` : 'N/A'}
+                            </p>
                         </div>
-                      </div>
-                    ))}
+                        <div className="text-right">
+                            <p className="font-semibold text-sm sm:text-base">₹{method.value.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                     </div>
                 </div>
                 </div>
