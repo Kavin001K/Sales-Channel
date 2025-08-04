@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  AuthState, 
-  Company, 
-  Employee, 
-  LoginCredentials, 
+import {
+  AuthState,
+  Company,
+  Employee,
+  LoginCredentials,
   EmployeeLoginCredentials,
   AdminUser,
   AdminLoginCredentials,
   AdminAuthState
 } from '../lib/types';
-import { databaseService } from '../lib/database';
+import { customerService, employeeService } from '../lib/database';
 
 interface AuthContextType extends AuthState {
   loginCompany: (credentials: LoginCredentials) => Promise<boolean>;
@@ -17,7 +17,6 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   logoutEmployee: () => void;
   refreshAuth: () => void;
-  // Admin authentication
   loginAdmin: (credentials: AdminLoginCredentials) => Promise<boolean>;
   logoutAdmin: () => void;
   adminAuth: AdminAuthState;
@@ -51,7 +50,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading: true
   });
 
-  // Load authentication state from localStorage on mount
   useEffect(() => {
     const loadAuthState = () => {
       try {
@@ -87,7 +85,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loadAuthState();
   }, []);
 
-  // Save authentication state to localStorage
   const saveAuthState = (state: AuthState) => {
     try {
       localStorage.setItem('auth_state', JSON.stringify(state));
@@ -108,8 +105,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      const company = await databaseService.authenticateCompany(credentials);
-      
+      const companies = await customerService.getAll() as unknown as Company[];
+      const company = companies.find(c => c.email === credentials.email);
+
       if (company) {
         const newState: AuthState = {
           isAuthenticated: true,
@@ -140,11 +138,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      const employee = await databaseService.authenticateEmployee(
-        authState.company.id, 
-        credentials
-      );
-      
+      const employees = await employeeService.getAll();
+      const employee = employees.find(e => e.pin === credentials.pin);
+
       if (employee) {
         const newState: AuthState = {
           isAuthenticated: true,
@@ -166,12 +162,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return false;
     }
   };
-
+  
   const loginAdmin = async (credentials: AdminLoginCredentials): Promise<boolean> => {
     try {
       setAdminAuth(prev => ({ ...prev, loading: true }));
       
-      // Mock admin authentication - in real app, this would call the database service
       const mockAdminUser: AdminUser = {
         id: 'admin-1',
         username: credentials.username,
@@ -184,7 +179,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         updatedAt: new Date()
       };
 
-      // Simple validation for demo
       if (credentials.username === 'superadmin' && credentials.password === 'admin123') {
         const newState: AdminAuthState = {
           isAuthenticated: true,
@@ -242,8 +236,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const refreshAuth = () => {
-    // This could be used to refresh tokens or validate current session
-    // For now, we'll just reload from localStorage
     const savedAuth = localStorage.getItem('auth_state');
     const savedAdminAuth = localStorage.getItem('admin_auth_state');
     
