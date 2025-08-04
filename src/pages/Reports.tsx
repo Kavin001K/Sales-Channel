@@ -492,18 +492,18 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
                         <TableHead className="text-xs sm:text-sm">Product</TableHead>
                         <TableHead className="text-xs sm:text-sm">Qty</TableHead>
                         <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
                         <TableHead className="text-xs sm:text-sm">Profit</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {itemWiseSales.slice(0, 5).map((item) => (
-                        <TableRow key={item.product.id}>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemWiseSales.slice(0, 5).map((item) => (
+                      <TableRow key={item.product.id}>
                           <TableCell className="font-medium text-xs sm:text-sm">
                             <div className="max-w-[120px] sm:max-w-none truncate" title={item.product.name}>
                               {item.product.name}
@@ -512,12 +512,12 @@ export default function Reports() {
                           <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
                           <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
                           <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{item.profit.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          ₹{item.profit.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
                 </div>
               </CardContent>
             </Card>
@@ -561,20 +561,20 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
+              <Table>
+                <TableHeader>
+                  <TableRow>
                       <TableHead className="text-xs sm:text-sm">Product</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Category</TableHead>
                       <TableHead className="text-xs sm:text-sm">Qty</TableHead>
                       <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
                       <TableHead className="text-xs sm:text-sm">Profit</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden md:table-cell">Margin</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itemWiseSales.map((item) => (
-                      <TableRow key={item.product.id}>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itemWiseSales.map((item) => (
+                    <TableRow key={item.product.id}>
                         <TableCell className="font-medium text-xs sm:text-sm">
                           <div className="max-w-[100px] sm:max-w-none truncate" title={item.product.name}>
                             {item.product.name}
@@ -587,17 +587,17 @@ export default function Reports() {
                         <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
                         <TableCell className="text-xs sm:text-sm">₹{item.revenue.toFixed(2)}</TableCell>
                         <TableCell className={`text-xs sm:text-sm ${item.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ₹{item.profit.toFixed(2)}
-                        </TableCell>
+                        ₹{item.profit.toFixed(2)}
+                      </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <Badge variant={item.profit > 0 ? 'default' : 'destructive'} className="text-xs">
-                            {((item.profit / item.revenue) * 100).toFixed(1)}%
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          {((item.profit / item.revenue) * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
               </div>
             </CardContent>
           </Card>
@@ -611,18 +611,18 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
+              <Table>
+                <TableHeader>
+                  <TableRow>
                       <TableHead className="text-xs sm:text-sm">Employee</TableHead>
                       <TableHead className="text-xs sm:text-sm">Transactions</TableHead>
                       <TableHead className="text-xs sm:text-sm">Revenue</TableHead>
                       <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Avg Transaction</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employeeWiseSales.map((employee) => (
-                      <TableRow key={employee.name}>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {employeeWiseSales.map((employee) => (
+                    <TableRow key={employee.name}>
                         <TableCell className="font-medium text-xs sm:text-sm">
                           <div className="max-w-[100px] sm:max-w-none truncate" title={employee.name}>
                             {employee.name}
@@ -633,10 +633,10 @@ export default function Reports() {
                         <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
                           ₹{(employee.revenue / employee.transactions).toFixed(2)}
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
               </div>
             </CardContent>
           </Card>
@@ -666,35 +666,35 @@ export default function Reports() {
         </TabsContent>
 
         <TabsContent value="payments">
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <CardTitle className="text-base sm:text-lg">Payment Method Analysis</CardTitle>
               <CardDescription className="text-sm">Detailed breakdown of payment methods</CardDescription>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Distribution</h3>
                   <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-                    <PieChart>
-                      <Pie
-                        data={paymentBreakdown}
-                        cx="50%"
-                        cy="50%"
+                  <PieChart>
+                    <Pie
+                      data={paymentBreakdown}
+                      cx="50%"
+                      cy="50%"
                         labelLine={false}
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         outerRadius={60}
                         className="sm:outerRadius-80"
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {paymentBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                  </PieChart>
+                </ResponsiveContainer>
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Summary</h3>
@@ -706,17 +706,17 @@ export default function Reports() {
                           <p className="text-xs sm:text-sm text-muted-foreground">
                             {((method.value / salesOverview.totalSales) * 100).toFixed(1)}% of total sales
                           </p>
-                        </div>
-                        <div className="text-right">
+                      </div>
+                      <div className="text-right">
                           <p className="font-semibold text-sm sm:text-base">₹{method.value.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
+                    </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

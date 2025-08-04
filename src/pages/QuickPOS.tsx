@@ -651,34 +651,34 @@ export default function QuickPOS() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Top Bar - Fixed Height */}
-      <div className="flex flex-col lg:flex-row items-center justify-between bg-white dark:bg-gray-800 border-b px-4 py-2 h-16 lg:h-12 gap-2 flex-shrink-0">
-          {/* Logo/Company Name */}
-          <div className="flex items-center">
-            <div className="text-xl font-bold text-blue-700 dark:text-blue-400">ACE-PoS</div>
-          </div>
-        
-        {/* Search Bar with Radio Buttons - Properly Visible */}
-        <div className="flex flex-col items-center flex-1 mx-4 w-full lg:w-auto">
-          <div className="flex gap-4 mb-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
-              <span className={`text-sm dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Serial No.</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
-              <span className={`text-sm dark:text-gray-300 ${searchType === 'code' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Item Code</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
-              <span className={`text-sm dark:text-gray-300 ${searchType === 'name' ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>Item Name</span>
-            </label>
-          </div>
+      {/* Top Bar - Fully Compact */}
+      <div className="flex items-center gap-4 bg-white dark:bg-gray-800 border-b px-4 py-2 flex-shrink-0">
+        {/* Logo/Company Name */}
+        <div className="text-xl font-bold text-blue-700 dark:text-blue-400">ACE-PoS</div>
+
+        {/* Search Radio Buttons */}
+        <div className="hidden lg:flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
+            <span className={`text-sm dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Serial No.</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
+            <span className={`text-sm dark:text-gray-300 ${searchType === 'code' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Item Code</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
+            <span className={`text-sm dark:text-gray-300 ${searchType === 'name' ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>Item Name</span>
+          </label>
+        </div>
+
+        {/* Search Input */}
+        <div className="flex-1 flex justify-start">
           <div className="flex items-center w-full max-w-lg">
             <input
               ref={searchRef}
               className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              placeholder={`Search by ${searchType === 'serial' ? 'Serial No.' : searchType === 'code' ? 'Item Code' : 'Item Name'}...`}
+              placeholder="Search by Item Name..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -687,18 +687,18 @@ export default function QuickPOS() {
             </button>
           </div>
         </div>
-        
-        {/* Bill/Tax Invoice Toggle and Date/Time - Properly Visible */}
-        <div className="flex flex-col items-end min-w-[200px]">
-          <div className="flex gap-2 mb-2">
+
+        {/* Bill/Tax Invoice & Date/Time */}
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="flex gap-2">
             <button
-              className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 rounded text-sm ${invoiceType === 'bill' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('bill')}
             >
               Bill
             </button>
             <button
-              className={`px-4 py-2 rounded-t text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 rounded text-sm ${invoiceType === 'tax' ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => setInvoiceType('tax')}
             >
               Tax Invoice
@@ -710,27 +710,23 @@ export default function QuickPOS() {
           </div>
         </div>
       </div>
-      {/* Main Content (Category Sidebar + Product Grid) - No Overflow */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 min-w-0">
-        {/* Category Sidebar - Fixed Width */}
-        <div className="bg-blue-800 text-white w-full lg:w-48 flex flex-col flex-shrink-0">
+      {/* Main Content - No Scroll */}
+      <div className="flex-1 flex flex-row overflow-hidden">
+        {/* Category Sidebar */}
+        <div className="bg-blue-800 text-white w-48 flex-shrink-0 overflow-y-auto">
           <div className="font-bold text-base mb-3 tracking-widest text-center p-3 border-b border-blue-700">CATEGORY</div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 p-3 lg:p-0">
-              {categories.map(category => (
-                <button
-                  key={category}
-                  className={`w-full text-left px-3 py-2 mb-2 transition font-medium text-sm ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
+          <div className="p-3">
+            {categories.map(category => (
+              <button
+                key={category}
+                className={`w-full text-left px-3 py-2 mb-2 transition font-medium text-sm rounded ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
           </div>
-          
-          {/* Logout Button at bottom of sidebar */}
-          <div className="p-4 border-t border-blue-700">
+          <div className="p-4 mt-auto border-t border-blue-700">
             <button 
               onClick={logout}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 text-white hover:bg-red-600 rounded transition-colors text-base"
@@ -741,51 +737,47 @@ export default function QuickPOS() {
           </div>
         </div>
         
-        {/* Product Grid - No Overflow */}
-        <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-3 min-w-0 min-h-0">
-          <div className="h-full">
-            <div className="overflow-x-auto overflow-y-auto h-full">
-              <table className="w-full bg-white dark:bg-gray-800 rounded shadow text-left table-fixed">
-                <thead>
-                  <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
-                    <th className="px-2 py-2 text-xs font-semibold w-2/5">Item Name</th>
-                    <th className="px-2 py-2 text-xs font-semibold hidden sm:table-cell w-1/5">Tag</th>
-                    <th className="px-2 py-2 text-xs font-semibold w-1/5">Sale Price</th>
-                    <th className="px-2 py-2 text-xs font-semibold hidden md:table-cell w-1/5">MRP</th>
+        {/* Product Grid */}
+        <div className="flex-1 p-3 overflow-y-auto">
+          <table className="w-full bg-white dark:bg-gray-800 rounded shadow text-left">
+            <thead>
+              <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
+                <th className="px-4 py-3 text-sm font-semibold">Item Name</th>
+                <th className="px-4 py-3 text-sm font-semibold hidden sm:table-cell">Tag</th>
+                <th className="px-4 py-3 text-sm font-semibold">Sale Price</th>
+                <th className="px-4 py-3 text-sm font-semibold hidden md:table-cell">MRP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayedProducts.length === 0 ? (
+                <tr><td colSpan={4} className="text-center text-gray-400 py-8">No products found.</td></tr>
+              ) : (
+                displayedProducts.map(product => (
+                  <tr
+                    key={product.id}
+                    className="hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer border-b dark:border-gray-700"
+                    onClick={() => handleProductSelect(product)}
+                  >
+                    <td className="px-4 py-3 font-semibold text-sm dark:text-white">
+                      <div className="truncate" title={product.name}>
+                        {product.name}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
+                    </td>
+                    <td className="px-4 py-3 text-sm hidden sm:table-cell dark:text-white truncate">{product.sku || '-'}</td>
+                    <td className="px-4 py-3 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {displayedProducts.length === 0 ? (
-                    <tr><td colSpan={4} className="text-center text-gray-400 py-8">No products found.</td></tr>
-                  ) : (
-                    displayedProducts.map(product => (
-                      <tr
-                        key={product.id}
-                        className="hover:bg-blue-50 cursor-pointer border-b"
-                        onClick={() => handleProductSelect(product)}
-                      >
-                        <td className="px-2 py-2 font-semibold text-xs dark:text-white">
-                          <div className="truncate" title={product.name}>
-                            {product.name}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
-                        </td>
-                        <td className="px-2 py-2 text-xs hidden sm:table-cell dark:text-white truncate">{product.sku || '-'}</td>
-                        <td className="px-2 py-2 text-xs dark:text-white">₹{product.price.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-xs hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Cart/Invoice Panel - Fixed Width */}
-        <div className="w-full lg:w-80 bg-white dark:bg-gray-800 border-t lg:border-l flex flex-col h-64 lg:h-full flex-shrink-0">
-          <div className="p-3 border-b">
-            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+        {/* Cart/Invoice Panel */}
+        <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700 flex flex-col flex-shrink-0">
+          <div className="p-3 border-b dark:border-gray-700">
+            <div className="flex gap-3">
               <input
                 className="border rounded px-3 py-2 flex-1 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 placeholder="Mobile No."
@@ -800,60 +792,49 @@ export default function QuickPOS() {
               />
             </div>
           </div>
-          {/* Cart Table */}
-          <div className="flex-1 p-3">
-            <div className="overflow-x-auto overflow-y-auto h-full">
-              <table className="w-full text-xs dark:text-white table-fixed">
-                <thead>
-                  <tr className="border-b dark:border-gray-600">
-                    <th className="text-left px-1 py-1 font-semibold dark:text-white w-2/5">Item Name</th>
-                    <th className="text-center px-1 py-1 font-semibold dark:text-white w-1/6">Qty</th>
-                    <th className="text-right px-1 py-1 font-semibold dark:text-white w-1/6">Rate</th>
-                    <th className="text-right px-1 py-1 font-semibold dark:text-white w-1/6">Amount</th>
-                    <th className="text-center px-1 py-1 font-semibold dark:text-white w-1/12"></th>
+          <div className="flex-1 p-3 overflow-y-auto">
+            <table className="w-full text-sm dark:text-white">
+              <thead>
+                <tr className="border-b dark:border-gray-600">
+                  <th className="text-left font-semibold">Item</th>
+                  <th className="text-center font-semibold">Qty</th>
+                  <th className="text-right font-semibold">Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {cart.items.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center text-gray-400 py-8">No items</td></tr>
+                ) : cart.items.map((item, idx) => (
+                  <tr key={item.product.id} className="border-b dark:border-gray-600">
+                    <td className="py-2 truncate" title={item.product.name}>{item.product.name}</td>
+                    <td className="py-2 text-center">{item.quantity}</td>
+                    <td className="py-2 text-right">₹{(item.product.price * item.quantity).toFixed(2)}</td>
+                    <td className="py-2 text-center">
+                      <button onClick={() => cart.removeItem(item.product.id)} className="text-red-500 hover:text-red-700"><X className="w-4 h-4" /></button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {cart.items.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center text-gray-400 dark:text-gray-500 py-4">No items</td></tr>
-                  ) : cart.items.map((item, idx) => (
-                    <tr key={item.product.id} className="border-b dark:border-gray-600">
-                      <td className="px-1 py-1 truncate dark:text-white" title={item.product.name}>{item.product.name}</td>
-                      <td className="px-1 py-1 text-center dark:text-white">{item.quantity}</td>
-                      <td className="px-1 py-1 text-right dark:text-white">₹{item.product.price.toFixed(2)}</td>
-                      <td className="px-1 py-1 text-right dark:text-white">₹{(item.product.price * item.quantity).toFixed(2)}</td>
-                      <td className="px-1 py-1 text-center">
-                        <button onClick={() => cart.removeItem(item.product.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><X className="w-4 h-4" /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {/* Bill Summary & Payment */}
-          <div className="p-2 border-t space-y-2">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>Savings</span><span>0.00</span>
+          <div className="p-3 border-t dark:border-gray-700 space-y-3">
+            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+              <span>Total</span>
+              <span className="font-bold">₹{cart.getTotal().toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>Round Off</span><span>0.00</span>
+            <div className="flex gap-2">
+              <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} /> Cash</label>
+              <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} /> Card</label>
+              <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} /> Wallet</label>
             </div>
-            <div className="flex justify-between text-base font-bold dark:text-white">
-              <span>Total</span><span>₹{cart.getTotal().toFixed(2)}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 mt-2">
-              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
-                <input type="radio" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} /> Cash
-              </label>
-              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
-                <input type="radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} /> Card
-              </label>
-              <label className="flex items-center gap-1 cursor-pointer text-xs dark:text-white">
-                <input type="radio" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} /> Wallet
-              </label>
-            </div>
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-sm mt-2" onClick={handleGenerateBill}>Generate Bill</button>
+            <button 
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded text-lg" 
+              onClick={handleGenerateBill}
+              disabled={cart.items.length === 0}
+            >
+              Generate Bill
+            </button>
           </div>
         </div>
       </div>
