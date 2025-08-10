@@ -36,45 +36,54 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const allTransactions = getTransactions();
-    const allProducts = getProducts();
-    const allCustomers = getCustomers();
+  const loadData = async () => {
+    try {
+      const allTransactions = await getTransactions();
+      const allProducts = await getProducts();
+      const allCustomers = await getCustomers();
 
-    setTransactions(allTransactions);
-    setProducts(allProducts);
+      // Ensure we have arrays
+      const transactionsArray = Array.isArray(allTransactions) ? allTransactions : [];
+      const productsArray = Array.isArray(allProducts) ? allProducts : [];
+      const customersArray = Array.isArray(allCustomers) ? allCustomers : [];
 
-    // Calculate today's stats
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayTransactions = allTransactions.filter(t => {
-      const transactionDate = new Date(t.timestamp);
-      transactionDate.setHours(0, 0, 0, 0);
-      return transactionDate.getTime() === today.getTime();
-    });
+      setTransactions(transactionsArray);
+      setProducts(productsArray);
 
-    const todaySales = todayTransactions.reduce((sum, t) => sum + t.total, 0);
-    const uniqueCustomers = new Set(todayTransactions.map(t => t.customerId).filter(Boolean)).size;
+      // Calculate today's stats
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayTransactions = transactionsArray.filter(t => {
+        const transactionDate = new Date(t.timestamp);
+        transactionDate.setHours(0, 0, 0, 0);
+        return transactionDate.getTime() === today.getTime();
+      });
 
-    setTodayStats({
-      sales: todaySales,
-      transactions: todayTransactions.length,
-      customers: uniqueCustomers,
-      averageTransaction: todayTransactions.length > 0 ? todaySales / todayTransactions.length : 0
-    });
+      const todaySales = todayTransactions.reduce((sum, t) => sum + t.total, 0);
+      const uniqueCustomers = new Set(todayTransactions.map(t => t.customerId).filter(Boolean)).size;
 
-    // Check inventory alerts
-    const alerts: InventoryAlert[] = allProducts
-      .filter(p => p.stock <= p.minStock)
-      .map(p => ({
-        product: p,
-        currentStock: p.stock,
-        minStock: p.minStock,
-        type: p.stock === 0 ? 'out_of_stock' : 'low_stock'
-      }));
+      setTodayStats({
+        sales: todaySales,
+        transactions: todayTransactions.length,
+        customers: uniqueCustomers,
+        averageTransaction: todayTransactions.length > 0 ? todaySales / todayTransactions.length : 0
+      });
 
-    setInventoryAlerts(alerts);
+      // Check inventory alerts
+      const alerts: InventoryAlert[] = productsArray
+        .filter(p => p.stock <= p.minStock)
+        .map(p => ({
+          product: p,
+          currentStock: p.stock,
+          minStock: p.minStock,
+          type: p.stock === 0 ? 'out_of_stock' : 'low_stock'
+        }));
+
+      setInventoryAlerts(alerts);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
   };
 
   const getRecentTransactions = () => {

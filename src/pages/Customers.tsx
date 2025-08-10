@@ -46,8 +46,15 @@ export default function Customers() {
     loadCustomers();
   }, []);
 
-  const loadCustomers = () => {
-    setCustomers(getCustomers());
+  const loadCustomers = async () => {
+    try {
+      const customersData = await getCustomers();
+      const customersArray = Array.isArray(customersData) ? customersData : [];
+      setCustomers(customersArray);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+      setCustomers([]);
+    }
   };
 
   // Update resetForm to reset all fields

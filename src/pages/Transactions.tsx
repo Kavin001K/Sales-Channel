@@ -27,14 +27,11 @@ export default function Transactions() {
       
       try {
         setLoading(true);
-        const data = await transactionService.getAll();
+        const data = await transactionService.getAll(company?.id);
         console.log('Loaded transactions:', data, 'Type:', typeof data, 'IsArray:', Array.isArray(data));
         
         // Ensure we always have an array
         const transactionArray = Array.isArray(data) ? data : [];
-        
-        // If you want to filter by company, uncomment the next line:
-        // const filtered = transactionArray.filter((t: Transaction) => t.companyId === company.id);
         setTransactions(transactionArray);
       } catch (error) {
         console.error('Error loading transactions:', error);

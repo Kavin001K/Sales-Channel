@@ -42,8 +42,15 @@ export default function Employees() {
     loadEmployees();
   }, []);
 
-  const loadEmployees = () => {
-    setEmployees(getEmployees());
+  const loadEmployees = async () => {
+    try {
+      const employeesData = await getEmployees();
+      const employeesArray = Array.isArray(employeesData) ? employeesData : [];
+      setEmployees(employeesArray);
+    } catch (error) {
+      console.error('Error loading employees:', error);
+      setEmployees([]);
+    }
   };
 
   const resetForm = () => {

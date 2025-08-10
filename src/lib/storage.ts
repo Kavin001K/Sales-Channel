@@ -4,22 +4,33 @@ import {
   customerService, 
   employeeService, 
   transactionService,
-  settingsService
+  settingsService,
+  companyService,
+  subscriptionPlanService,
+  supportTicketService,
+  authService
 } from './database';
 
+// User authentication
+export const createUser = (userData: any): Promise<any> => authService.createUser(userData);
+export const authenticateUser = (email: string, password: string): Promise<any> => authService.authenticateUser(email, password);
+export const getUserById = (id: string): Promise<any> => authService.getUserById(id);
+export const updateUser = (id: string, updates: any): Promise<any> => authService.updateUser(id, updates);
+export const getAllUsers = (companyId?: string): Promise<any[]> => authService.getAllUsers(companyId);
+
 // Products storage
-export const getProducts = (): Promise<Product[]> => productService.getAll();
+export const getProducts = (companyId?: string): Promise<Product[]> => productService.getAll(companyId);
 export const addProduct = (product: Product): Promise<Product> => productService.add(product);
 export const updateProduct = (id: string, updatedProduct: Partial<Product>): Promise<Product> => productService.update(id, updatedProduct);
 export const deleteProduct = (id: string): Promise<void> => productService.delete(id);
 
 // Transactions storage
-export const getTransactions = (): Promise<Transaction[]> => transactionService.getAll();
+export const getTransactions = (companyId?: string): Promise<Transaction[]> => transactionService.getAll(companyId);
 export const saveTransaction = (transaction: Transaction): Promise<Transaction> => transactionService.add(transaction);
 export const updateTransaction = (id: string, updates: Partial<Transaction>): Promise<Transaction> => transactionService.update(id, updates);
 
 // Customers storage
-export const getCustomers = (): Promise<Customer[]> => customerService.getAll();
+export const getCustomers = (companyId?: string): Promise<Customer[]> => customerService.getAll(companyId);
 export const addCustomer = (customer: Customer): Promise<Customer> => customerService.add(customer);
 export const updateCustomer = (id: string, updates: Partial<Customer>): Promise<Customer> => customerService.update(id, updates);
 export const deleteCustomer = (id: string): Promise<void> => customerService.delete(id);
@@ -29,11 +40,27 @@ export const saveCustomer = (customer: Customer): Promise<Customer> => {
     }
     return customerService.update(customer.id, customer);
 };
+
 // Employees storage
-export const getEmployees = (): Promise<Employee[]> => employeeService.getAll();
+export const getEmployees = (companyId?: string): Promise<Employee[]> => employeeService.getAll(companyId);
 export const addEmployee = (employee: Employee): Promise<Employee> => employeeService.add(employee);
 export const updateEmployee = (id: string, updates: Partial<Employee>): Promise<Employee> => employeeService.update(id, updates);
 export const deleteEmployee = (id: string): Promise<void> => employeeService.delete(id);
+
+// Companies storage
+export const getCompanies = (): Promise<any[]> => companyService.getAll();
+export const addCompany = (company: any): Promise<any> => companyService.add(company);
+export const updateCompany = (id: string, updates: any): Promise<any> => companyService.update(id, updates);
+export const deleteCompany = (id: string): Promise<void> => companyService.delete(id);
+
+// Subscription management
+export const getSubscriptionPlans = (): Promise<any[]> => subscriptionPlanService.getPlans();
+export const getCompanySubscription = (companyId: string): Promise<any> => subscriptionPlanService.getCompanySubscription(companyId);
+export const createSubscription = (subscription: any): Promise<any> => subscriptionPlanService.createSubscription(subscription);
+
+// Support tickets
+export const getSupportTickets = (companyId?: string): Promise<any[]> => supportTicketService.getTickets(companyId);
+export const createSupportTicket = (ticket: any): Promise<any> => supportTicketService.createTicket(ticket);
 
 // Settings
 export const getSettings = (): Promise<any> => settingsService.getAll();

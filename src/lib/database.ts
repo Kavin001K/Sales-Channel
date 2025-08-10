@@ -44,32 +44,60 @@ const createHybridService = (entityName: string, localKey: string) => {
   const pluralEntityName = `${entityName}s`;
 
   return {
-    getAll: async () => {
+    getAll: async (companyId?: string) => {
       if (isOnline() && getElectronApi()) {
         try {
-          const data = await cloudDB.query(`SELECT * FROM ${pluralEntityName}`);
+          let query = `SELECT * FROM ${pluralEntityName}`;
+          let params: any[] = [];
+          
+          if (companyId) {
+            query += ` WHERE companyId = $1`;
+            params.push(companyId);
+          }
+          
+          const data = await cloudDB.query(query, params);
           localDB.setItem(localKey, data);
           return data;
         } catch (error) {
           console.warn(`Could not fetch ${pluralEntityName} from cloud, falling back to local.`, error);
-          return localDB.getItem(localKey) || [];
+          const localData = localDB.getItem(localKey) || [];
+          if (companyId) {
+            return localData.filter((item: any) => item.companyId === companyId);
+          }
+          return localData;
         }
       } else {
-        return localDB.getItem(localKey) || [];
+        const localData = localDB.getItem(localKey) || [];
+        if (companyId) {
+          return localData.filter((item: any) => item.companyId === companyId);
+        }
+        return localData;
       }
     },
     
-    getById: async (id: string) => {
+    getById: async (id: string, companyId?: string) => {
        if (isOnline() && getElectronApi()) {
         try {
-          const data = await cloudDB.query(`SELECT * FROM ${pluralEntityName} WHERE id = $1`, [id]);
+          let query = `SELECT * FROM ${pluralEntityName} WHERE id = $1`;
+          let params = [id];
+          
+          if (companyId) {
+            query += ` AND companyId = $2`;
+            params.push(companyId);
+          }
+          
+          const data = await cloudDB.query(query, params);
           return data[0] || null;
         } catch (error) {
           console.warn(`Could not fetch ${entityName} from cloud, falling back to local.`, error);
         }
       }
       const allItems = localDB.getItem(localKey) || [];
-      return allItems.find((item: any) => item.id === id) || null;
+      let item = allItems.find((item: any) => item.id === id);
+      if (companyId && item) {
+        item = item.companyId === companyId ? item : null;
+      }
+      return item || null;
     },
 
     add: async (item: any) => {
@@ -121,10 +149,260 @@ const createHybridService = (entityName: string, localKey: string) => {
   };
 };
 
+// Subscription management services
+const subscriptionService = {
+  getPlans: async () => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        const data = await cloudDB.query('SELECT * FROM subscription_plans WHERE isActive = true');
+        localDB.setItem('subscription_plans', data);
+        return data;
+      } catch (error) {
+        console.warn('Could not fetch subscription plans from cloud, falling back to local.', error);
+        return localDB.getItem('subscription_plans') || [];
+      }
+    } else {
+      return localDB.getItem('subscription_plans') || [];
+    }
+  },
+
+  getCompanySubscription: async (companyId: string) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        const data = await cloudDB.query(`
+          SELECT cs.*, sp.name as planName, sp.description as planDescription, sp.features
+          FROM company_subscriptions cs
+          JOIN subscription_plans sp ON cs.planId = sp.id
+          WHERE cs.companyId = $1 AND cs.status = 'active'
+          ORDER BY cs.createdAt DESC
+          LIMIT 1
+        `, [companyId]);
+        return data[0] || null;
+      } catch (error) {
+        console.warn('Could not fetch company subscription from cloud, falling back to local.', error);
+        return localDB.getItem(`company_subscription_${companyId}`) || null;
+      }
+    } else {
+      return localDB.getItem(`company_subscription_${companyId}`) || null;
+    }
+  },
+
+  createSubscription: async (subscription: any) => {
+    const newSubscription = { ...subscription, id: subscription.id || `sub_${Date.now()}`, createdAt: new Date(), updatedAt: new Date() };
+    if (isOnline() && getElectronApi()) {
+      try {
+        const columns = Object.keys(newSubscription).join(', ');
+        const placeholders = Object.keys(newSubscription).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(newSubscription);
+        await cloudDB.query(`INSERT INTO company_subscriptions (${columns}) VALUES (${placeholders})`, values);
+      } catch (error) {
+        console.warn('Could not create subscription in cloud, saving locally.', error);
+      }
+    }
+    localDB.setItem(`company_subscription_${newSubscription.companyId}`, newSubscription);
+    return newSubscription;
+  }
+};
+
+// Support ticket service
+const supportService = {
+  getTickets: async (companyId?: string) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        let query = 'SELECT * FROM support_tickets';
+        let params: any[] = [];
+        
+        if (companyId) {
+          query += ' WHERE companyId = $1';
+          params.push(companyId);
+        }
+        
+        query += ' ORDER BY createdAt DESC';
+        const data = await cloudDB.query(query, params);
+        localDB.setItem('support_tickets', data);
+        return data;
+      } catch (error) {
+        console.warn('Could not fetch support tickets from cloud, falling back to local.', error);
+        const localData = localDB.getItem('support_tickets') || [];
+        if (companyId) {
+          return localData.filter((ticket: any) => ticket.companyId === companyId);
+        }
+        return localData;
+      }
+    } else {
+      const localData = localDB.getItem('support_tickets') || [];
+      if (companyId) {
+        return localData.filter((ticket: any) => ticket.companyId === companyId);
+      }
+      return localData;
+    }
+  },
+
+  createTicket: async (ticket: any) => {
+    const newTicket = { ...ticket, id: ticket.id || `ticket_${Date.now()}`, createdAt: new Date(), updatedAt: new Date() };
+    if (isOnline() && getElectronApi()) {
+      try {
+        const columns = Object.keys(newTicket).join(', ');
+        const placeholders = Object.keys(newTicket).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(newTicket);
+        await cloudDB.query(`INSERT INTO support_tickets (${columns}) VALUES (${placeholders})`, values);
+      } catch (error) {
+        console.warn('Could not create support ticket in cloud, saving locally.', error);
+      }
+    }
+    const allTickets = localDB.getItem('support_tickets') || [];
+    localDB.setItem('support_tickets', [...allTickets, newTicket]);
+    return newTicket;
+  }
+};
+
+// User authentication service
+const userService = {
+  // Simple password hashing (in production, use bcrypt)
+  hashPassword: (password: string) => {
+    return btoa(password); // Base64 encoding for demo (use bcrypt in production)
+  },
+
+  verifyPassword: (password: string, hashedPassword: string) => {
+    return btoa(password) === hashedPassword;
+  },
+
+  createUser: async (userData: any) => {
+    const hashedPassword = userService.hashPassword(userData.password);
+    const newUser = {
+      ...userData,
+      id: userData.id || `user_${Date.now()}`,
+      password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    if (isOnline() && getElectronApi()) {
+      try {
+        const columns = Object.keys(newUser).join(', ');
+        const placeholders = Object.keys(newUser).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(newUser);
+        await cloudDB.query(`INSERT INTO users (${columns}) VALUES (${placeholders})`, values);
+      } catch (error) {
+        console.warn('Could not create user in cloud, saving locally.', error);
+      }
+    }
+    
+    const allUsers = localDB.getItem('users') || [];
+    localDB.setItem('users', [...allUsers, newUser]);
+    return { ...newUser, password: undefined }; // Don't return password
+  },
+
+  authenticateUser: async (email: string, password: string) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        const data = await cloudDB.query('SELECT * FROM users WHERE email = $1 AND isActive = true', [email]);
+        if (data.length > 0) {
+          const user = data[0];
+          if (userService.verifyPassword(password, user.password)) {
+            // Update last login
+            await cloudDB.query('UPDATE users SET lastLogin = NOW() WHERE id = $1', [user.id]);
+            return { ...user, password: undefined };
+          }
+        }
+        return null;
+      } catch (error) {
+        console.warn('Could not authenticate user from cloud, trying local.', error);
+      }
+    }
+    
+    const allUsers = localDB.getItem('users') || [];
+    const user = allUsers.find((u: any) => u.email === email && u.isActive);
+    if (user && userService.verifyPassword(password, user.password)) {
+      // Update last login locally
+      const updatedUsers = allUsers.map((u: any) => 
+        u.id === user.id ? { ...u, lastLogin: new Date() } : u
+      );
+      localDB.setItem('users', updatedUsers);
+      return { ...user, password: undefined };
+    }
+    return null;
+  },
+
+  getUserById: async (id: string) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        const data = await cloudDB.query('SELECT * FROM users WHERE id = $1 AND isActive = true', [id]);
+        if (data.length > 0) {
+          return { ...data[0], password: undefined };
+        }
+      } catch (error) {
+        console.warn('Could not fetch user from cloud, trying local.', error);
+      }
+    }
+    
+    const allUsers = localDB.getItem('users') || [];
+    const user = allUsers.find((u: any) => u.id === id && u.isActive);
+    return user ? { ...user, password: undefined } : null;
+  },
+
+  updateUser: async (id: string, updates: any) => {
+    const updatedUserData = { ...updates, updatedAt: new Date() };
+    
+    if (isOnline() && getElectronApi()) {
+      try {
+        const setClauses = Object.keys(updatedUserData).map((key, i) => `${key} = $${i + 1}`).join(', ');
+        const values = [...Object.values(updatedUserData), id];
+        await cloudDB.query(`UPDATE users SET ${setClauses} WHERE id = $${Object.keys(updatedUserData).length + 1}`, values);
+      } catch (error) {
+        console.warn('Could not update user in cloud, updating locally.', error);
+      }
+    }
+    
+    const allUsers = localDB.getItem('users') || [];
+    const updatedUsers = allUsers.map((user: any) => 
+      user.id === id ? { ...user, ...updatedUserData } : user
+    );
+    localDB.setItem('users', updatedUsers);
+    
+    const updatedUser = updatedUsers.find((u: any) => u.id === id);
+    return updatedUser ? { ...updatedUser, password: undefined } : null;
+  },
+
+  getAllUsers: async (companyId?: string) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        let query = 'SELECT * FROM users WHERE isActive = true';
+        let params: any[] = [];
+        
+        if (companyId) {
+          query += ' AND companyId = $1';
+          params.push(companyId);
+        }
+        
+        const data = await cloudDB.query(query, params);
+        return data.map((user: any) => ({ ...user, password: undefined }));
+      } catch (error) {
+        console.warn('Could not fetch users from cloud, falling back to local.', error);
+      }
+    }
+    
+    const allUsers = localDB.getItem('users') || [];
+    let users = allUsers.filter((user: any) => user.isActive);
+    
+    if (companyId) {
+      users = users.filter((user: any) => user.companyId === companyId);
+    }
+    
+    return users.map((user: any) => ({ ...user, password: undefined }));
+  }
+};
+
 export const productService = createHybridService('product', 'products');
 export const customerService = createHybridService('customer', 'customers');
 export const employeeService = createHybridService('employee', 'employees');
 export const transactionService = createHybridService('transaction', 'transactions');
+export const companyService = createHybridService('company', 'companies');
+export const subscriptionPlanService = subscriptionService;
+export const supportTicketService = supportService;
+export const authService = userService;
+
+// Settings service
 export const settingsService = {
     getAll: async () => {
         if (isOnline() && getElectronApi()) {

@@ -56,8 +56,15 @@ export default function Products() {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
-    setProducts(getProducts());
+  const loadProducts = async () => {
+    try {
+      const productsData = await getProducts();
+      const productsArray = Array.isArray(productsData) ? productsData : [];
+      setProducts(productsArray);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setProducts([]);
+    }
   };
 
   const resetForm = () => {
