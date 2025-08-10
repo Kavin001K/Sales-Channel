@@ -10,8 +10,10 @@ import {
   TrendingUp,
   Store,
   Settings,
-  Shield
+  Shield,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Sidebar,
@@ -26,90 +28,121 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navigationItems = [
+// Define navigation items with role-based access
+const allNavigationItems = [
+  // Dashboard - Available to all authenticated users
   {
     title: "Dashboard",
     url: "/",
     icon: BarChart3,
-    description: "Overview & Analytics"
+    description: "Overview & Analytics",
+    roles: ['company', 'admin', 'manager', 'cashier', 'super_admin', 'admin', 'support', 'sales']
   },
-  {
-    title: "Employee Dashboard",
-    url: "/employee-dashboard",
-    icon: Users,
-    description: "CRM & Customer Management"
-  },
+  
+  // POS Operations - Available to company users and employees
   {
     title: "Sales",
     url: "/sales",
     icon: ShoppingCart,
-    description: "Process Transactions"
+    description: "Process Transactions",
+    roles: ['company', 'admin', 'manager', 'cashier']
   },
   {
     title: "Quick Sales",
     url: "/quickpos",
     icon: ShoppingCart,
-    description: "Quick POS Billing"
+    description: "Quick POS Billing",
+    roles: ['company', 'admin', 'manager', 'cashier']
   },
-  {
-    title: "Generate Invoice",
-    url: "/create-invoice",
-    icon: Receipt,
-    description: "Create Invoice"
-  },
+  
+  // Inventory Management - Available to company admins and managers
   {
     title: "Products",
     url: "/products",
     icon: Package,
-    description: "Manage Inventory"
+    description: "Manage Inventory",
+    roles: ['company', 'admin', 'manager']
   },
+  
+  // Customer Management - Available to company users and software company employees
   {
     title: "Customers",
     url: "/customers",
     icon: Users,
-    description: "Customer Management"
+    description: "Customer Management",
+    roles: ['company', 'admin', 'manager', 'cashier', 'sales', 'support']
   },
+  
+  // Employee Management - Available to company admins only
   {
     title: "Employees",
     url: "/employees",
     icon: UserCheck,
-    description: "Staff Management"
+    description: "Staff Management",
+    roles: ['company', 'admin']
   },
+  
+  // Transaction History - Available to company users
   {
     title: "Transactions",
     url: "/transactions",
     icon: Receipt,
-    description: "Transaction History"
+    description: "Transaction History",
+    roles: ['company', 'admin', 'manager', 'cashier']
   },
+  
+  // Reports - Available to company admins and managers
   {
     title: "Reports",
     url: "/reports",
     icon: TrendingUp,
-    description: "Sales Analytics"
+    description: "Sales Analytics",
+    roles: ['company', 'admin', 'manager']
   },
+  
+  // Software Company Employee Dashboard
+  {
+    title: "Employee Dashboard",
+    url: "/employee-dashboard",
+    icon: Users,
+    description: "CRM & Customer Management",
+    roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr']
+  },
+  
+  // Admin Panel - Available to super admin and admin users
   {
     title: "Admin Panel",
     url: "/admin",
     icon: Shield,
-    description: "System Administration"
+    description: "System Administration",
+    roles: ['super_admin', 'admin']
   },
+  
+  // Admin CRM - Available to software company employees
   {
     title: "Admin CRM",
     url: "/admin/crm",
     icon: Users,
-    description: "Customer Relationship Management"
+    description: "Customer Relationship Management",
+    roles: ['sales', 'support', 'admin']
   },
+  
+  // Subscription Management - Available to super admin and admin users
   {
     title: "Subscription Admin",
     url: "/admin/subscriptions",
     icon: Shield,
-    description: "Manage Subscriptions"
+    description: "Manage Subscriptions",
+    roles: ['super_admin', 'admin']
   },
+  
+  // Company Dashboard - Available to company users
   {
     title: "Company Dashboard",
     url: "/company/dashboard",
     icon: Store,
-    description: "View Subscription & Support"
+    description: "View Subscription & Support",
+    roles: ['company']
   }
 ];
 
@@ -117,10 +150,71 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { company, employee, adminAuth, logout, logoutEmployee, logoutAdmin } = useAuth();
+
+  // Determine user role
+  const getUserRole = () => {
+    if (adminAuth.isAuthenticated && adminAuth.adminUser) {
+      return adminAuth.adminUser.role;
+    }
+    if (employee) {
+      return employee.position?.toLowerCase() || 'cashier';
+    }
+    if (company) {
+      return 'company';
+    }
+    return null;
+  };
+
+  const userRole = getUserRole();
+
+  // Filter navigation items based on user role
+  const navigationItems = allNavigationItems.filter(item => {
+    if (!userRole) return false;
+    return item.roles.includes(userRole);
+  });
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50";
+
+  const handleLogout = () => {
+    if (adminAuth.isAuthenticated) {
+      logoutAdmin();
+    } else if (employee) {
+      logoutEmployee();
+    } else {
+      logout();
+    }
+  };
+
+  // Get user display info
+  const getUserInfo = () => {
+    if (adminAuth.isAuthenticated && adminAuth.adminUser) {
+      return {
+        name: adminAuth.adminUser.username,
+        role: adminAuth.adminUser.role,
+        type: 'Admin'
+      };
+    }
+    if (employee) {
+      return {
+        name: employee.name,
+        role: employee.position || 'Employee',
+        type: 'Employee'
+      };
+    }
+    if (company) {
+      return {
+        name: company.name,
+        role: 'Company Owner',
+        type: 'Company'
+      };
+    }
+    return null;
+  };
+
+  const userInfo = getUserInfo();
 
   return (
     <Sidebar
@@ -139,6 +233,16 @@ export function AppSidebar() {
             )}
           </div>
         </div>
+
+        {/* User Info */}
+        {userInfo && state !== "collapsed" && (
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="text-sm">
+              <div className="font-medium text-sidebar-foreground">{userInfo.name}</div>
+              <div className="text-xs text-sidebar-foreground/70">{userInfo.role} • {userInfo.type}</div>
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         <SidebarGroup>
@@ -164,7 +268,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings */}
+        {/* Settings & Logout */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
@@ -172,8 +276,25 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild>
                   <NavLink to="/settings" className={getNavCls}>
                     <Settings className="w-5 h-5" />
-                    {state !== "collapsed" && <span>Settings</span>}
+                    {state !== "collapsed" && (
+                      <div className="flex flex-col">
+                        <span className="font-medium">Settings</span>
+                        <span className="text-xs text-sidebar-foreground/70">App Configuration</span>
+                      </div>
+                    )}
                   </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">
+                  <LogOut className="w-5 h-5" />
+                  {state !== "collapsed" && (
+                    <div className="flex flex-col">
+                      <span className="font-medium">Logout</span>
+                      <span className="text-xs text-sidebar-foreground/70">Sign out</span>
+                    </div>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

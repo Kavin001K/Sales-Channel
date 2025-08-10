@@ -19,13 +19,22 @@ import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 import SubscriptionAdminDashboard from "./pages/SubscriptionAdminDashboard";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
-import ProtectedRoute from './components/ProtectedRoute';
+import { 
+  ProtectedRoute, 
+  AdminOnly, 
+  CompanyOnly, 
+  EmployeeOnly, 
+  ManagerOnly, 
+  CashierOnly, 
+  SoftwareCompanyEmployeeOnly 
+} from './components/ProtectedRoute';
 import CompanyLogin from './pages/CompanyLogin';
 import EmployeeLogin from './pages/EmployeeLogin';
 import './App.css';
@@ -61,6 +70,7 @@ function AppRoutes() {
             {/* Public routes */}
             <Route path="/login" element={<CompanyLogin />} />
             <Route path="/employee-login" element={<EmployeeLogin />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
             
             {/* Protected routes */}
             <Route path="/" element={
@@ -75,93 +85,103 @@ function AppRoutes() {
               </ProtectedRoute>
             } />
             
+            {/* Admin routes */}
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <AdminOnly>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </AdminOnly>
             } />
             
             <Route path="/admin/crm" element={
-              <ProtectedRoute>
+              <SoftwareCompanyEmployeeOnly>
                 <AdminCRM />
-              </ProtectedRoute>
+              </SoftwareCompanyEmployeeOnly>
             } />
             
             <Route path="/admin/company/:companyId" element={
-              <ProtectedRoute>
+              <AdminOnly>
                 <CompanyDetails />
-              </ProtectedRoute>
+              </AdminOnly>
             } />
             
+            <Route path="/admin/subscriptions" element={
+              <AdminOnly>
+                <SubscriptionAdminDashboard />
+              </AdminOnly>
+            } />
+            
+            {/* Software Company Employee routes */}
             <Route path="/employee-dashboard" element={
-              <ProtectedRoute>
+              <SoftwareCompanyEmployeeOnly>
                 <EmployeeDashboard />
-              </ProtectedRoute>
+              </SoftwareCompanyEmployeeOnly>
             } />
             
+            {/* Company routes */}
+            <Route path="/company/dashboard" element={
+              <CompanyOnly>
+                <CompanyDashboard />
+              </CompanyOnly>
+            } />
+            
+            {/* POS Operations - Available to company users and employees */}
+            <Route path="/sales" element={
+              <CashierOnly>
+                <Sales />
+              </CashierOnly>
+            } />
+            
+            <Route path="/quickpos" element={
+              <CashierOnly>
+                <QuickPOS />
+              </CashierOnly>
+            } />
+            
+            <Route path="/pos" element={
+              <CashierOnly>
+                <QuickPOS />
+              </CashierOnly>
+            } />
+            
+            {/* Inventory Management - Available to company admins and managers */}
             <Route path="/products" element={
-              <ProtectedRoute>
+              <ManagerOnly>
                 <Products />
-              </ProtectedRoute>
+              </ManagerOnly>
             } />
             
+            {/* Customer Management - Available to company users and software company employees */}
             <Route path="/customers" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['company', 'admin', 'manager', 'cashier', 'sales', 'support']}>
                 <Customers />
               </ProtectedRoute>
             } />
             
+            {/* Employee Management - Available to company admins only */}
             <Route path="/employees" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['company', 'admin']}>
                 <Employees />
               </ProtectedRoute>
             } />
             
+            {/* Transaction History - Available to company users */}
             <Route path="/transactions" element={
-              <ProtectedRoute>
+              <CashierOnly>
                 <Transactions />
-              </ProtectedRoute>
+              </CashierOnly>
             } />
             
+            {/* Reports - Available to company admins and managers */}
             <Route path="/reports" element={
-              <ProtectedRoute>
+              <ManagerOnly>
                 <Reports />
-              </ProtectedRoute>
+              </ManagerOnly>
             } />
             
-            <Route path="/sales" element={
-              <ProtectedRoute>
-                <Sales />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/pos" element={
-              <ProtectedRoute>
-                <QuickPOS />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/quickpos" element={
-              <ProtectedRoute>
-                <QuickPOS />
-              </ProtectedRoute>
-            } />
-            
+            {/* Settings - Available to all authenticated users */}
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin/subscriptions" element={
-              <ProtectedRoute>
-                <SubscriptionAdminDashboard />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/company/dashboard" element={
-              <ProtectedRoute>
-                <CompanyDashboard />
               </ProtectedRoute>
             } />
             

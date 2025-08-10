@@ -8,40 +8,91 @@ import {
   Receipt,
   TrendingUp,
   Store,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-const mobileNavItems = [
+// Define mobile navigation items with role-based access
+const allMobileNavItems = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/",
     icon: BarChart3,
+    roles: ['company', 'admin', 'manager', 'cashier', 'super_admin', 'admin', 'support', 'sales']
   },
   {
     title: "Sales",
     url: "/sales",
     icon: ShoppingCart,
+    roles: ['company', 'admin', 'manager', 'cashier']
   },
   {
     title: "Quick POS",
     url: "/quickpos",
     icon: Receipt,
+    roles: ['company', 'admin', 'manager', 'cashier']
   },
   {
     title: "Products",
     url: "/products",
     icon: Package,
+    roles: ['company', 'admin', 'manager']
   },
   {
-    title: "More",
-    url: "/transactions",
-    icon: Settings,
+    title: "Customers",
+    url: "/customers",
+    icon: Users,
+    roles: ['company', 'admin', 'manager', 'cashier', 'sales', 'support']
+  },
+  {
+    title: "Reports",
+    url: "/reports",
+    icon: TrendingUp,
+    roles: ['company', 'admin', 'manager']
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Shield,
+    roles: ['super_admin', 'admin']
+  },
+  {
+    title: "CRM",
+    url: "/admin/crm",
+    icon: Users,
+    roles: ['sales', 'support', 'admin']
   }
 ];
 
 export function MobileNav() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { company, employee, adminAuth } = useAuth();
+
+  // Determine user role
+  const getUserRole = () => {
+    if (adminAuth.isAuthenticated && adminAuth.adminUser) {
+      return adminAuth.adminUser.role;
+    }
+    if (employee) {
+      return employee.position?.toLowerCase() || 'cashier';
+    }
+    if (company) {
+      return 'company';
+    }
+    return null;
+  };
+
+  const userRole = getUserRole();
+
+  // Filter navigation items based on user role and limit to 5 items for mobile
+  const mobileNavItems = allMobileNavItems
+    .filter(item => {
+      if (!userRole) return false;
+      return item.roles.includes(userRole);
+    })
+    .slice(0, 5); // Limit to 5 items for mobile
 
   const isActive = (path: string) => currentPath === path;
 
