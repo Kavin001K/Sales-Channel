@@ -73,7 +73,7 @@ export default function EmployeeLogin() {
             Welcome to {company.name}
           </CardDescription>
           <CardDescription className="text-sm text-gray-500">
-            Enter your employee credentials to continue
+            Please enter your employee credentials to access the POS system
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,7 +83,7 @@ export default function EmployeeLogin() {
               <Input
                 id="employeeId"
                 type="text"
-                placeholder="EMP001"
+                placeholder="Enter your Employee ID"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
@@ -135,7 +135,7 @@ export default function EmployeeLogin() {
                   Logging in...
                 </>
               ) : (
-                'Login as Employee'
+                'Login to POS System'
               )}
             </Button>
 

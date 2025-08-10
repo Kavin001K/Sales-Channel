@@ -38,6 +38,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // For dashboard and POS routes, require both company and employee login
+  const isDashboardRoute = location.pathname === '/dashboard' || 
+                          location.pathname === '/sales' || 
+                          location.pathname === '/quickpos' || 
+                          location.pathname === '/pos' ||
+                          location.pathname === '/products' ||
+                          location.pathname === '/customers' ||
+                          location.pathname === '/employees' ||
+                          location.pathname === '/transactions' ||
+                          location.pathname === '/reports';
+
+  if (isDashboardRoute && company && !employee) {
+    // If company is logged in but no employee, redirect to employee login
+    return <Navigate to="/employee-login" replace />;
+  }
+
   // If no specific roles are required, allow access
   if (allowedRoles.length === 0) {
     return <>{children}</>;

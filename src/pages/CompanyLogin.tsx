@@ -31,7 +31,8 @@ export default function CompanyLogin() {
       const success = await loginCompany({ email, password });
       
       if (success) {
-        navigate('/dashboard');
+        // Redirect to employee login page instead of dashboard
+        navigate('/employee-login');
       } else {
         setError('Invalid email or password');
       }
