@@ -260,7 +260,7 @@ const Settings = () => {
                       <Label htmlFor="company-state">State <span className="text-red-500">*</span></Label>
                       <select
                         id="company-state"
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                         value={companySettings.state}
                         onChange={(e) => setCompanySettings({...companySettings, state: e.target.value})}
                         required
@@ -335,7 +335,7 @@ const Settings = () => {
                     <Label htmlFor="company-taxation">Taxation Method <Info className="inline w-4 h-4 ml-1" /><span className="sr-only">Choose the applicable taxation method for your business.</span></Label>
                     <select
                       id="company-taxation"
-                      className="w-full p-2 border rounded-md"
+                      className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                       value={companySettings.taxationMethod}
                       onChange={(e) => setCompanySettings({...companySettings, taxationMethod: e.target.value})}
                     >
@@ -348,7 +348,7 @@ const Settings = () => {
                     <Label htmlFor="company-currency">Currency</Label>
                     <select
                       id="company-currency"
-                      className="w-full p-2 border rounded-md"
+                      className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                       value={companySettings.currency}
                       onChange={(e) => setCompanySettings({...companySettings, currency: e.target.value})}
                     >
@@ -429,7 +429,7 @@ const Settings = () => {
                   <Label htmlFor="paper-size">Paper Size</Label>
                   <select
                     id="paper-size"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                     value={printSettings.paperSize}
                     onChange={(e) => setPrintSettings({...printSettings, paperSize: e.target.value as 'a4' | 'thermal'})}
                   >
@@ -579,7 +579,7 @@ const Settings = () => {
                   <Label htmlFor="currency">Currency</Label>
                   <select
                     id="currency"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                     value={generalSettings.currency}
                     onChange={(e) => setGeneralSettings({...generalSettings, currency: e.target.value})}
                   >
@@ -594,7 +594,7 @@ const Settings = () => {
                   <Label htmlFor="timezone">Timezone</Label>
                   <select
                     id="timezone"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                     value={generalSettings.timezone}
                     onChange={(e) => setGeneralSettings({...generalSettings, timezone: e.target.value})}
                   >
@@ -609,7 +609,7 @@ const Settings = () => {
                   <Label htmlFor="date-format">Date Format</Label>
                   <select
                     id="date-format"
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
                     value={generalSettings.dateFormat}
                     onChange={(e) => setGeneralSettings({...generalSettings, dateFormat: e.target.value})}
                   >
