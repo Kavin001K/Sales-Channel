@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
-import { Loader2, Building2, Shield, User } from 'lucide-react';
+import { Loader2, Building2, Shield, User, Eye, EyeOff } from 'lucide-react';
 
 export default function CompanyLogin() {
   const [email, setEmail] = useState('');
@@ -16,6 +16,8 @@ export default function CompanyLogin() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginMode, setLoginMode] = useState<'company' | 'admin'>('company');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   
   const { loginCompany, loginAdmin } = useAuth();
   const navigate = useNavigate();
@@ -29,12 +31,7 @@ export default function CompanyLogin() {
       const success = await loginCompany({ email, password });
       
       if (success) {
-        // Check if user is admin or regular employee
-        if (email.includes('admin') || email.includes('superadmin')) {
-          navigate('/admin');
-        } else {
-          navigate('/employee-dashboard');
-        }
+        navigate('/dashboard');
       } else {
         setError('Invalid email or password');
       }
@@ -107,15 +104,29 @@ export default function CompanyLogin() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="company-password">Password</Label>
-                  <Input
-                    id="company-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="company-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {error && loginMode === 'company' && (
@@ -143,8 +154,8 @@ export default function CompanyLogin() {
               <div className="text-center text-sm text-gray-600">
                 <p>Demo Company Credentials:</p>
                 <p className="font-mono text-xs mt-1">
-                  Email: admin@techsolutions.com<br />
-                  Password: admin123
+                  Email: admin@defaultcompany.com<br />
+                  Password: company123
                 </p>
               </div>
             </TabsContent>
@@ -166,15 +177,29 @@ export default function CompanyLogin() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="admin-password">Password</Label>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    placeholder="Enter admin password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="admin-password"
+                      type={showAdminPassword ? "text" : "password"}
+                      placeholder="Enter admin password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    >
+                      {showAdminPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {error && loginMode === 'admin' && (
@@ -203,7 +228,7 @@ export default function CompanyLogin() {
                 <p>Demo Admin Credentials:</p>
                 <p className="font-mono text-xs mt-1">
                   Username: superadmin<br />
-                  Password: admin123
+                  Password: superadmin123
                 </p>
               </div>
             </TabsContent>
