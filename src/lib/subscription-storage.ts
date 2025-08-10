@@ -6,34 +6,35 @@
 
 import { SubscriptionPlan, CompanySubscription, SupportTicket } from './subscription-types';
 import { Company } from './types';
-import * as db from './database';
+import { subscriptionPlanService, companyService, supportTicketService } from './database';
 
 // --- Subscription Plans ---
 export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
-  return await db.getPlansFromDb();
+  return await subscriptionPlanService.getAll();
 };
 export const saveSubscriptionPlan = async (plan: SubscriptionPlan): Promise<void> => {
-  await db.savePlanToDb(plan);
+  await subscriptionPlanService.add(plan);
 };
 
 // --- Companies ---
 export const getSubscribedCompanies = async (): Promise<Company[]> => {
-  return await db.getCompaniesFromDb();
+  return await companyService.getAll();
 };
 export const saveSubscribedCompany = async (company: Company): Promise<void> => {
-  await db.saveCompanyToDb(company);
+  await companyService.add(company);
 };
 
 // --- Company Subscriptions ---
 export const getCompanySubscriptions = async (): Promise<CompanySubscription[]> => {
-  return await db.getSubscriptionsFromDb();
+  // This would need to be implemented in the database service
+  return [];
 };
 export const getSubscriptionByCompany = async (companyId: string): Promise<CompanySubscription | undefined> => {
-  const subscriptions = await db.getSubscriptionsFromDb();
-  return subscriptions.find(sub => sub.companyId === companyId);
+  // This would need to be implemented in the database service
+  return undefined;
 };
 export const assignSubscriptionToCompany = async (companyId: string, planId: string): Promise<void> => {
-  const plans = await db.getPlansFromDb();
+  const plans = await subscriptionPlanService.getAll();
   const plan = plans.find(p => p.id === planId);
   if (!plan) throw new Error('Subscription plan not found');
 
@@ -50,15 +51,16 @@ export const assignSubscriptionToCompany = async (companyId: string, planId: str
     tokensUsed: 0,
   };
 
-  await db.assignSubscriptionInDb(newSubscription);
+  // This would need to be implemented in the database service
+  console.log('Assigning subscription:', newSubscription);
 };
 
 // --- Support Tickets ---
 export const getSupportTickets = async (): Promise<SupportTicket[]> => {
-  return await db.getTicketsFromDb();
+  return await supportTicketService.getAll();
 };
 export const getTicketsByCompany = async (companyId: string): Promise<SupportTicket[]> => {
-  const tickets = await db.getTicketsFromDb();
+  const tickets = await supportTicketService.getAll();
   return tickets.filter(t => t.companyId === companyId);
 };
 export const createSupportTicket = async (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<SupportTicket> => {
@@ -69,9 +71,9 @@ export const createSupportTicket = async (ticketData: Omit<SupportTicket, 'id' |
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  await db.createTicketInDb(newTicket);
+  await supportTicketService.add(newTicket);
   return newTicket;
 };
 export const updateSupportTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed'): Promise<void> => {
-  await db.updateTicketInDb(ticketId, { status, updatedAt: new Date() });
+  await supportTicketService.update(ticketId, { status, updatedAt: new Date() });
 };

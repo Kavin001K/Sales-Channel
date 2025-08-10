@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Product, Transaction, CartItem } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
 import { getProducts, initializeSampleData, saveTransaction, updateProduct, getCustomers, saveCustomer, updateCustomer } from '@/lib/storage';
@@ -78,10 +78,21 @@ export default function QuickPOS() {
   const isDecimalUnit = (unit: string) => DECIMAL_UNITS.includes((unit || '').toUpperCase());
 
   useEffect(() => {
-    initializeSampleData();
-    const loadedProducts = getProducts();
-    setProducts(loadedProducts);
-    setFilteredProducts(loadedProducts);
+    const loadData = async () => {
+      try {
+        await initializeSampleData();
+        const loadedProducts = await getProducts();
+        const productsArray = Array.isArray(loadedProducts) ? loadedProducts : [];
+        setProducts(productsArray);
+        setFilteredProducts(productsArray);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        setProducts([]);
+        setFilteredProducts([]);
+      }
+    };
+    
+    loadData();
   }, []);
 
   // Enhanced search with barcode support
@@ -116,14 +127,23 @@ export default function QuickPOS() {
 
   // Auto-fetch customer by phone
   useEffect(() => {
-    if (customerPhone.length >= 6) {
-      const customers = getCustomers();
-      const found = customers.find(c => c.phone === customerPhone);
-      if (found) {
-        setCustomerName(found.name);
-        setCustomerGST(found.gst || '');
+    const fetchCustomer = async () => {
+      if (customerPhone.length >= 6) {
+        try {
+          const customers = await getCustomers();
+          const customersArray = Array.isArray(customers) ? customers : [];
+          const found = customersArray.find(c => c.phone === customerPhone);
+          if (found) {
+            setCustomerName(found.name);
+            setCustomerGST(found.gst || '');
+          }
+        } catch (error) {
+          console.error('Error loading customers:', error);
+        }
       }
-    }
+    };
+    
+    fetchCustomer();
   }, [customerPhone]);
 
   // Keyboard shortcuts
@@ -568,7 +588,12 @@ export default function QuickPOS() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // 2. Get unique categories from products
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return ['All'];
+    }
+    return ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  }, [products]);
 
   // 3. Filter products by selected category
   const displayedProducts = selectedCategory === 'All' ? products : products.filter(p => p.category === selectedCategory);

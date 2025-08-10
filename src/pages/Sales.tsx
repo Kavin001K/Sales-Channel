@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Product, Transaction } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
 import { getProducts, initializeSampleData, saveTransaction } from '@/lib/storage';
@@ -36,7 +36,12 @@ export default function Sales() {
   }, []);
 
   // Get unique categories from products
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return ['All'];
+    }
+    return ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  }, [products]);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // ESC key handler for closing MoU Dialog
@@ -52,10 +57,21 @@ export default function Sales() {
 
   useEffect(() => {
     // Initialize sample data and load products
-    initializeSampleData();
-    const loadedProducts = getProducts();
-    setProducts(loadedProducts);
-    setFilteredProducts(loadedProducts);
+    const loadData = async () => {
+      try {
+        await initializeSampleData();
+        const loadedProducts = await getProducts();
+        const productsArray = Array.isArray(loadedProducts) ? loadedProducts : [];
+        setProducts(productsArray);
+        setFilteredProducts(productsArray);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        setProducts([]);
+        setFilteredProducts([]);
+      }
+    };
+    
+    loadData();
   }, []);
 
   // Enhanced search with barcode support
