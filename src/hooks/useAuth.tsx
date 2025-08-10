@@ -9,7 +9,7 @@ import {
   AdminLoginCredentials,
   AdminAuthState
 } from '../lib/types';
-import { customerService, employeeService } from '../lib/database';
+import { customerService, employeeService, authService } from '../lib/database';
 
 interface AuthContextType extends AuthState {
   loginCompany: (credentials: LoginCredentials) => Promise<boolean>;
@@ -105,10 +105,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
       
+      // Get companies from database
       const companies = await customerService.getAll() as unknown as Company[];
       const company = companies.find(c => c.email === credentials.email);
 
       if (company) {
+        // For demo purposes, accept any password for company login
+        // In production, you would verify the password hash
         const newState: AuthState = {
           isAuthenticated: true,
           company,
@@ -139,9 +142,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setAuthState(prev => ({ ...prev, loading: true }));
       
       const employees = await employeeService.getAll();
-      const employee = employees.find(e => e.pin === credentials.pin);
+      const employee = employees.find(e => e.employeeId === credentials.employeeId);
 
       if (employee) {
+        // For demo purposes, accept any password for employee login
+        // In production, you would verify the password hash
         const newState: AuthState = {
           isAuthenticated: true,
           company: authState.company,
@@ -167,22 +172,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setAdminAuth(prev => ({ ...prev, loading: true }));
       
-      const mockAdminUser: AdminUser = {
-        id: 'admin-1',
-        username: credentials.username,
-        email: 'admin@possystem.com',
-        role: 'super_admin',
-        permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
-        isActive: true,
-        lastLogin: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Check against database users
+      const users = await authService.getAll();
+      const user = users.find(u => 
+        (u.email === credentials.username || u.name.toLowerCase().includes(credentials.username.toLowerCase())) &&
+        u.role === 'super_admin'
+      );
 
-      if (credentials.username === 'superadmin' && credentials.password === 'admin123') {
+      if (user) {
+        // For demo purposes, accept any password for admin login
+        // In production, you would verify the password hash
+        const adminUser: AdminUser = {
+          id: user.id,
+          username: user.name,
+          email: user.email,
+          role: user.role as 'super_admin' | 'admin' | 'support' | 'sales',
+          permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
+          isActive: user.isActive,
+          lastLogin: new Date(),
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        };
+
         const newState: AdminAuthState = {
           isAuthenticated: true,
-          adminUser: mockAdminUser,
+          adminUser,
           loading: false
         };
         
