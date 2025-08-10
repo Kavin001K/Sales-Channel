@@ -12,6 +12,8 @@ export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [barcodeQuery, setBarcodeQuery] = useState('');
+  const [skuQuery, setSkuQuery] = useState('');
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const cart = useCart();
   const [isMoUDialogOpen, setIsMoUDialogOpen] = useState(false);
