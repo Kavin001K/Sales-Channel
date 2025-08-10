@@ -105,13 +105,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // Get companies from database
-      const companies = await customerService.getAll() as unknown as Company[];
-      const company = companies.find(c => c.email === credentials.email);
+      // Demo company credentials
+      const demoCompanies = [
+        {
+          id: 'defaultcompany',
+          name: 'Default Company',
+          email: 'admin@defaultcompany.com',
+          address: '123 Business Street',
+          city: 'Chennai',
+          state: 'Tamil Nadu',
+          zipCode: '600001',
+          country: 'India',
+          phone: '+91-9876543210',
+          taxId: 'TAX123456789',
+          logoUrl: undefined,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      const company = demoCompanies.find(c => c.email === credentials.email);
 
       if (company) {
-        // For demo purposes, accept any password for company login
-        // In production, you would verify the password hash
         const newState: AuthState = {
           isAuthenticated: true,
           company,
@@ -141,12 +157,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      const employees = await employeeService.getAll();
-      const employee = employees.find(e => e.employeeId === credentials.employeeId);
+      // Demo employee credentials
+      const demoEmployees = [
+        {
+          id: 'emp001',
+          companyId: authState.company.id,
+          employeeId: 'EMP001',
+          name: 'John Doe',
+          email: 'john@company.com',
+          phone: '+91-9876543210',
+          position: 'cashier',
+          salary: 25000,
+          hireDate: new Date('2023-01-01'),
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      const employee = demoEmployees.find(e => e.employeeId === credentials.employeeId);
 
       if (employee) {
-        // For demo purposes, accept any password for employee login
-        // In production, you would verify the password hash
         const newState: AuthState = {
           isAuthenticated: true,
           company: authState.company,
@@ -172,26 +203,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setAdminAuth(prev => ({ ...prev, loading: true }));
       
-      // Check against database users
-      const users = await authService.getAll();
-      const user = users.find(u => 
-        (u.email === credentials.username || u.name.toLowerCase().includes(credentials.username.toLowerCase())) &&
-        u.role === 'super_admin'
+      // Demo admin credentials
+      const demoAdmins = [
+        {
+          id: 'superadmin',
+          username: 'superadmin',
+          email: 'superadmin@pos.com',
+          role: 'super_admin',
+          name: 'Super Administrator',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'admin',
+          username: 'admin',
+          email: 'admin@pos.com',
+          role: 'admin',
+          name: 'Company Administrator',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      const admin = demoAdmins.find(a => 
+        a.username === credentials.username || 
+        a.email === credentials.username
       );
 
-      if (user) {
-        // For demo purposes, accept any password for admin login
-        // In production, you would verify the password hash
+      if (admin) {
         const adminUser: AdminUser = {
-          id: user.id,
-          username: user.name,
-          email: user.email,
-          role: user.role as 'super_admin' | 'admin' | 'support' | 'sales',
+          id: admin.id,
+          username: admin.username,
+          email: admin.email,
+          role: admin.role as 'super_admin' | 'admin' | 'support' | 'sales',
           permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
-          isActive: user.isActive,
+          isActive: admin.isActive,
           lastLogin: new Date(),
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          createdAt: admin.createdAt,
+          updatedAt: admin.updatedAt
         };
 
         const newState: AdminAuthState = {
