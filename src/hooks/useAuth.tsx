@@ -17,7 +17,7 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   logoutEmployee: () => void;
   refreshAuth: () => void;
-  loginAdmin: (credentials: AdminLoginCredentials) => Promise<boolean>;
+  loginAdmin: (credentials: AdminLoginCredentials) => Promise<'super_admin' | 'admin' | 'sales' | 'support' | 'technical' | 'marketing' | 'finance' | 'hr' | null>;
   logoutAdmin: () => void;
   adminAuth: AdminAuthState;
 }
@@ -229,7 +229,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
-  const loginAdmin = async (credentials: AdminLoginCredentials): Promise<boolean> => {
+  const loginAdmin = async (credentials: AdminLoginCredentials): Promise<'super_admin' | 'admin' | 'sales' | 'support' | 'technical' | 'marketing' | 'finance' | 'hr' | null> => {
     try {
       setAdminAuth(prev => ({ ...prev, loading: true }));
       
@@ -257,22 +257,55 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       ];
 
-      const admin = demoAdmins.find(a => 
-        a.username === credentials.username || 
-        a.email === credentials.username
+      // Demo employees of the software company (admin company)
+      const demoAdminCompanyEmployees = [
+        {
+          id: 'support1',
+          username: 'support',
+          email: 'support@pos.com',
+          role: 'support' as const,
+          name: 'Support Specialist',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'sales1',
+          username: 'sales',
+          email: 'sales@pos.com',
+          role: 'sales' as const,
+          name: 'Sales Executive',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'tech1',
+          username: 'technical',
+          email: 'technical@pos.com',
+          role: 'technical' as const,
+          name: 'Technical Engineer',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      const matchedUser = [...demoAdmins, ...demoAdminCompanyEmployees].find(u => 
+        u.username === credentials.username || u.email === credentials.username
       );
 
-      if (admin) {
+      if (matchedUser) {
         const adminUser: AdminUser = {
-          id: admin.id,
-          username: admin.username,
-          email: admin.email,
-          role: admin.role as 'super_admin' | 'admin' | 'support' | 'sales',
+          id: matchedUser.id,
+          username: matchedUser.username,
+          email: matchedUser.email,
+          role: matchedUser.role as 'super_admin' | 'admin' | 'support' | 'sales' | 'technical' | 'marketing' | 'finance' | 'hr',
           permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
-          isActive: admin.isActive,
+          isActive: matchedUser.isActive,
           lastLogin: new Date(),
-          createdAt: admin.createdAt,
-          updatedAt: admin.updatedAt
+          createdAt: matchedUser.createdAt,
+          updatedAt: matchedUser.updatedAt
         };
 
         const newState: AdminAuthState = {
@@ -283,15 +316,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         setAdminAuth(newState);
         saveAdminAuthState(newState);
-        return true;
+        return adminUser.role;
       } else {
         setAdminAuth(prev => ({ ...prev, loading: false }));
-        return false;
+        return null;
       }
     } catch (error) {
       console.error('Admin login error:', error);
       setAdminAuth(prev => ({ ...prev, loading: false }));
-      return false;
+      return null;
     }
   };
 

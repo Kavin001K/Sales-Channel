@@ -48,15 +48,45 @@ export default function CompanyLogin() {
     setIsLoading(true);
 
     try {
-      const success = await loginAdmin({ username, password });
+      const role = await loginAdmin({ username, password });
       
-      if (success) {
-        navigate('/admin');
+      if (role) {
+        if (role === 'super_admin' || role === 'admin') {
+          navigate('/admin');
+        } else {
+          // Software company employee roles go to CRM area by default
+          navigate('/admin/crm');
+        }
       } else {
         setError('Invalid username or password');
       }
     } catch (err) {
       setError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const autofillAdminDemo = (user: 'superadmin' | 'admin' | 'support' | 'sales' | 'technical') => {
+    setUsername(user);
+    setPassword(user === 'superadmin' ? 'superadmin123' : 'employee123');
+    setShowAdminPassword(true);
+  };
+
+  const quickLoginAdminDemo = async (user: 'superadmin' | 'admin' | 'support' | 'sales' | 'technical') => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const role = await loginAdmin({ username: user, password: user === 'superadmin' ? 'superadmin123' : 'employee123' });
+      if (role) {
+        if (role === 'super_admin' || role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/admin/crm');
+        }
+      } else {
+        setError('Invalid username or password');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -224,12 +254,34 @@ export default function CompanyLogin() {
                 </Button>
               </form>
 
-              <div className="text-center text-sm text-gray-600">
-                <p>Demo Admin Credentials:</p>
-                <p className="font-mono text-xs mt-1">
-                  Username: superadmin<br />
-                  Password: superadmin123
-                </p>
+              <div className="text-center text-sm text-gray-600 space-y-2">
+                <div>
+                  <p>Demo Admin Credentials:</p>
+                  <p className="font-mono text-xs mt-1">
+                    Username: superadmin<br />
+                    Password: superadmin123
+                  </p>
+                </div>
+                <div className="pt-2 border-t">
+                  <p>Demo Admin Company Employees:</p>
+                  <p className="font-mono text-xs mt-1">
+                    Username: support<br />
+                    Username: sales<br />
+                    Username: technical<br />
+                    Password: employee123 (any password accepted in demo)
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <Button variant="outline" onClick={() => autofillAdminDemo('superadmin')} disabled={isLoading}>Autofill Super Admin</Button>
+                  <Button variant="outline" onClick={() => autofillAdminDemo('admin')} disabled={isLoading}>Autofill Admin</Button>
+                  <Button variant="outline" onClick={() => autofillAdminDemo('support')} disabled={isLoading}>Autofill Support</Button>
+                  <Button variant="outline" onClick={() => autofillAdminDemo('sales')} disabled={isLoading}>Autofill Sales</Button>
+                  <Button variant="outline" onClick={() => autofillAdminDemo('technical')} disabled={isLoading}>Autofill Technical</Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Button onClick={() => quickLoginAdminDemo('superadmin')} disabled={isLoading}>{isLoading ? 'Logging in...' : 'Quick Login Super Admin'}</Button>
+                  <Button onClick={() => quickLoginAdminDemo('support')} disabled={isLoading}>{isLoading ? 'Logging in...' : 'Quick Login Support'}</Button>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
