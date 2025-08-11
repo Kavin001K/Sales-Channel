@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Employee } from '@/lib/types';
-import { getEmployees, addEmployee, updateEmployee, deleteEmployee } from '@/lib/storage';
+import { getEmployees, addEmployee, updateEmployee, deleteEmployee, generateNextEmployeeId, getEmployeeIdSettings } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,16 +61,40 @@ export default function Employees() {
   };
 
   const resetForm = () => {
-    const newId = `EMP${Date.now()}`;
-    const newPin = '';
+    const init = async () => {
+      try {
+        const nextId = await generateNextEmployeeId();
+        const idPreview = nextId || `EMP001`;
+        setFormData(prev => ({
+          ...prev,
+          id: idPreview,
+          pin: '',
+          name: '',
+          email: '',
+          phone: '',
+          role: 'cashier',
+          customRoleName: '',
+          hourlyRate: '',
+          permissions: {
+            canProcessSales: false,
+            canManageProducts: false,
+            canManageCustomers: false,
+            canViewReports: false,
+            canManageEmployees: false,
+            canProcessRefunds: false,
+            canApplyDiscounts: false,
+            canVoidTransactions: false
+          }
+        }));
+      } catch {
     setFormData({
-      id: newId,
-      pin: newPin,
+          id: 'EMP001',
+          pin: '',
       name: '',
       email: '',
       phone: '',
       role: 'cashier',
-      customRoleName: '',
+          customRoleName: '',
       hourlyRate: '',
       permissions: {
         canProcessSales: false,
@@ -83,6 +107,9 @@ export default function Employees() {
         canVoidTransactions: false
       }
     });
+      }
+    };
+    void init();
   };
 
   const handleRoleChange = (role: 'admin' | 'manager' | 'cashier' | 'custom') => {
@@ -274,6 +301,14 @@ export default function Employees() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="employee-id">Employee ID</Label>
+                  <Input
+                    id="employee-id"
+                    value={formData.id}
+                    onChange={(e) => setFormData({...formData, id: e.target.value.toUpperCase()})}
+                  />
+                </div>
                 <div>
                   <Label htmlFor="name">Name *</Label>
                   <Input

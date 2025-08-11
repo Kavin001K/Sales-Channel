@@ -66,6 +66,34 @@ export const createSupportTicket = (ticket: any): Promise<any> => supportTicketS
 export const getSettings = (): Promise<any> => settingsService.getAll();
 export const updateSettings = (settings: any): Promise<any> => settingsService.update(settings);
 
+// Employee ID settings helpers
+export interface EmployeeIdSettings { prefix: string; digits: number; next: number; }
+export const getEmployeeIdSettings = async (): Promise<EmployeeIdSettings> => {
+  const settings = await getSettings();
+  const prefix = settings.employee_id_prefix || 'EMP';
+  const digits = parseInt(settings.employee_id_digits, 10) || 3;
+  const next = parseInt(settings.employee_id_next, 10) || 1;
+  return { prefix, digits, next };
+};
+
+export const setEmployeeIdSettings = async (updates: Partial<EmployeeIdSettings>): Promise<EmployeeIdSettings> => {
+  const current = await getEmployeeIdSettings();
+  const merged: EmployeeIdSettings = { ...current, ...updates } as EmployeeIdSettings;
+  await updateSettings({
+    employee_id_prefix: merged.prefix,
+    employee_id_digits: String(merged.digits),
+    employee_id_next: String(merged.next),
+  });
+  return merged;
+};
+
+export const generateNextEmployeeId = async (): Promise<string> => {
+  const { prefix, digits, next } = await getEmployeeIdSettings();
+  const id = `${prefix}${String(next).padStart(digits, '0')}`;
+  await updateSettings({ employee_id_next: String(next + 1) });
+  return id;
+};
+
 
 // Company and Print Settings Utilities
 export interface CompanySettings {
