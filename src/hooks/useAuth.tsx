@@ -128,8 +128,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const company = demoCompanies.find(c => c.email === credentials.email);
 
       if (company) {
+        // Only set company, don't set employee yet
         const newState: AuthState = {
-          isAuthenticated: true,
+          isAuthenticated: false, // Not fully authenticated until employee logs in
           company,
           employee: null,
           loading: false
@@ -172,12 +173,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
+        },
+        {
+          id: 'emp002',
+          companyId: authState.company.id,
+          employeeId: 'EMP002',
+          name: 'Jane Smith',
+          email: 'jane@company.com',
+          phone: '+91-9876543211',
+          position: 'manager',
+          salary: 35000,
+          hireDate: new Date('2023-01-01'),
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'emp003',
+          companyId: authState.company.id,
+          employeeId: 'EMP003',
+          name: 'Mike Johnson',
+          email: 'mike@company.com',
+          phone: '+91-9876543212',
+          position: 'admin',
+          salary: 45000,
+          hireDate: new Date('2023-01-01'),
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       ];
 
       const employee = demoEmployees.find(e => e.employeeId === credentials.employeeId);
 
       if (employee) {
+        // Now fully authenticated with both company and employee
         const newState: AuthState = {
           isAuthenticated: true,
           company: authState.company,

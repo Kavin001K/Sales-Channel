@@ -41,6 +41,7 @@ export default function EmployeeLogin() {
       const success = await loginEmployee({ employeeId, password });
       
       if (success) {
+        // Now fully authenticated with both company and employee
         navigate('/dashboard');
       } else {
         setError('Invalid employee ID or password');
@@ -154,8 +155,10 @@ export default function EmployeeLogin() {
           <div className="mt-6 text-center text-sm text-gray-600">
             <p>Demo Employee Credentials:</p>
             <p className="font-mono text-xs mt-1">
-              Employee ID: EMP001<br />
-              Password: emp123
+              Employee ID: EMP001 (Cashier)<br />
+              Employee ID: EMP002 (Manager)<br />
+              Employee ID: EMP003 (Admin)<br />
+              Password: any password (demo mode)
             </p>
           </div>
         </CardContent>

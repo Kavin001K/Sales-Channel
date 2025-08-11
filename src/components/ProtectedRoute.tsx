@@ -31,27 +31,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check if user is authenticated
-  const isAuthenticated = company || employee || adminAuth.isAuthenticated;
+  // For company users, they need both company AND employee to be authenticated
+  // For admin users, they just need adminAuth to be authenticated
+  const isAuthenticated = (company && employee) || adminAuth.isAuthenticated;
   
   if (!isAuthenticated) {
-    // Redirect to login page
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // For dashboard and POS routes, require both company and employee login
-  const isDashboardRoute = location.pathname === '/dashboard' || 
-                          location.pathname === '/sales' || 
-                          location.pathname === '/quickpos' || 
-                          location.pathname === '/pos' ||
-                          location.pathname === '/products' ||
-                          location.pathname === '/customers' ||
-                          location.pathname === '/employees' ||
-                          location.pathname === '/transactions' ||
-                          location.pathname === '/reports';
-
-  if (isDashboardRoute && company && !employee) {
     // If company is logged in but no employee, redirect to employee login
-    return <Navigate to="/employee-login" replace />;
+    if (company && !employee) {
+      return <Navigate to="/employee-login" state={{ from: location }} replace />;
+    }
+    // Otherwise redirect to main login
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // If no specific roles are required, allow access
