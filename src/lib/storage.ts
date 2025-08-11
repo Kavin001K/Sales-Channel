@@ -61,6 +61,8 @@ export const createSubscription = (subscription: any): Promise<any> => subscript
 // Support tickets
 export const getSupportTickets = (companyId?: string): Promise<any[]> => supportTicketService.getTickets(companyId);
 export const createSupportTicket = (ticket: any): Promise<any> => supportTicketService.createTicket(ticket);
+export const sendSupportMessage = (message: any): Promise<any> => supportTicketService.addMessage(message);
+export const getConversationMessages = (conversationId: string): Promise<any[]> => supportTicketService.getMessagesForConversation(conversationId);
 
 // Settings
 export const getSettings = (): Promise<any> => settingsService.getAll();

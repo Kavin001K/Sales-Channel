@@ -24,6 +24,7 @@ import SubscriptionAdminDashboard from "./pages/SubscriptionAdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
+import SupportCenter from "./pages/SupportCenter";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
@@ -121,6 +122,11 @@ function AppRoutes() {
             <Route path="/admin/company-dashboard" element={
               <SoftwareCompanyEmployeeOnly>
                 <AdminCompanyDashboard />
+              </SoftwareCompanyEmployeeOnly>
+            } />
+            <Route path="/admin/support" element={
+              <SoftwareCompanyEmployeeOnly>
+                <SupportCenter />
               </SoftwareCompanyEmployeeOnly>
             } />
             

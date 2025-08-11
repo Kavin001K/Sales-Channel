@@ -11,7 +11,8 @@ import {
   Store,
   Settings,
   Shield,
-  LogOut
+  LogOut,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,7 +31,7 @@ import {
 
 // Define navigation items with role-based access
 const allNavigationItems = [
-  { title: "Dashboard", url: "/", icon: BarChart3, description: "Overview & Analytics", roles: ['company', 'admin', 'manager', 'cashier', 'support', 'sales', 'technical', 'marketing', 'finance', 'hr', 'super_admin'] },
+  { title: "Dashboard", url: "/", icon: BarChart3, description: "Overview & Analytics", roles: ['company', 'admin', 'manager', 'cashier'] },
   { title: "Sales", url: "/sales", icon: ShoppingCart, description: "Process Transactions", roles: ['company', 'admin', 'manager', 'cashier'] },
   { title: "Quick Sales", url: "/quickpos", icon: ShoppingCart, description: "Quick POS Billing", roles: ['company', 'admin', 'manager', 'cashier'] },
   { title: "Products", url: "/products", icon: Package, description: "Manage Inventory", roles: ['company', 'admin', 'manager'] },
@@ -43,6 +44,7 @@ const allNavigationItems = [
   { title: "Admin CRM", url: "/admin/crm", icon: Users, description: "Customer Relationship Management", roles: ['sales', 'support', 'admin', 'technical', 'marketing', 'finance', 'hr'] },
   { title: "Subscription Admin", url: "/admin/subscriptions", icon: Shield, description: "Manage Subscriptions", roles: ['super_admin', 'admin'] },
   { title: "Company Dashboard", url: "/company/dashboard", icon: Store, description: "View Subscription & Support", roles: ['company'] }
+  ,{ title: "Support Center", url: "/admin/support", icon: MessageSquare, description: "Tickets & Messaging", roles: ['support', 'sales', 'technical', 'marketing', 'finance', 'hr', 'admin', 'super_admin'] }
 ];
 
 export function AppSidebar() {

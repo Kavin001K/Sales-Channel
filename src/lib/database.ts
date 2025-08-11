@@ -253,6 +253,17 @@ const supportService = {
     const allTickets = localDB.getItem('support_tickets') || [];
     localDB.setItem('support_tickets', [...allTickets, newTicket]);
     return newTicket;
+  },
+
+  addMessage: async (message: any) => {
+    const newMessage = { ...message, id: message.id || `msg_${Date.now()}`, createdAt: new Date() };
+    const all = localDB.getItem('support_messages') || [];
+    localDB.setItem('support_messages', [...all, newMessage]);
+    return newMessage;
+  },
+  getMessagesForConversation: async (conversationId: string) => {
+    const all = localDB.getItem('support_messages') || [];
+    return all.filter((m: any) => m.conversationId === conversationId).sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 };
 
