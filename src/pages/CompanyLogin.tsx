@@ -54,8 +54,8 @@ export default function CompanyLogin() {
         if (role === 'super_admin' || role === 'admin') {
           navigate('/admin');
         } else {
-          // Software company employee roles go to CRM area by default
-          navigate('/admin/crm');
+          // Admin company employees go to their dedicated dashboard
+          navigate('/admin/company-dashboard');
         }
       } else {
         setError('Invalid username or password');

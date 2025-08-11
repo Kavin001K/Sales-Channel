@@ -38,7 +38,7 @@ const allNavigationItems = [
   { title: "Employees", url: "/employees", icon: UserCheck, description: "Staff Management", roles: ['company', 'admin'] },
   { title: "Transactions", url: "/transactions", icon: Receipt, description: "Transaction History", roles: ['company', 'admin', 'manager', 'cashier'] },
   { title: "Reports", url: "/reports", icon: TrendingUp, description: "Sales Analytics", roles: ['company', 'admin', 'manager'] },
-  { title: "Employee Dashboard", url: "/employee-dashboard", icon: Users, description: "CRM & Customer Management", roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr'] },
+  { title: "Admin Company Dashboard", url: "/admin/company-dashboard", icon: Users, description: "Internal Team Workspace", roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr'] },
   { title: "Admin Panel", url: "/admin", icon: Shield, description: "System Administration", roles: ['super_admin', 'admin'] },
   { title: "Admin CRM", url: "/admin/crm", icon: Users, description: "Customer Relationship Management", roles: ['sales', 'support', 'admin', 'technical', 'marketing', 'finance', 'hr'] },
   { title: "Subscription Admin", url: "/admin/subscriptions", icon: Shield, description: "Manage Subscriptions", roles: ['super_admin', 'admin'] },

@@ -23,6 +23,7 @@ import Unauthorized from "./pages/Unauthorized";
 import SubscriptionAdminDashboard from "./pages/SubscriptionAdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
@@ -116,10 +117,10 @@ function AppRoutes() {
               </AdminOnly>
             } />
             
-            {/* Software Company Employee routes */}
-            <Route path="/employee-dashboard" element={
+            {/* Admin Company Employee routes */}
+            <Route path="/admin/company-dashboard" element={
               <SoftwareCompanyEmployeeOnly>
-                <EmployeeDashboard />
+                <AdminCompanyDashboard />
               </SoftwareCompanyEmployeeOnly>
             } />
             

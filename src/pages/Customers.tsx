@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Edit, Trash2, Search, Users, Star, DollarSign, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Users, Star, DollarSign, Upload, Eye, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
 
@@ -19,6 +19,11 @@ export default function Customers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [viewCustomer, setViewCustomer] = useState<Customer | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageBody, setMessageBody] = useState('');
   // Expand formData to include all new fields
   const [formData, setFormData] = useState({
     name: '',
@@ -149,6 +154,26 @@ export default function Customers() {
       notes: customer.notes || ''
     });
     setIsAddDialogOpen(true);
+  };
+
+  const handleView = (customer: Customer) => {
+    setViewCustomer(customer);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleMessage = (customer: Customer) => {
+    setViewCustomer(customer);
+    setMessageSubject(`Hello ${customer.name}`);
+    setMessageBody('');
+    setIsMessageDialogOpen(true);
+  };
+
+  const sendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success(`Message sent to ${viewCustomer?.name} (demo)`);
+    setIsMessageDialogOpen(false);
+    setMessageSubject('');
+    setMessageBody('');
   };
 
   const handleDelete = (id: string) => {
@@ -405,11 +430,29 @@ export default function Customers() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => handleView(customer)}
+                  className="flex-1 text-xs sm:text-sm"
+                >
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  View
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleEdit(customer)}
                   className="flex-1 text-xs sm:text-sm"
                 >
                   <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleMessage(customer)}
+                  className="flex-1 text-xs sm:text-sm"
+                >
+                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Message
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -439,6 +482,53 @@ export default function Customers() {
       </div>
         </TabsContent>
       </Tabs>
+
+      {/* View Customer Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Customer Details</DialogTitle>
+          </DialogHeader>
+          {viewCustomer && (
+            <div className="space-y-2 text-sm">
+              <div className="font-semibold text-base">{viewCustomer.name}</div>
+              {viewCustomer.email && <div>Email: {viewCustomer.email}</div>}
+              {viewCustomer.phone && <div>Phone: {viewCustomer.phone}</div>}
+              {viewCustomer.address && (
+                <div>
+                  Address: {viewCustomer.address.street}, {viewCustomer.address.city}, {viewCustomer.address.state} {viewCustomer.address.zipCode}
+                </div>
+              )}
+              <div>Total Spent: ${viewCustomer.totalSpent.toFixed(2)}</div>
+              <div>Visits: {viewCustomer.visits}</div>
+              {viewCustomer.notes && <div className="italic">“{viewCustomer.notes}”</div>}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Customer Dialog */}
+      <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Message {viewCustomer ? `to ${viewCustomer.name}` : ''}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={sendMessage} className="space-y-3">
+            <div>
+              <Label htmlFor="msgSubject">Subject</Label>
+              <Input id="msgSubject" value={messageSubject} onChange={e => setMessageSubject(e.target.value)} required />
+            </div>
+            <div>
+              <Label htmlFor="msgBody">Message</Label>
+              <Textarea id="msgBody" value={messageBody} onChange={e => setMessageBody(e.target.value)} required rows={5} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsMessageDialogOpen(false)}>Cancel</Button>
+              <Button type="submit">Send</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

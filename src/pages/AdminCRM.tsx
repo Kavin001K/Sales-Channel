@@ -50,8 +50,11 @@ export default function AdminCRM() {
   
   // Dialog states
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
+  const [isLeadViewDialogOpen, setIsLeadViewDialogOpen] = useState(false);
   const [isOpportunityDialogOpen, setIsOpportunityDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
+  const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
   
   // Form states
@@ -413,23 +416,41 @@ export default function AdminCRM() {
   };
 
   const handleAddLead = () => {
-    const newLead: Lead = {
-      id: `lead-${Date.now()}`,
-      companyName: leadForm.companyName,
-      contactPerson: leadForm.contactPerson,
-      email: leadForm.email,
-      phone: leadForm.phone,
-      industry: leadForm.industry,
-      companySize: leadForm.companySize,
-      source: leadForm.source,
-      status: 'new',
-      estimatedValue: parseFloat(leadForm.estimatedValue) || 0,
-      notes: leadForm.notes,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    setLeads([...leads, newLead]);
+    if (editingLeadId) {
+      setLeads(leads.map(l => l.id === editingLeadId ? {
+        ...l,
+        companyName: leadForm.companyName,
+        contactPerson: leadForm.contactPerson,
+        email: leadForm.email,
+        phone: leadForm.phone,
+        industry: leadForm.industry,
+        companySize: leadForm.companySize,
+        source: leadForm.source,
+        estimatedValue: parseFloat(leadForm.estimatedValue) || 0,
+        notes: leadForm.notes,
+        updatedAt: new Date()
+      } : l));
+      setEditingLeadId(null);
+      toast.success('Lead updated successfully');
+    } else {
+      const newLead: Lead = {
+        id: `lead-${Date.now()}`,
+        companyName: leadForm.companyName,
+        contactPerson: leadForm.contactPerson,
+        email: leadForm.email,
+        phone: leadForm.phone,
+        industry: leadForm.industry,
+        companySize: leadForm.companySize,
+        source: leadForm.source,
+        status: 'new',
+        estimatedValue: parseFloat(leadForm.estimatedValue) || 0,
+        notes: leadForm.notes,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      setLeads([...leads, newLead]);
+      toast.success('Lead added successfully');
+    }
     setLeadForm({
       companyName: '',
       contactPerson: '',
@@ -442,7 +463,27 @@ export default function AdminCRM() {
       notes: ''
     });
     setIsLeadDialogOpen(false);
-    toast.success('Lead added successfully');
+  };
+
+  const handleEditLead = (lead: Lead) => {
+    setEditingLeadId(lead.id);
+    setLeadForm({
+      companyName: lead.companyName,
+      contactPerson: lead.contactPerson,
+      email: lead.email || '',
+      phone: lead.phone || '',
+      industry: lead.industry || '',
+      companySize: (lead.companySize as any) || 'small',
+      source: (lead.source as any) || 'website',
+      estimatedValue: lead.estimatedValue?.toString() || '',
+      notes: lead.notes || ''
+    });
+    setIsLeadDialogOpen(true);
+  };
+
+  const handleViewLead = (lead: Lead) => {
+    setViewLead(lead);
+    setIsLeadViewDialogOpen(true);
   };
 
   const handleAddOpportunity = () => {
@@ -827,10 +868,10 @@ export default function AdminCRM() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleViewLead(lead)}>
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleEditLead(lead)}>
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
@@ -1318,6 +1359,26 @@ export default function AdminCRM() {
           </Card>
         </TabsContent>
       </Tabs>
+      {/* Lead View Dialog */}
+      <Dialog open={isLeadViewDialogOpen} onOpenChange={setIsLeadViewDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Lead Details</DialogTitle>
+          </DialogHeader>
+          {viewLead && (
+            <div className="space-y-2 text-sm">
+              <div className="text-base font-semibold">{viewLead.companyName}</div>
+              <div>Contact: {viewLead.contactPerson}</div>
+              {viewLead.email && <div>Email: {viewLead.email}</div>}
+              {viewLead.phone && <div>Phone: {viewLead.phone}</div>}
+              {viewLead.industry && <div>Industry: {viewLead.industry}</div>}
+              <div>Status: {viewLead.status}</div>
+              {viewLead.estimatedValue && <div>Estimated Value: ₹{viewLead.estimatedValue.toLocaleString()}</div>}
+              {viewLead.notes && <div className="italic">“{viewLead.notes}”</div>}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
