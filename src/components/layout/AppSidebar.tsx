@@ -30,120 +30,19 @@ import {
 
 // Define navigation items with role-based access
 const allNavigationItems = [
-  // Dashboard - Available to all authenticated users
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: BarChart3,
-    description: "Overview & Analytics",
-    roles: ['company', 'admin', 'manager', 'cashier', 'super_admin', 'admin', 'support', 'sales']
-  },
-  
-  // POS Operations - Available to company users and employees
-  {
-    title: "Sales",
-    url: "/sales",
-    icon: ShoppingCart,
-    description: "Process Transactions",
-    roles: ['company', 'admin', 'manager', 'cashier']
-  },
-  {
-    title: "Quick Sales",
-    url: "/quickpos",
-    icon: ShoppingCart,
-    description: "Quick POS Billing",
-    roles: ['company', 'admin', 'manager', 'cashier']
-  },
-  
-  // Inventory Management - Available to company admins and managers
-  {
-    title: "Products",
-    url: "/products",
-    icon: Package,
-    description: "Manage Inventory",
-    roles: ['company', 'admin', 'manager']
-  },
-  
-  // Customer Management - Available to company users and software company employees
-  {
-    title: "Customers",
-    url: "/customers",
-    icon: Users,
-    description: "Customer Management",
-    roles: ['company', 'admin', 'manager', 'cashier', 'sales', 'support']
-  },
-  
-  // Employee Management - Available to company admins only
-  {
-    title: "Employees",
-    url: "/employees",
-    icon: UserCheck,
-    description: "Staff Management",
-    roles: ['company', 'admin']
-  },
-  
-  // Transaction History - Available to company users
-  {
-    title: "Transactions",
-    url: "/transactions",
-    icon: Receipt,
-    description: "Transaction History",
-    roles: ['company', 'admin', 'manager', 'cashier']
-  },
-  
-  // Reports - Available to company admins and managers
-  {
-    title: "Reports",
-    url: "/reports",
-    icon: TrendingUp,
-    description: "Sales Analytics",
-    roles: ['company', 'admin', 'manager']
-  },
-  
-  // Software Company Employee Dashboard
-  {
-    title: "Employee Dashboard",
-    url: "/employee-dashboard",
-    icon: Users,
-    description: "CRM & Customer Management",
-    roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr']
-  },
-  
-  // Admin Panel - Available to super admin and admin users
-  {
-    title: "Admin Panel",
-    url: "/admin",
-    icon: Shield,
-    description: "System Administration",
-    roles: ['super_admin', 'admin']
-  },
-  
-  // Admin CRM - Available to software company employees
-  {
-    title: "Admin CRM",
-    url: "/admin/crm",
-    icon: Users,
-    description: "Customer Relationship Management",
-    roles: ['sales', 'support', 'admin']
-  },
-  
-  // Subscription Management - Available to super admin and admin users
-  {
-    title: "Subscription Admin",
-    url: "/admin/subscriptions",
-    icon: Shield,
-    description: "Manage Subscriptions",
-    roles: ['super_admin', 'admin']
-  },
-  
-  // Company Dashboard - Available to company users
-  {
-    title: "Company Dashboard",
-    url: "/company/dashboard",
-    icon: Store,
-    description: "View Subscription & Support",
-    roles: ['company']
-  }
+  { title: "Dashboard", url: "/", icon: BarChart3, description: "Overview & Analytics", roles: ['company', 'admin', 'manager', 'cashier', 'support', 'sales'] },
+  { title: "Sales", url: "/sales", icon: ShoppingCart, description: "Process Transactions", roles: ['company', 'admin', 'manager', 'cashier'] },
+  { title: "Quick Sales", url: "/quickpos", icon: ShoppingCart, description: "Quick POS Billing", roles: ['company', 'admin', 'manager', 'cashier'] },
+  { title: "Products", url: "/products", icon: Package, description: "Manage Inventory", roles: ['company', 'admin', 'manager'] },
+  { title: "Customers", url: "/customers", icon: Users, description: "Customer Management", roles: ['company', 'admin', 'manager', 'cashier', 'sales', 'support'] },
+  { title: "Employees", url: "/employees", icon: UserCheck, description: "Staff Management", roles: ['company', 'admin'] },
+  { title: "Transactions", url: "/transactions", icon: Receipt, description: "Transaction History", roles: ['company', 'admin', 'manager', 'cashier'] },
+  { title: "Reports", url: "/reports", icon: TrendingUp, description: "Sales Analytics", roles: ['company', 'admin', 'manager'] },
+  { title: "Employee Dashboard", url: "/employee-dashboard", icon: Users, description: "CRM & Customer Management", roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr'] },
+  { title: "Admin Panel", url: "/admin", icon: Shield, description: "System Administration", roles: ['super_admin', 'admin'] },
+  { title: "Admin CRM", url: "/admin/crm", icon: Users, description: "Customer Relationship Management", roles: ['sales', 'support', 'admin'] },
+  { title: "Subscription Admin", url: "/admin/subscriptions", icon: Shield, description: "Manage Subscriptions", roles: ['super_admin', 'admin'] },
+  { title: "Company Dashboard", url: "/company/dashboard", icon: Store, description: "View Subscription & Support", roles: ['company'] }
 ];
 
 export function AppSidebar() {

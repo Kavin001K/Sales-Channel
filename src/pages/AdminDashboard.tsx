@@ -250,19 +250,19 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-background text-foreground">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage companies, subscriptions, and system health</p>
+          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-muted-foreground dark:text-gray-300">Manage companies, subscriptions, and system health</p>
         </div>
         <div className="flex items-center gap-4">
-          <Badge className={`${getSystemHealthColor(systemStats.systemHealth)} bg-opacity-10`}>
+          <Badge className={`${getSystemHealthColor(systemStats.systemHealth)} bg-opacity-10 dark:bg-opacity-20`}>
             <Activity className="w-4 h-4 mr-1" />
             System: {systemStats.systemHealth}
           </Badge>
-          <Badge variant="outline">
+          <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">
             <Server className="w-4 h-4 mr-1" />
             Uptime: {systemStats.uptime}%
           </Badge>
@@ -271,53 +271,53 @@ export default function AdminDashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Total Companies</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalCompanies}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-foreground">{systemStats.totalCompanies}</div>
+            <p className="text-xs text-muted-foreground dark:text-gray-400">
               +2 this month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Active Subscriptions</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.activeSubscriptions}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-foreground">{systemStats.activeSubscriptions}</div>
+            <p className="text-xs text-muted-foreground dark:text-gray-400">
               {((systemStats.activeSubscriptions / systemStats.totalCompanies) * 100).toFixed(1)}% active rate
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{systemStats.monthlyRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-foreground">₹{systemStats.monthlyRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground dark:text-gray-400">
               +12.5% from last month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Active Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-foreground">{systemStats.activeUsers}</div>
+            <p className="text-xs text-muted-foreground dark:text-gray-400">
               +5.2% from yesterday
             </p>
           </CardContent>
@@ -326,11 +326,11 @@ export default function AdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="companies" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="companies">Companies</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 dark:bg-gray-800 dark:border-gray-700">
+          <TabsTrigger value="companies" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Companies</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Subscriptions</TabsTrigger>
+          <TabsTrigger value="analytics" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Analytics</TabsTrigger>
+          <TabsTrigger value="system" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">System</TabsTrigger>
         </TabsList>
 
         {/* Companies Tab */}
@@ -339,71 +339,71 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search companies..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-400"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="all" className="dark:text-white dark:hover:bg-gray-700">All Status</SelectItem>
+                  <SelectItem value="active" className="dark:text-white dark:hover:bg-gray-700">Active</SelectItem>
+                  <SelectItem value="expired" className="dark:text-white dark:hover:bg-gray-700">Expired</SelectItem>
+                  <SelectItem value="suspended" className="dark:text-white dark:hover:bg-gray-700">Suspended</SelectItem>
+                  <SelectItem value="pending" className="dark:text-white dark:hover:bg-gray-700">Pending</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={planFilter} onValueChange={setPlanFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                   <SelectValue placeholder="Filter by plan" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="all" className="dark:text-white dark:hover:bg-gray-700">All Plans</SelectItem>
+                  <SelectItem value="basic" className="dark:text-white dark:hover:bg-gray-700">Basic</SelectItem>
+                  <SelectItem value="premium" className="dark:text-white dark:hover:bg-gray-700">Premium</SelectItem>
+                  <SelectItem value="enterprise" className="dark:text-white dark:hover:bg-gray-700">Enterprise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Dialog open={isAddCompanyOpen} onOpenChange={setIsAddCompanyOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Company
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl">
+              <DialogContent className="sm:max-w-2xl dark:bg-gray-800 dark:border-gray-700">
                 <DialogHeader>
-                  <DialogTitle>Add New Company</DialogTitle>
+                  <DialogTitle className="dark:text-white">Add New Company</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Company Name</Label>
-                    <Input id="name" placeholder="Enter company name" />
+                    <Label htmlFor="name" className="dark:text-white">Company Name</Label>
+                    <Input id="name" placeholder="Enter company name" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="Enter email" />
+                    <Label htmlFor="email" className="dark:text-white">Email</Label>
+                    <Input id="email" type="email" placeholder="Enter email" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" placeholder="Enter phone number" />
+                    <Label htmlFor="phone" className="dark:text-white">Phone</Label>
+                    <Input id="phone" placeholder="Enter phone number" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="plan">Subscription Plan</Label>
+                    <Label htmlFor="plan" className="dark:text-white">Subscription Plan</Label>
                     <Select>
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <SelectValue placeholder="Select plan" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                         {subscriptionPlans.map(plan => (
-                          <SelectItem key={plan.id} value={plan.id}>
+                          <SelectItem key={plan.id} value={plan.id} className="dark:text-white dark:hover:bg-gray-700">
                             {plan.name} - ₹{plan.price}/month
                           </SelectItem>
                         ))}
@@ -411,18 +411,18 @@ export default function AdminDashboard() {
                     </Select>
                   </div>
                   <div className="space-y-2 col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Enter company address" />
+                    <Label htmlFor="address" className="dark:text-white">Address</Label>
+                    <Input id="address" placeholder="Enter company address" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddCompanyOpen(false)}>
+                  <Button variant="outline" onClick={() => setIsAddCompanyOpen(false)} className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
                     Cancel
                   </Button>
                   <Button onClick={() => {
                     toast.success('Company added successfully!');
                     setIsAddCompanyOpen(false);
-                  }}>
+                  }} className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white">
                     Add Company
                   </Button>
                 </div>
@@ -431,33 +431,33 @@ export default function AdminDashboard() {
           </div>
 
           {/* Companies Table */}
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle>Companies Overview</CardTitle>
-              <CardDescription>
+              <CardTitle className="dark:text-white">Companies Overview</CardTitle>
+              <CardDescription className="dark:text-gray-300">
                 Manage all companies and their subscription status
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Monthly Fee</TableHead>
-                    <TableHead>Employees</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="dark:border-gray-700 dark:hover:bg-gray-700">
+                    <TableHead className="dark:text-white">Company</TableHead>
+                    <TableHead className="dark:text-white">Plan</TableHead>
+                    <TableHead className="dark:text-white">Status</TableHead>
+                    <TableHead className="dark:text-white">Monthly Fee</TableHead>
+                    <TableHead className="dark:text-white">Employees</TableHead>
+                    <TableHead className="dark:text-white">Last Login</TableHead>
+                    <TableHead className="dark:text-white">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredCompanies.map((company) => (
-                    <TableRow key={company.id}>
-                      <TableCell>
+                    <TableRow key={company.id} className="dark:border-gray-700 dark:hover:bg-gray-700">
+                      <TableCell className="dark:text-white">
                         <div>
                           <div className="font-medium">{company.name}</div>
-                          <div className="text-sm text-muted-foreground">{company.email}</div>
+                          <div className="text-sm text-muted-foreground dark:text-gray-400">{company.email}</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -470,11 +470,11 @@ export default function AdminDashboard() {
                           {company.subscriptionStatus}
                         </Badge>
                       </TableCell>
-                      <TableCell>₹{company.monthlyFee.toLocaleString()}</TableCell>
-                      <TableCell>{company.employees}</TableCell>
-                      <TableCell>
+                      <TableCell className="dark:text-white">₹{company.monthlyFee.toLocaleString()}</TableCell>
+                      <TableCell className="dark:text-white">{company.employees}</TableCell>
+                      <TableCell className="dark:text-white">
                         {company.lastLogin.toLocaleDateString()}
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground dark:text-gray-400">
                           {company.lastLogin.toLocaleTimeString()}
                         </div>
                       </TableCell>
@@ -484,13 +484,14 @@ export default function AdminDashboard() {
                             variant="outline" 
                             size="sm"
                             onClick={() => navigate(`/admin/company/${company.id}`)}
+                            className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
                             <Settings className="w-4 h-4" />
                           </Button>
                         </div>
@@ -507,47 +508,47 @@ export default function AdminDashboard() {
         <TabsContent value="subscriptions" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Subscription Plans */}
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Subscription Plans</CardTitle>
+                  <CardTitle className="dark:text-white">Subscription Plans</CardTitle>
                   <Dialog open={isAddPlanOpen} onOpenChange={setIsAddPlanOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm">
+                      <Button size="sm" className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Plan
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
                       <DialogHeader>
-                        <DialogTitle>Add New Subscription Plan</DialogTitle>
+                        <DialogTitle className="dark:text-white">Add New Subscription Plan</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="planName">Plan Name</Label>
-                          <Input id="planName" placeholder="Enter plan name" />
+                          <Label htmlFor="planName" className="dark:text-white">Plan Name</Label>
+                          <Input id="planName" placeholder="Enter plan name" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="planPrice">Monthly Price (₹)</Label>
-                          <Input id="planPrice" type="number" placeholder="Enter price" />
+                          <Label htmlFor="planPrice" className="dark:text-white">Monthly Price (₹)</Label>
+                          <Input id="planPrice" type="number" placeholder="Enter price" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="maxEmployees">Max Employees</Label>
-                          <Input id="maxEmployees" type="number" placeholder="Enter max employees" />
+                          <Label htmlFor="maxEmployees" className="dark:text-white">Max Employees</Label>
+                          <Input id="maxEmployees" type="number" placeholder="Enter max employees" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="maxTransactions">Max Transactions</Label>
-                          <Input id="maxTransactions" type="number" placeholder="Enter max transactions" />
+                          <Label htmlFor="maxTransactions" className="dark:text-white">Max Transactions</Label>
+                          <Input id="maxTransactions" type="number" placeholder="Enter max transactions" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400" />
                         </div>
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsAddPlanOpen(false)}>
+                        <Button variant="outline" onClick={() => setIsAddPlanOpen(false)} className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
                           Cancel
                         </Button>
                         <Button onClick={() => {
                           toast.success('Plan added successfully!');
                           setIsAddPlanOpen(false);
-                        }}>
+                        }} className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white">
                           Add Plan
                         </Button>
                       </div>
@@ -558,19 +559,19 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {subscriptionPlans.map((plan) => (
-                    <div key={plan.id} className="border rounded-lg p-4">
+                    <div key={plan.id} className="border rounded-lg p-4 dark:border-gray-700 dark:bg-gray-700">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{plan.name}</h3>
+                        <h3 className="font-semibold dark:text-white">{plan.name}</h3>
                         <Badge className={getPlanColor(plan.name.toLowerCase())}>
                           ₹{plan.price}/month
                         </Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground mb-3">
+                      <div className="text-sm text-muted-foreground dark:text-gray-300 mb-3">
                         <div>Max Employees: {plan.maxEmployees}</div>
                         <div>Max Transactions: {plan.maxTransactions.toLocaleString()}</div>
                         <div>Storage: {plan.storage}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground dark:text-gray-400">
                         Features: {plan.features.join(', ')}
                       </div>
                     </div>
@@ -580,27 +581,27 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Subscription Analytics */}
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Subscription Analytics</CardTitle>
+                <CardTitle className="dark:text-white">Subscription Analytics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span>Total Revenue</span>
-                    <span className="font-bold">₹{systemStats.totalRevenue.toLocaleString()}</span>
+                    <span className="dark:text-white">Total Revenue</span>
+                    <span className="font-bold dark:text-white">₹{systemStats.totalRevenue.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Monthly Recurring Revenue</span>
-                    <span className="font-bold">₹{systemStats.monthlyRevenue.toLocaleString()}</span>
+                    <span className="dark:text-white">Monthly Recurring Revenue</span>
+                    <span className="font-bold dark:text-white">₹{systemStats.monthlyRevenue.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Average Revenue Per User</span>
-                    <span className="font-bold">₹{(systemStats.monthlyRevenue / systemStats.totalCompanies).toFixed(0)}</span>
+                    <span className="dark:text-white">Average Revenue Per User</span>
+                    <span className="font-bold dark:text-white">₹{(systemStats.monthlyRevenue / systemStats.totalCompanies).toFixed(0)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Churn Rate</span>
-                    <span className="font-bold text-red-600">2.3%</span>
+                    <span className="dark:text-white">Churn Rate</span>
+                    <span className="font-bold text-red-600 dark:text-red-400">2.3%</span>
                   </div>
                 </div>
               </CardContent>
@@ -611,24 +612,24 @@ export default function AdminDashboard() {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Revenue Trends</CardTitle>
+                <CardTitle className="dark:text-white">Revenue Trends</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <div className="h-64 flex items-center justify-center text-muted-foreground dark:text-gray-400">
                   <BarChart3 className="w-16 h-16" />
                   <span className="ml-2">Revenue Chart</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Subscription Distribution</CardTitle>
+                <CardTitle className="dark:text-white">Subscription Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <div className="h-64 flex items-center justify-center text-muted-foreground dark:text-gray-400">
                   <PieChart className="w-16 h-16" />
                   <span className="ml-2">Plan Distribution</span>
                 </div>
@@ -640,28 +641,28 @@ export default function AdminDashboard() {
         {/* System Tab */}
         <TabsContent value="system" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>System Health</CardTitle>
+                <CardTitle className="dark:text-white">System Health</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span>System Status</span>
+                    <span className="dark:text-white">System Status</span>
                     <Badge className={getSystemHealthColor(systemStats.systemHealth)}>
                       {systemStats.systemHealth}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Uptime</span>
-                    <span className="font-bold">{systemStats.uptime}%</span>
+                    <span className="dark:text-white">Uptime</span>
+                    <span className="font-bold dark:text-white">{systemStats.uptime}%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Active Users</span>
-                    <span className="font-bold">{systemStats.activeUsers}</span>
+                    <span className="dark:text-white">Active Users</span>
+                    <span className="font-bold dark:text-white">{systemStats.activeUsers}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Database Status</span>
+                    <span className="dark:text-white">Database Status</span>
                     <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Healthy
@@ -671,31 +672,31 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Recent Activities</CardTitle>
+                <CardTitle className="dark:text-white">Recent Activities</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>New company &quot;Tech Cafe&quot; registered</span>
-                    <span className="text-muted-foreground">2 hours ago</span>
+                    <span className="dark:text-white">New company &quot;Tech Cafe&quot; registered</span>
+                    <span className="text-muted-foreground dark:text-gray-400">2 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Subscription renewed for &quot;Bakery Delight&quot;</span>
-                    <span className="text-muted-foreground">4 hours ago</span>
+                    <span className="dark:text-white">Subscription renewed for &quot;Bakery Delight&quot;</span>
+                    <span className="text-muted-foreground dark:text-gray-400">4 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span>Payment failed for &quot;Restaurant Elite&quot;</span>
-                    <span className="text-muted-foreground">6 hours ago</span>
+                    <span className="dark:text-white">Payment failed for &quot;Restaurant Elite&quot;</span>
+                    <span className="text-muted-foreground dark:text-gray-400">6 hours ago</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>System backup completed</span>
-                    <span className="text-muted-foreground">1 day ago</span>
+                    <span className="dark:text-white">System backup completed</span>
+                    <span className="text-muted-foreground dark:text-gray-400">1 day ago</span>
                   </div>
                 </div>
               </CardContent>
