@@ -58,6 +58,30 @@ export default function EmployeeLogin() {
     navigate('/login');
   };
 
+  const autofillAdminDemo = () => {
+    setEmployeeId('EMP003');
+    setPassword('demo');
+    setShowPassword(true);
+  };
+
+  const quickLoginAdminDemo = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const success = await loginEmployee({ employeeId: 'EMP003', password: 'demo' });
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Invalid employee ID or password');
+      }
+    } catch (err) {
+      setError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!company) {
     return null; // Will redirect to login
   }
@@ -160,6 +184,30 @@ export default function EmployeeLogin() {
               Employee ID: EMP003 (Admin)<br />
               Password: any password (demo mode)
             </p>
+          </div>
+
+          <div className="mt-4 p-4 rounded-md border bg-white/60">
+            <p className="text-sm font-semibold text-gray-800">Admin (Demo) Details</p>
+            <div className="mt-2 text-sm text-gray-700">
+              <p>Employee ID: <span className="font-mono">EMP003</span></p>
+              <p>Role: Admin</p>
+              <p>Password: any password (demo)</p>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button type="button" variant="outline" onClick={autofillAdminDemo} disabled={isLoading}>
+                Autofill Admin
+              </Button>
+              <Button type="button" onClick={quickLoginAdminDemo} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Quick Login as Admin'
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
