@@ -269,7 +269,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Key Metrics */}
+        {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

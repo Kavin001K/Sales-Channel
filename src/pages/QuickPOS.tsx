@@ -128,18 +128,18 @@ export default function QuickPOS() {
   // Auto-fetch customer by phone
   useEffect(() => {
     const fetchCustomer = async () => {
-      if (customerPhone.length >= 6) {
+    if (customerPhone.length >= 6) {
         try {
           const customers = await getCustomers();
           const customersArray = Array.isArray(customers) ? customers : [];
           const found = customersArray.find(c => c.phone === customerPhone);
-          if (found) {
-            setCustomerName(found.name);
-            setCustomerGST(found.gst || '');
-          }
+      if (found) {
+        setCustomerName(found.name);
+        setCustomerGST(found.gst || '');
+      }
         } catch (error) {
           console.error('Error loading customers:', error);
-        }
+    }
       }
     };
     
@@ -654,18 +654,18 @@ export default function QuickPOS() {
         {/* Search Radio Buttons */}
         <div className="hidden lg:flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
+              <input type="radio" checked={searchType === 'serial'} onChange={() => setSearchType('serial')} />
             <span className={`text-sm dark:text-gray-300 ${searchType === 'serial' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Serial No.</span>
-          </label>
+            </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
+              <input type="radio" checked={searchType === 'code'} onChange={() => setSearchType('code')} />
             <span className={`text-sm dark:text-gray-300 ${searchType === 'code' ? 'text-blue-700 dark:text-blue-400 font-bold' : ''}`}>Item Code</span>
-          </label>
+            </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
+              <input type="radio" checked={searchType === 'name'} onChange={() => setSearchType('name')} />
             <span className={`text-sm dark:text-gray-300 ${searchType === 'name' ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>Item Name</span>
-          </label>
-        </div>
+            </label>
+          </div>
 
         {/* Search Input */}
         <div className="flex-1 flex justify-start">
@@ -704,7 +704,7 @@ export default function QuickPOS() {
             <div className="text-lg font-mono font-bold dark:text-white">{currentTime.toLocaleTimeString()}</div>
           </div>
         </div>
-      </div>
+                  </div>
       {/* Main Content - No Scroll */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* Category Sidebar */}
@@ -817,12 +817,12 @@ export default function QuickPOS() {
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Total</span>
               <span className="font-bold">₹{cart.getTotal().toFixed(2)}</span>
-            </div>
+                  </div>
             <div className="flex gap-2">
               <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} /> Cash</label>
               <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} /> Card</label>
               <label className="flex items-center gap-2"><input type="radio" name="payment" checked={paymentMethod === 'wallet'} onChange={() => setPaymentMethod('wallet')} /> Wallet</label>
-            </div>
+              </div>
             <button 
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded text-lg" 
               onClick={handleGenerateBill}
@@ -830,8 +830,8 @@ export default function QuickPOS() {
             >
               Generate Bill
             </button>
-          </div>
-        </div>
+              </div>
+            </div>
       </div>
 
       {/* Sticky mobile checkout bar */}
@@ -846,9 +846,9 @@ export default function QuickPOS() {
             >
               Generate Bill
             </button>
-          </div>
-        </div>
-      </div>
+              </div>
+              </div>
+            </div>
 
       {/* Quantity Dialog - Responsive */}
       {isQtyDialogOpen && qtyDialogProduct && (
@@ -858,18 +858,18 @@ export default function QuickPOS() {
             <h2 className="text-lg sm:text-xl font-bold mb-2 dark:text-white">{qtyDialogProduct.name}</h2>
             <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
               <span className="font-semibold">Unit:</span> {qtyDialogProduct.unit || 'PCS'}
-            </div>
+                </div>
             {qtyDialogProduct.description && (
               <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">{qtyDialogProduct.description}</div>
             )}
             <input
-              type="number"
+                  type="number"
               className="border rounded px-3 sm:px-4 py-2 w-full mb-4 text-sm sm:text-base dark:bg-gray-700 dark:text-white dark:border-gray-600"
               value={qtyDialogQty}
               onChange={e => setQtyDialogQty(e.target.value)}
               min={isDecimalUnit(qtyDialogProduct.unit || 'PCS') ? '0.001' : '1'}
               step={isDecimalUnit(qtyDialogProduct.unit || 'PCS') ? '0.001' : '1'}
-              autoFocus
+                  autoFocus
               onKeyDown={e => { if (e.key === 'Enter') handleQtyDialogConfirm(); }}
             />
             {qtyDialogError && (
@@ -877,15 +877,15 @@ export default function QuickPOS() {
                 {isDecimalUnit(qtyDialogProduct.unit || 'PCS')
                   ? 'Enter a valid decimal quantity (e.g., 1.25)'
                   : 'Enter a valid whole number quantity (e.g., 2)'}
-              </div>
-            )}
+                  </div>
+                )}
             <div className="flex gap-2 sm:gap-4">
               <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500" onClick={() => setIsQtyDialogOpen(false)}>Cancel</button>
               <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm sm:text-base" onClick={handleQtyDialogConfirm}>Add to Cart</button>
             </div>
           </div>
-        </div>
-      )}
+              </div>
+            )}
 
       {/* Payment Dialog - Properly Aligned */}
       {isPaymentDialogOpen && (
@@ -918,7 +918,7 @@ export default function QuickPOS() {
                   </div>
                 </>
               )}
-              {paymentMethod === 'card' && (
+            {paymentMethod === 'card' && (
                 <>
                   <div className="mb-4">
                     <label className="block text-gray-700 font-semibold mb-2 text-base">Amount <span className="text-red-600">*</span></label>
@@ -936,7 +936,7 @@ export default function QuickPOS() {
                     <input
                       type="text"
                       className="border rounded px-3 py-2 w-full text-base"
-                      value={cardTransactionId}
+                  value={cardTransactionId}
                       onChange={e => setCardTransactionId(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { handleTransactionComplete(); setIsPaymentDialogOpen(false); } }}
                     />
@@ -952,10 +952,10 @@ export default function QuickPOS() {
                     value={cashAmount}
                     onChange={e => setCashAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                     onKeyDown={e => { if (e.key === 'Enter') { handleTransactionComplete(); setIsPaymentDialogOpen(false); } }}
-                    autoFocus
-                  />
-                </div>
-              )}
+                  autoFocus
+                />
+              </div>
+            )}
               <div className="flex gap-4 mt-6">
                 <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded text-base" onClick={() => setIsPaymentDialogOpen(false)}>Cancel</button>
                 <button className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded flex items-center justify-center gap-3 text-base" onClick={() => { handleTransactionComplete(); setIsPaymentDialogOpen(false); }}>
@@ -979,10 +979,10 @@ export default function QuickPOS() {
                     }}
                   >{key}</button>
                 ))}
-              </div>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
       )}
     </div>
   );

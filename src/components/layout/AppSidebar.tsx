@@ -171,19 +171,21 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/settings" className={getNavCls}>
-                    <Settings className="w-5 h-5" />
-                    {state !== "collapsed" && (
-                      <div className="flex flex-col">
-                        <span className="font-medium">Settings</span>
-                        <span className="text-xs text-sidebar-foreground/70">App Configuration</span>
-                      </div>
-                    )}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                   {userRole && (userRole === 'company' || userRole === 'admin' || userRole === 'super_admin') && (
+                     <SidebarMenuItem>
+                       <SidebarMenuButton asChild>
+                         <NavLink to={userRole === 'company' ? "/settings" : "/admin"} className={getNavCls}>
+                           <Settings className="w-5 h-5" />
+                           {state !== "collapsed" && (
+                             <div className="flex flex-col">
+                               <span className="font-medium">Settings</span>
+                               <span className="text-xs text-sidebar-foreground/70">{userRole === 'company' ? 'Company Settings' : 'Admin Settings'}</span>
+                             </div>
+                           )}
+                         </NavLink>
+                       </SidebarMenuButton>
+                     </SidebarMenuItem>
+                   )}
               
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">

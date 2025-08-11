@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Receipt, Printer, Bell, Info } from "lucide-react";
 import { getEmployeeIdSettings, setEmployeeIdSettings } from "@/lib/storage";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface CompanySettings {
   name: string;
@@ -55,6 +57,8 @@ interface GeneralSettings {
 
 const Settings = () => {
   const { toast } = useToast();
+  const { adminAuth, employee } = useAuth();
+  const navigate = useNavigate();
   
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
     name: "Ace-Bill",
@@ -105,6 +109,16 @@ const Settings = () => {
   const [empIdNext, setEmpIdNext] = useState(1);
 
   useEffect(() => {
+    // Guard: super admin/company platform admin should not access company settings
+    if (adminAuth.isAuthenticated) {
+      navigate('/admin/settings', { replace: true });
+      return;
+    }
+    // Non-admin employees cannot access settings
+    if (employee && (employee.position?.toLowerCase() !== 'admin')) {
+      navigate('/unauthorized', { replace: true });
+      return;
+    }
     // Load settings from localStorage
     const savedCompany = localStorage.getItem('company_settings');
     const savedPrint = localStorage.getItem('print_settings');
