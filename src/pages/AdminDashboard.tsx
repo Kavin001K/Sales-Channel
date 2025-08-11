@@ -488,10 +488,20 @@ export default function AdminDashboard() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                            onClick={() => navigate(`/admin/company/${company.id}`, { state: { startEditing: true } })}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                            onClick={() => navigate(`/admin/company/${company.id}`, { state: { tab: 'settings' } })}
+                          >
                             <Settings className="w-4 h-4" />
                           </Button>
                         </div>

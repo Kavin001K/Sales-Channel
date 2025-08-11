@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -102,6 +102,7 @@ interface Employee {
 export default function CompanyDetails() {
   const { companyId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation() as any;
   const [company, setCompany] = useState<Company | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -112,6 +113,20 @@ export default function CompanyDetails() {
   useEffect(() => {
     loadCompanyData();
   }, [companyId]);
+
+  // Handle navigation state to auto-open editing or specific tab
+  useEffect(() => {
+    if (location?.state?.startEditing) {
+      setIsEditing(true);
+    }
+    if (location?.state?.tab === 'settings') {
+      // If you add controlled Tabs, you could set default here; for now, scroll to settings section
+      const el = document.getElementById('company-settings-section');
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 200);
+      }
+    }
+  }, [location?.state]);
 
   const loadCompanyData = () => {
     // Mock company data
@@ -677,7 +692,7 @@ export default function CompanyDetails() {
                 Manage company configuration and preferences
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent id="company-settings-section">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
