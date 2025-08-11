@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Receipt, Printer, Bell, Info } from "lucide-react";
+import { getEmployeeIdSettings, setEmployeeIdSettings } from "@/lib/storage";
 
 interface CompanySettings {
   name: string;
@@ -99,6 +100,9 @@ const Settings = () => {
 
   const [companyErrors, setCompanyErrors] = useState<string[]>([]);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
+  const [empIdPrefix, setEmpIdPrefix] = useState("EMP");
+  const [empIdDigits, setEmpIdDigits] = useState(3);
+  const [empIdNext, setEmpIdNext] = useState(1);
 
   useEffect(() => {
     // Load settings from localStorage
@@ -111,6 +115,14 @@ const Settings = () => {
     if (savedPrint) setPrintSettings(JSON.parse(savedPrint));
     if (savedNotifications) setNotificationSettings(JSON.parse(savedNotifications));
     if (savedGeneral) setGeneralSettings(JSON.parse(savedGeneral));
+
+    // Load employee ID settings from backend/local
+    (async () => {
+      const s = await getEmployeeIdSettings();
+      setEmpIdPrefix(s.prefix);
+      setEmpIdDigits(s.digits);
+      setEmpIdNext(s.next);
+    })();
   }, []);
 
   const saveCompanySettings = () => {
@@ -392,6 +404,37 @@ const Settings = () => {
                   <span role="img" aria-label="Save">💾</span> {isSavingCompany ? 'Saving...' : 'Save'}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Employee Settings */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Employee ID Settings</CardTitle>
+              <CardDescription>Customize how new Employee IDs are generated.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="emp-prefix">Prefix</Label>
+                  <Input id="emp-prefix" value={empIdPrefix} onChange={(e) => setEmpIdPrefix(e.target.value.toUpperCase())} />
+                </div>
+                <div>
+                  <Label htmlFor="emp-digits">Digits</Label>
+                  <Input id="emp-digits" type="number" min={2} max={6} value={empIdDigits} onChange={(e) => setEmpIdDigits(Math.max(2, Math.min(6, parseInt(e.target.value||"3"))))} />
+                </div>
+                <div>
+                  <Label htmlFor="emp-next">Next Number</Label>
+                  <Input id="emp-next" type="number" min={1} value={empIdNext} onChange={(e) => setEmpIdNext(Math.max(1, parseInt(e.target.value||"1")))} />
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">Preview: {empIdPrefix}{String(empIdNext).padStart(empIdDigits, '0')}</div>
+              <Button onClick={async () => {
+                await setEmployeeIdSettings({ prefix: empIdPrefix, digits: empIdDigits, next: empIdNext });
+                toast({ title: "Employee ID settings saved" });
+              }}>Save Employee ID Settings</Button>
             </CardContent>
           </Card>
         </TabsContent>

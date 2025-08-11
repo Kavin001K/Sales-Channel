@@ -813,7 +813,7 @@ export default function QuickPOS() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 border-t dark:border-gray-700 space-y-3">
+          <div className="p-3 border-t dark:border-gray-700 space-y-3 pb-24 md:pb-3">
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Total</span>
               <span className="font-bold">₹{cart.getTotal().toFixed(2)}</span>
@@ -825,6 +825,22 @@ export default function QuickPOS() {
             </div>
             <button 
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded text-lg" 
+              onClick={handleGenerateBill}
+              disabled={cart.items.length === 0}
+            >
+              Generate Bill
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky mobile checkout bar */}
+      <div className="md:hidden fixed bottom-14 left-0 right-0 z-40">
+        <div className="mx-3 mb-3 shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 p-3 flex items-center justify-between">
+            <div className="text-sm font-semibold dark:text-white">Total: ₹{cart.getTotal().toFixed(2)}</div>
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded disabled:opacity-50"
               onClick={handleGenerateBill}
               disabled={cart.items.length === 0}
             >

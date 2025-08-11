@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron electron/main.js",
@@ -15,7 +16,9 @@
     "electron:pack": "npm run build && electron-builder --dir",
     "electron:dist": "npm run build && electron-builder",
     "setup-db": "node scripts/setup-database.cjs",
-    "reset-db": "node scripts/reset-database.cjs"
+    "reset-db": "node scripts/reset-database.cjs",
+    "prelaunch:check": "npm run typecheck && node scripts/prelaunch-check.cjs",
+    "prelaunch:build": "npm run build && npm run electron:pack"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

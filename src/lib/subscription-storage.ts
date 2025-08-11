@@ -26,12 +26,34 @@ export const saveSubscribedCompany = async (company: Company): Promise<void> => 
 
 // --- Company Subscriptions ---
 export const getCompanySubscriptions = async (): Promise<CompanySubscription[]> => {
-  // This would need to be implemented in the database service
-  return [];
+  // Fallback to local list from companyService for demo
+  const companies = await companyService.getAll();
+  const plans = await subscriptionPlanService.getAll();
+  // Map companies to a synthetic active subscription if planId exists in company meta (optional)
+  return companies
+    .filter((c: any) => c.subscriptionPlanId)
+    .map((c: any) => ({
+      companyId: c.id,
+      planId: c.subscriptionPlanId,
+      startDate: c.subscriptionStart || new Date(),
+      endDate: c.subscriptionEnd || new Date(Date.now() + 30*24*3600*1000),
+      status: 'active',
+      tokensUsed: 0
+    }));
 };
 export const getSubscriptionByCompany = async (companyId: string): Promise<CompanySubscription | undefined> => {
-  // This would need to be implemented in the database service
-  return undefined;
+  // Try subscription service if available in future; otherwise infer from company record
+  const companies = await companyService.getAll();
+  const c: any = companies.find((x: any) => x.id === companyId);
+  if (!c || !c.subscriptionPlanId) return undefined;
+  return {
+    companyId: c.id,
+    planId: c.subscriptionPlanId,
+    startDate: c.subscriptionStart || new Date(),
+    endDate: c.subscriptionEnd || new Date(Date.now() + 30*24*3600*1000),
+    status: 'active',
+    tokensUsed: 0
+  };
 };
 export const assignSubscriptionToCompany = async (companyId: string, planId: string): Promise<void> => {
   const plans = await subscriptionPlanService.getAll();
@@ -50,9 +72,12 @@ export const assignSubscriptionToCompany = async (companyId: string, planId: str
     status: 'active',
     tokensUsed: 0,
   };
-
-  // This would need to be implemented in the database service
-  console.log('Assigning subscription:', newSubscription);
+  // Persist minimal subscription metadata onto company until full service exists
+  await companyService.update(companyId, {
+    subscriptionPlanId: planId,
+    subscriptionStart: now,
+    subscriptionEnd: endDate,
+  } as any);
 };
 
 // --- Support Tickets ---
