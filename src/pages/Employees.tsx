@@ -17,6 +17,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isCustomRoleDialogOpen, setIsCustomRoleDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState({
     id: '',
@@ -24,7 +25,8 @@ export default function Employees() {
     name: '',
     email: '',
     phone: '',
-    role: 'cashier' as 'admin' | 'manager' | 'cashier',
+    role: 'cashier' as 'admin' | 'manager' | 'cashier' | 'custom',
+    customRoleName: '',
     hourlyRate: '',
     permissions: {
       canProcessSales: false,
@@ -37,6 +39,11 @@ export default function Employees() {
       canVoidTransactions: false
     }
   });
+
+  const [customRoles, setCustomRoles] = useState<Array<{
+    name: string;
+    permissions: typeof formData.permissions;
+  }>>([]);
 
   useEffect(() => {
     loadEmployees();
@@ -63,6 +70,7 @@ export default function Employees() {
       email: '',
       phone: '',
       role: 'cashier',
+      customRoleName: '',
       hourlyRate: '',
       permissions: {
         canProcessSales: false,
@@ -77,7 +85,7 @@ export default function Employees() {
     });
   };
 
-  const handleRoleChange = (role: 'admin' | 'manager' | 'cashier') => {
+  const handleRoleChange = (role: 'admin' | 'manager' | 'cashier' | 'custom') => {
     const rolePermissions = {
       admin: {
         canProcessSales: true,
@@ -108,6 +116,16 @@ export default function Employees() {
         canProcessRefunds: false,
         canApplyDiscounts: true,
         canVoidTransactions: false
+      },
+      custom: {
+        canProcessSales: false,
+        canManageProducts: false,
+        canManageCustomers: false,
+        canViewReports: false,
+        canManageEmployees: false,
+        canProcessRefunds: false,
+        canApplyDiscounts: false,
+        canVoidTransactions: false
       }
     };
 
@@ -116,6 +134,39 @@ export default function Employees() {
       role,
       permissions: rolePermissions[role]
     });
+  };
+
+  const handleCustomRoleSelect = (roleName: string) => {
+    const customRole = customRoles.find(role => role.name === roleName);
+    if (customRole) {
+      setFormData({
+        ...formData,
+        role: 'custom',
+        customRoleName: roleName,
+        permissions: customRole.permissions
+      });
+    }
+  };
+
+  const handleCreateCustomRole = () => {
+    if (!formData.customRoleName.trim()) {
+      toast.error('Please enter a custom role name');
+      return;
+    }
+
+    const newCustomRole = {
+      name: formData.customRoleName,
+      permissions: formData.permissions
+    };
+
+    setCustomRoles(prev => [...prev, newCustomRole]);
+    toast.success(`Custom role "${formData.customRoleName}" created successfully`);
+    setIsCustomRoleDialogOpen(false);
+  };
+
+  const handleDeleteCustomRole = (roleName: string) => {
+    setCustomRoles(prev => prev.filter(role => role.name !== roleName));
+    toast.success(`Custom role "${roleName}" deleted successfully`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -131,12 +182,17 @@ export default function Employees() {
       return;
     }
 
+    if (formData.role === 'custom' && !formData.customRoleName.trim()) {
+      toast.error('Please enter a custom role name');
+      return;
+    }
+
     const employee: Employee = {
       id: formData.id,
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      role: formData.role,
+      role: formData.role === 'custom' ? formData.customRoleName : formData.role,
       permissions: formData.permissions,
       hourlyRate: parseFloat(formData.hourlyRate) || 0,
       isActive: true,
@@ -168,6 +224,7 @@ export default function Employees() {
       email: employee.email,
       phone: employee.phone || '',
       role: employee.role,
+      customRoleName: '', // Clear custom role name when editing a standard role
       hourlyRate: employee.hourlyRate?.toString() || '',
       permissions: employee.permissions
     });
@@ -185,7 +242,7 @@ export default function Employees() {
       case 'admin': return 'destructive';
       case 'manager': return 'default';
       case 'cashier': return 'secondary';
-      default: return 'outline';
+      default: return 'outline'; // Custom roles will use outline variant
     }
   };
 
@@ -271,6 +328,7 @@ export default function Employees() {
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="cashier">Cashier</SelectItem>
+                      <SelectItem value="custom">Custom Role</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -285,6 +343,53 @@ export default function Employees() {
                   />
                 </div>
               </div>
+
+              {formData.role === 'custom' && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="customRoleName">Custom Role Name *</Label>
+                    <Input
+                      id="customRoleName"
+                      value={formData.customRoleName}
+                      onChange={(e) => setFormData({...formData, customRoleName: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  {/* Custom Role Management */}
+                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold">Custom Role Management</h3>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCustomRoleDialogOpen(true)}
+                      >
+                        Manage Custom Roles
+                      </Button>
+                    </div>
+                    
+                    {customRoles.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Saved Custom Roles:</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {customRoles.map((role) => (
+                            <Badge
+                              key={role.name}
+                              variant={formData.customRoleName === role.name ? "default" : "secondary"}
+                              className="cursor-pointer"
+                              onClick={() => handleCustomRoleSelect(role.name)}
+                            >
+                              {role.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <Label className="text-base font-medium">Permissions</Label>
@@ -492,6 +597,185 @@ export default function Employees() {
           )}
         </CardContent>
       </Card>
+
+      {/* Custom Role Management Dialog */}
+      <Dialog open={isCustomRoleDialogOpen} onOpenChange={setIsCustomRoleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage Custom Roles</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* Create New Custom Role */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-4">Create New Custom Role</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="newRoleName">Role Name</Label>
+                  <Input
+                    id="newRoleName"
+                    placeholder="Enter custom role name"
+                    value={formData.customRoleName}
+                    onChange={(e) => setFormData({...formData, customRoleName: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Permissions</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canProcessSales"
+                          checked={formData.permissions.canProcessSales}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canProcessSales: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canProcessSales" className="text-sm">Process Sales</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canManageProducts"
+                          checked={formData.permissions.canManageProducts}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canManageProducts: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canManageProducts" className="text-sm">Manage Products</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canManageCustomers"
+                          checked={formData.permissions.canManageCustomers}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canManageCustomers: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canManageCustomers" className="text-sm">Manage Customers</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canViewReports"
+                          checked={formData.permissions.canViewReports}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canViewReports: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canViewReports" className="text-sm">View Reports</Label>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canManageEmployees"
+                          checked={formData.permissions.canManageEmployees}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canManageEmployees: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canManageEmployees" className="text-sm">Manage Employees</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canProcessRefunds"
+                          checked={formData.permissions.canProcessRefunds}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canProcessRefunds: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canProcessRefunds" className="text-sm">Process Refunds</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canApplyDiscounts"
+                          checked={formData.permissions.canApplyDiscounts}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canApplyDiscounts: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canApplyDiscounts" className="text-sm">Apply Discounts</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="canVoidTransactions"
+                          checked={formData.permissions.canVoidTransactions}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, canVoidTransactions: checked as boolean }
+                            })
+                          }
+                        />
+                        <Label htmlFor="canVoidTransactions" className="text-sm">Void Transactions</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={handleCreateCustomRole} className="w-full">
+                  Create Custom Role
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing Custom Roles */}
+            {customRoles.length > 0 && (
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold mb-4">Existing Custom Roles</h3>
+                <div className="space-y-3">
+                  {customRoles.map((role) => (
+                    <div key={role.name} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{role.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {Object.values(role.permissions).filter(Boolean).length} permissions enabled
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCustomRoleSelect(role.name)}
+                        >
+                          Use
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteCustomRole(role.name)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

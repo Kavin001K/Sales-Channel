@@ -21,10 +21,27 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('month');
 
   useEffect(() => {
-    setTransactions(getTransactions());
-    setProducts(getProducts());
-    setEmployees(getEmployees());
-    setCustomers(getCustomers());
+    const loadData = async () => {
+      try {
+        const transactionsData = await getTransactions();
+        const productsData = await getProducts();
+        const employeesData = await getEmployees();
+        const customersData = await getCustomers();
+        
+        setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
+        setProducts(Array.isArray(productsData) ? productsData : []);
+        setEmployees(Array.isArray(employeesData) ? employeesData : []);
+        setCustomers(Array.isArray(customersData) ? customersData : []);
+      } catch (error) {
+        console.error('Error loading reports data:', error);
+        setTransactions([]);
+        setProducts([]);
+        setEmployees([]);
+        setCustomers([]);
+      }
+    };
+    
+    loadData();
   }, []);
 
   const filteredTransactions = useMemo(() => {
