@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import SubscriptionAdminDashboard from "./pages/SubscriptionAdminDashboard";
+import AdminSettings from "./pages/AdminSettings";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
@@ -89,6 +90,11 @@ function AppRoutes() {
             <Route path="/admin" element={
               <AdminOnly>
                 <AdminDashboard />
+              </AdminOnly>
+            } />
+            <Route path="/admin/settings" element={
+              <AdminOnly>
+                <AdminSettings />
               </AdminOnly>
             } />
             
