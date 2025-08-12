@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ShoppingCart, Zap, X, CreditCard, DollarSign, Keyboard, Printer, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,6 +24,7 @@ export default function Sales() {
   const [qtyInputs, setQtyInputs] = useState<{ [productId: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [productId: string]: string }>({});
   const inputRefs = useRef<{ [productId: string]: HTMLInputElement | null }>({});
+  const { company, employee } = useAuth();
 
   // Add state for search type and invoice type
   const [searchType, setSearchType] = useState<'serial' | 'code' | 'name'>('name');
@@ -429,7 +431,9 @@ export default function Sales() {
                     // Create transaction and complete
                     const transaction: Transaction = {
                       id: `TXN-${Date.now()}`,
-                      companyId: '',
+                      companyId: company?.id || '',
+                      employeeId: employee?.id,
+                      employeeName: employee?.name,
                       items: cart.items.map(item => ({
                         productId: item.product.id,
                         name: item.product.name,

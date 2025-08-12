@@ -139,28 +139,28 @@ function AppRoutes() {
             
             {/* POS Operations - Available to company users and employees */}
             <Route path="/sales" element={
-              <CashierOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
                 <Sales />
-              </CashierOnly>
+              </ProtectedRoute>
             } />
             
             <Route path="/quickpos" element={
-              <CashierOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
                 <QuickPOS />
-              </CashierOnly>
+              </ProtectedRoute>
             } />
             
             <Route path="/pos" element={
-              <CashierOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
                 <QuickPOS />
-              </CashierOnly>
+              </ProtectedRoute>
             } />
             
             {/* Inventory Management - Available to company admins and managers */}
             <Route path="/products" element={
-              <ManagerOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager']}>
                 <Products />
-              </ManagerOnly>
+              </ProtectedRoute>
             } />
             
             {/* Customer Management - Available to company users and software company employees */}
@@ -179,16 +179,16 @@ function AppRoutes() {
             
             {/* Transaction History - Available to company users */}
             <Route path="/transactions" element={
-              <CashierOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
                 <Transactions />
-              </CashierOnly>
+              </ProtectedRoute>
             } />
             
             {/* Reports - Available to company admins and managers */}
             <Route path="/reports" element={
-              <ManagerOnly>
+              <ProtectedRoute allowedRoles={['company','admin','manager']}>
                 <Reports />
-              </ManagerOnly>
+              </ProtectedRoute>
             } />
             
             {/* Settings - Available to all authenticated users */}

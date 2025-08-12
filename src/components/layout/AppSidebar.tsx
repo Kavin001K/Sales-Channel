@@ -69,9 +69,14 @@ export function AppSidebar() {
 
   const userRole = getUserRole();
 
-  // Filter navigation items based on user role
+  // Filter navigation items based on user role and context
+  // If not authenticated as software-company admin, hide all "/admin" routes
+  const isSoftwareAdminContext = !!(adminAuth.isAuthenticated && adminAuth.adminUser);
   const navigationItems = allNavigationItems.filter(item => {
     if (!userRole) return false;
+    if (!isSoftwareAdminContext && item.url.startsWith('/admin')) {
+      return false;
+    }
     return item.roles.includes(userRole);
   });
 

@@ -61,7 +61,7 @@ export default function QuickPOS() {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const { companySettings, printSettings } = useSettings();
-  const { logout } = useAuth();
+  const { logout, company, employee } = useAuth();
 
   // Add state for search type and invoice type
   const [searchType, setSearchType] = useState<'serial' | 'code' | 'name'>('name');
@@ -360,8 +360,9 @@ export default function QuickPOS() {
     setIsProcessing(true);
 
     let customerId = '';
-    const customers = getCustomers();
-    let customer = customers.find(c => c.phone === customerPhone);
+    const customers = await getCustomers();
+    const customersArray = Array.isArray(customers) ? customers : [];
+    let customer = customersArray.find(c => c.phone === customerPhone);
     if (!customer) {
       customer = {
         id: Date.now().toString() + Math.random().toString(36),
@@ -375,11 +376,11 @@ export default function QuickPOS() {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      saveCustomer(customer);
+      await saveCustomer(customer);
     } else {
       // Update GST if changed
       if (invoiceType === 'tax' && customerGST && customer.gst !== customerGST) {
-        updateCustomer(customer.id, { gst: customerGST });
+        await updateCustomer(customer.id, { gst: customerGST });
       }
     }
     customerId = customer.id;
@@ -389,7 +390,16 @@ export default function QuickPOS() {
 
     const transaction: Transaction = {
       id: Date.now().toString(),
-      items: cart.items,
+      companyId: company?.id || '',
+      customerId: customerId,
+      employeeId: employee?.id,
+      items: cart.items.map(ci => ({
+        productId: ci.product.id,
+        name: ci.product.name,
+        price: ci.product.price,
+        quantity: ci.quantity,
+        total: ci.product.price * ci.quantity
+      })),
       subtotal: cart.getTotal(),
       tax: 0,
       discount: 0,
@@ -406,7 +416,7 @@ export default function QuickPOS() {
       },
       timestamp: new Date(),
       customerName: customerName || undefined,
-      customerId: customerId,
+      employeeName: employee?.name,
       receipt: paymentMethod === 'card' ? cardTransactionId : undefined,
       status: 'completed'
     };
@@ -471,6 +481,7 @@ export default function QuickPOS() {
             <div>Receipt #: ${transaction.id.slice(-8)}</div>
             <div>Date: ${new Date(transaction.timestamp).toLocaleDateString()}</div>
             <div>Time: ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
+            ${employee?.name ? `<div>Cashier: ${employee.name}</div>` : ''}
             ${transaction.customerName ? `<div>Customer: ${transaction.customerName}</div>` : ''}
           </div>
           <table>

@@ -46,10 +46,14 @@ export function MobileNav() {
 
   const userRole = getUserRole();
 
-  // Filter navigation items based on user role and limit to 5 items for mobile
+  // Filter navigation items based on user role and context
+  const isSoftwareAdminContext = !!(adminAuth.isAuthenticated && adminAuth.adminUser);
   const mobileNavItems = allMobileNavItems
     .filter(item => {
       if (!userRole) return false;
+      if (!isSoftwareAdminContext && item.url.startsWith('/admin')) {
+        return false;
+      }
       return item.roles.includes(userRole);
     })
     .slice(0, 5); // Limit to 5 items for mobile
