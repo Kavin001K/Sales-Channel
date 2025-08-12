@@ -62,6 +62,9 @@ export default function QuickPOS() {
   const searchRef = useRef<HTMLInputElement>(null);
   const exitRequestedRef = useRef(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
+  const [isReprintDialogOpen, setIsReprintDialogOpen] = useState(false);
+  const [reprintCount, setReprintCount] = useState(0);
   const { companySettings, printSettings } = useSettings();
   const { logout, company, employee } = useAuth();
 
@@ -358,6 +361,155 @@ export default function QuickPOS() {
     };
   };
 
+  // Reprint function with proper labeling
+  const handleReprint = (transaction: Transaction) => {
+    const newReprintCount = reprintCount + 1;
+    setReprintCount(newReprintCount);
+    
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - ${transaction.id} (REPRINT)</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: auto !important; }
+            body {
+              font-family: 'Courier New', monospace;
+              width: ${printSettings.paperSize === 'thermal' ? '300px' : '210mm'};
+              margin: 0 auto;
+              padding: 10px 0 0 0;
+              font-size: ${printSettings.fontSize}px;
+              line-height: 1.3;
+              background: #fff;
+              color: #000;
+            }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; color: #000; }
+            .store-name { font-size: ${printSettings.fontSize + 4}px; font-weight: bold; color: #000; letter-spacing: 1px; }
+            .company-detail { font-weight: bold; color: #000; white-space: pre-line; }
+            .reprint-notice { 
+              background: #ff0000; 
+              color: #fff; 
+              text-align: center; 
+              padding: 5px; 
+              font-weight: bold; 
+              margin: 5px 0;
+              border: 2px solid #000;
+            }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+            th, td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            th { font-weight: bold; background: #fff; }
+            .amount, .total-bold { font-weight: bold; }
+            .total-row td { border-top: 2px solid #000; font-weight: bold; }
+            .footer { text-align: center; margin-top: 15px; font-size: ${printSettings.fontSize - 2}px; color: #000; font-weight: bold; }
+            @media print {
+              html, body { height: auto !important; }
+              body { margin: 0; padding: 0; background: #fff; color: #000; }
+              .no-print { display: none; }
+              .footer { margin-bottom: 0; color: #000; font-weight: bold; }
+              @page { margin: 0; size: auto; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
+          <div class="header">
+            <div class="store-name">${companySettings.name}</div>
+            <div class="company-detail">${(companySettings.address || '').replace(/\n/g, '<br/>')}</div>
+            <div class="company-detail">Phone: ${companySettings.phone}</div>
+            ${companySettings.email ? `<div class="company-detail">Email: ${companySettings.email}</div>` : ''}
+          </div>
+          <div style="margin: 10px 0 10px 0; color: #000; font-weight: bold; text-align: left;">
+            <div>Receipt #: ${transaction.id.slice(-8)}</div>
+            <div>Date: ${new Date(transaction.timestamp).toLocaleDateString()}</div>
+            <div>Time: ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
+            <div>Reprint Date: ${new Date().toLocaleDateString()}</div>
+            <div>Reprint Time: ${new Date().toLocaleTimeString()}</div>
+            ${employee?.name ? `<div>Cashier: ${employee.name}</div>` : ''}
+            ${transaction.customerName ? `<div>Customer: ${transaction.customerName}</div>` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:32px">S.No</th>
+                <th>PARTICULARS</th>
+                <th style="width:40px">QTY</th>
+                <th style="width:70px">RATE<br/>M.R.P.</th>
+                <th style="width:70px">AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${transaction.items.map((item, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>
+                    ₹${item.price.toFixed(2)}
+                    ${item.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.mrp.toFixed(2)}</span>` : ''}
+                  </td>
+                  <td class="amount">₹${(item.price * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div style="border-top: 2px solid #000; margin: 8px 0;"></div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Total Qty : ${transaction.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            <span>Sub Total <span style="font-weight: bold;">₹${transaction.subtotal.toFixed(2)}</span></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Round Off</span>
+            <span>₹${(Math.round(transaction.total) - transaction.total).toFixed(2)}</span>
+          </div>
+          <div class="total-row" style="font-size: ${printSettings.fontSize + 2}px; margin-top: 8px;">
+            <table style="width:100%; border:none;">
+              <tr>
+                <td style="border:none; text-align:right; font-weight:bold;">TOTAL</td>
+                <td style="border:none; text-align:right; font-weight:bold;">₹ ${Math.round(transaction.total).toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Total Savings</span>
+            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.mrp || 0) - item.price) * item.quantity, 0)).toFixed(2)}</span>
+          </div>
+          <div style="margin: 10px 0; color: #000; font-weight: bold;">
+            <div><strong>Payment:</strong> ${transaction.paymentMethod === 'cash' ? 'Cash' : transaction.paymentMethod === 'card' ? 'Credit/Debit Card' : 'Mobile Wallet'}</div>
+            ${transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount ? `
+              <div>Cash: ₹${transaction.paymentDetails.cashAmount.toFixed(2)}</div>
+              ${transaction.paymentDetails.change ? `<div>Change: ₹${transaction.paymentDetails.change.toFixed(2)}</div>` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount ? `
+              <div>Card: ₹${transaction.paymentDetails.cardAmount.toFixed(2)}</div>
+              ${transaction.receipt ? `<div>Txn ID: ${transaction.receipt}</div>` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'wallet' ? `<div>Wallet Payment</div>` : ''}
+          </div>
+          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
+          <div class="footer">
+            <div>${printSettings.header}</div>
+            <div>${printSettings.footer}</div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(invoiceHTML);
+      printWindow.document.close();
+      printWindow.onload = function() {
+        printWindow.print();
+        setTimeout(() => {
+          try { printWindow.close(); } catch {}
+        }, 300);
+      };
+    }
+    
+    toast.success(`Receipt reprinted successfully! (Reprint #${newReprintCount})`);
+  };
+
   // On bill generation, if customer not found, create new customer
   const handleTransactionComplete = async (skipPrint = false) => {
     if (cart.items.length === 0) {
@@ -451,7 +603,16 @@ export default function QuickPOS() {
     });
     setProducts(updatedProducts);
 
-    saveTransaction(transaction);
+    // Save transaction with cloud backup
+    try {
+      await saveTransaction(transaction);
+      setLastTransaction(transaction);
+      toast.success('Transaction saved and backed up to cloud successfully!');
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      toast.error('Transaction saved locally but cloud backup failed');
+    }
+    
     const invoiceHTML = `
       <!DOCTYPE html>
       <html>
@@ -745,7 +906,7 @@ export default function QuickPOS() {
       {/* Main Content - No Scroll */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* Category Sidebar */}
-        <div className="bg-blue-800 text-white w-44 flex-shrink-0 overflow-y-auto">
+        <div className="bg-blue-800 text-white w-40 md:w-44 flex-shrink-0 overflow-y-auto">
           <div className="font-bold text-sm mb-2 tracking-widest text-center p-2 border-b border-blue-700">CATEGORY</div>
           <div className="p-2">
             {categories.map(category => (
@@ -770,7 +931,7 @@ export default function QuickPOS() {
         </div>
         
         {/* Product Grid */}
-        <div className="flex-1 p-2 overflow-hidden flex flex-col">
+        <div className="flex-1 min-w-0 p-2 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-auto rounded shadow bg-white dark:bg-gray-800">
           <table className="w-full table-fixed text-left">
             <colgroup>
@@ -815,7 +976,7 @@ export default function QuickPOS() {
         </div>
 
         {/* Cart/Invoice Panel */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700 flex flex-col flex-shrink-0">
+        <div className="w-72 lg:w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700 flex flex-col flex-shrink-0">
           <div className="p-3 border-b dark:border-gray-700">
             <div className="flex gap-3">
               <input
