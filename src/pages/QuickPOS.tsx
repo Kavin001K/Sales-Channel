@@ -332,7 +332,7 @@ export default function QuickPOS() {
 
   // Calculate totals
   const subtotal = useMemo(() => {
-    return cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   }, [cart.items]);
 
   const tax = useMemo(() => {
@@ -382,18 +382,19 @@ export default function QuickPOS() {
           totalSpent: 0,
           visits: 0,
           visitCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
       } else if (customer) {
-        await updateCustomer({
+        await updateCustomer(customer.id, {
           ...customer,
           name: customerName,
           gst: customerGST,
           totalSpent: (customer.totalSpent || 0) + total,
           visits: (customer.visits || 0) + 1,
           visitCount: (customer.visitCount || 0) + 1,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date()
         });
       }
 
@@ -401,7 +402,7 @@ export default function QuickPOS() {
       for (const item of cart.items) {
         const product = products.find(p => p.id === item.product.id);
         if (product) {
-          await updateProduct({
+          await updateProduct(product.id, {
             ...product,
             stock: Math.max(0, product.stock - item.quantity)
           });
@@ -550,19 +551,19 @@ export default function QuickPOS() {
             {filteredProducts.map((product) => (
               <Card
                 key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300"
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-400 hover:scale-105"
                 onClick={() => handleProductSelect(product)}
               >
-                <CardContent className="p-4 text-center">
-                  <div className="h-16 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Package className="h-8 w-8 text-gray-400" />
+                <CardContent className="p-3 text-center">
+                  <div className="h-20 bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                    <Package className="h-10 w-10 text-blue-500" />
                   </div>
-                  <h3 className="font-semibold text-sm mb-2 line-clamp-2">{product.name}</h3>
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2 text-gray-800">{product.name}</h3>
                   <p className="text-xs text-gray-500 mb-2">{product.sku || product.barcode}</p>
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-green-600">₹{product.price.toFixed(2)}</span>
                     <Badge variant={product.stock > 0 ? "default" : "destructive"} className="text-xs">
-                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                      {product.stock > 0 ? `${product.stock}` : 'Out'}
                     </Badge>
                   </div>
                 </CardContent>
