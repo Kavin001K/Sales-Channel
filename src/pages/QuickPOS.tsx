@@ -292,16 +292,16 @@ export default function QuickPOS() {
               </tr>
             </thead>
             <tbody>
-              ${transaction.items.map((item, idx) => `
+            ${transaction.items.map((item, idx) => `
                 <tr>
                   <td>${idx + 1}</td>
-                  <td>${item.product.name}</td>
+                  <td>${item.name}</td>
                   <td>${item.quantity}</td>
                   <td>
-                    ₹${item.product.price.toFixed(2)}
-                    ${item.product.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.product.mrp.toFixed(2)}</span>` : ''}
+                    ₹${item.price.toFixed(2)}
+                    ${item.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.mrp.toFixed(2)}</span>` : ''}
                   </td>
-                  <td class="amount">₹${(item.product.price * item.quantity).toFixed(2)}</td>
+                  <td class="amount">₹${(item.price * item.quantity).toFixed(2)}</td>
                 </tr>
             `).join('')}
             </tbody>
@@ -325,7 +325,7 @@ export default function QuickPOS() {
           </div>
           <div style="display: flex; justify-content: space-between; font-weight: bold;">
             <span>Total Savings</span>
-            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.product.mrp || 0) - item.product.price) * item.quantity, 0)).toFixed(2)}</span>
+            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.mrp || 0) - item.price) * item.quantity, 0)).toFixed(2)}</span>
           </div>
           <div style="margin: 10px 0; color: #000; font-weight: bold;">
             <div><strong>Payment:</strong> ${transaction.paymentMethod === 'cash' ? 'Cash' : transaction.paymentMethod === 'card' ? 'Credit/Debit Card' : 'Mobile Wallet'}</div>
@@ -382,12 +382,14 @@ export default function QuickPOS() {
     if (!customer) {
       customer = {
         id: Date.now().toString() + Math.random().toString(36),
+        companyId: company?.id || '',
         name: customerName,
         phone: customerPhone,
         gst: customerGST,
         loyaltyPoints: 0,
         totalSpent: 0,
         visits: 1,
+        visitCount: 1,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -514,13 +516,13 @@ export default function QuickPOS() {
               ${transaction.items.map((item, idx) => `
                 <tr>
                   <td>${idx + 1}</td>
-                  <td>${item.product.name}</td>
+                  <td>${item.name}</td>
                   <td>${item.quantity}</td>
                   <td>
-                    ₹${item.product.price.toFixed(2)}
-                    ${item.product.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.product.mrp.toFixed(2)}</span>` : ''}
+                    ₹${item.price.toFixed(2)}
+                    ${item.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.mrp.toFixed(2)}</span>` : ''}
                   </td>
-                  <td class="amount">₹${(item.product.price * item.quantity).toFixed(2)}</td>
+                  <td class="amount">₹${(item.price * item.quantity).toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -544,7 +546,7 @@ export default function QuickPOS() {
           </div>
           <div style="display: flex; justify-content: space-between; font-weight: bold;">
             <span>Total Savings</span>
-            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.product.mrp || 0) - item.product.price) * item.quantity, 0)).toFixed(2)}</span>
+            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.mrp || 0) - item.price) * item.quantity, 0)).toFixed(2)}</span>
           </div>
           <div style="margin: 10px 0; color: #000; font-weight: bold;">
             <div><strong>Payment:</strong> ${transaction.paymentMethod === 'cash' ? 'Cash' : transaction.paymentMethod === 'card' ? 'Credit/Debit Card' : 'Mobile Wallet'}</div>
@@ -681,10 +683,10 @@ export default function QuickPOS() {
           </div>
         </div>
       )}
-      {/* Top Bar - Fully Compact */}
-      <div className="flex items-center gap-4 bg-white dark:bg-gray-800 border-b px-4 py-2 flex-shrink-0">
+      {/* Top Bar - Compact & Aligned */}
+      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border-b px-3 py-1.5 flex-shrink-0">
         {/* Logo/Company Name */}
-        <div className="text-xl font-bold text-blue-700 dark:text-blue-400">ACE-PoS</div>
+        <div className="text-lg font-semibold text-blue-700 dark:text-blue-400 tracking-wide">ACE-PoS</div>
 
         {/* Search Radio Buttons */}
         <div className="hidden lg:flex items-center gap-4">
@@ -704,10 +706,10 @@ export default function QuickPOS() {
 
         {/* Search Input */}
         <div className="flex-1 flex justify-start">
-          <div className="flex items-center w-full max-w-lg">
+          <div className="flex items-center w-full max-w-xl">
             <input
               ref={searchRef}
-              className="border rounded-l px-3 py-2 w-full text-base focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              className="border rounded-l px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               placeholder="Search by Item Name..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -735,21 +737,21 @@ export default function QuickPOS() {
             </button>
           </div>
           <div className="text-right">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-            <div className="text-lg font-mono font-bold dark:text-white">{currentTime.toLocaleTimeString()}</div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{currentTime.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+            <div className="text-base font-mono font-bold dark:text-white">{currentTime.toLocaleTimeString()}</div>
           </div>
         </div>
-                  </div>
+      </div>
       {/* Main Content - No Scroll */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* Category Sidebar */}
-        <div className="bg-blue-800 text-white w-48 flex-shrink-0 overflow-y-auto">
-          <div className="font-bold text-base mb-3 tracking-widest text-center p-3 border-b border-blue-700">CATEGORY</div>
-          <div className="p-3">
+        <div className="bg-blue-800 text-white w-44 flex-shrink-0 overflow-y-auto">
+          <div className="font-bold text-sm mb-2 tracking-widest text-center p-2 border-b border-blue-700">CATEGORY</div>
+          <div className="p-2">
             {categories.map(category => (
               <button
                 key={category}
-                className={`w-full text-left px-3 py-2 mb-2 transition font-medium text-sm rounded ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700'}`}
+                className={`w-full text-left px-3 py-2 mb-1 transition font-medium text-sm rounded ${selectedCategory === category ? 'bg-white text-blue-800' : 'hover:bg-blue-700/60'}`}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -768,14 +770,21 @@ export default function QuickPOS() {
         </div>
         
         {/* Product Grid */}
-        <div className="flex-1 p-3 overflow-y-auto">
-          <table className="w-full bg-white dark:bg-gray-800 rounded shadow text-left">
+        <div className="flex-1 p-2 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-auto rounded shadow bg-white dark:bg-gray-800">
+          <table className="w-full table-fixed text-left">
+            <colgroup>
+              <col style={{ width: '55%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '10%' }} />
+            </colgroup>
             <thead>
-              <tr className="bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
-                <th className="px-4 py-3 text-sm font-semibold">Item Name</th>
-                <th className="px-4 py-3 text-sm font-semibold hidden sm:table-cell">Tag</th>
-                <th className="px-4 py-3 text-sm font-semibold">Sale Price</th>
-                <th className="px-4 py-3 text-sm font-semibold hidden md:table-cell">MRP</th>
+              <tr className="sticky top-0 z-10 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
+                <th className="px-3 py-2 text-xs font-semibold">Item Name</th>
+                <th className="px-3 py-2 text-xs font-semibold hidden sm:table-cell">Tag</th>
+                <th className="px-3 py-2 text-xs font-semibold">Sale Price</th>
+                <th className="px-3 py-2 text-xs font-semibold hidden md:table-cell">MRP</th>
               </tr>
             </thead>
             <tbody>
@@ -788,20 +797,21 @@ export default function QuickPOS() {
                     className="hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer border-b dark:border-gray-700"
                     onClick={() => handleProductSelect(product)}
                   >
-                    <td className="px-4 py-3 font-semibold text-sm dark:text-white">
+                    <td className="px-3 py-2 font-medium text-sm dark:text-white">
                       <div className="truncate" title={product.name}>
                         {product.name}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">{product.sku || '-'}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm hidden sm:table-cell dark:text-white truncate">{product.sku || '-'}</td>
-                    <td className="px-4 py-3 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
+                    <td className="px-3 py-2 text-sm hidden sm:table-cell dark:text-white truncate">{product.sku || '-'}</td>
+                    <td className="px-3 py-2 text-sm dark:text-white">₹{product.price.toFixed(2)}</td>
+                    <td className="px-3 py-2 text-sm hidden md:table-cell dark:text-white">{product.mrp ? `₹${product.mrp.toFixed(2)}` : '-'}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Cart/Invoice Panel */}
@@ -848,7 +858,7 @@ export default function QuickPOS() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 border-t dark:border-gray-700 space-y-3 pb-24 md:pb-3">
+          <div className="p-3 border-t dark:border-gray-700 space-y-3 pb-20 md:pb-3">
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Total</span>
               <span className="font-bold">₹{cart.getTotal().toFixed(2)}</span>

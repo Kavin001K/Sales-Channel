@@ -10,6 +10,8 @@ export interface Product {
   barcode?: string;
   sku?: string;
   image?: string;
+  unit?: string;
+  mrp?: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +32,9 @@ export interface Customer {
   totalSpent: number;
   visitCount: number;
   lastVisit?: Date;
+  gst?: string;
+  loyaltyPoints?: number;
+  visits?: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -78,11 +83,17 @@ export interface Transaction {
   discount: number;
   total: number;
   paymentMethod?: string;
+  paymentDetails?: {
+    cashAmount?: number;
+    change?: number;
+    cardAmount?: number;
+  };
   status: 'pending' | 'completed' | 'cancelled' | 'refunded';
   notes?: string;
   timestamp: Date;
   customerName?: string;
   employeeName?: string;
+  receipt?: string;
 }
 
 export interface TransactionItem {
@@ -91,6 +102,7 @@ export interface TransactionItem {
   price: number;
   quantity: number;
   total: number;
+  mrp?: number;
 }
 
 export interface CartItem {
