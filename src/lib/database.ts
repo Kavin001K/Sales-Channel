@@ -20,20 +20,6 @@ const isValidColumnName = (columnName: string): boolean => {
   return validColumns.includes(columnName.toLowerCase());
 };
 
-// Security: Input validation and sanitization
-const sanitizeInput = (input: any): any => {
-  if (typeof input === 'string') {
-    return input.trim().replace(/[<>]/g, '');
-  }
-  return input;
-};
-
-// Security: Validate SQL table names to prevent injection
-const isValidTableName = (tableName: string): boolean => {
-  const validTables = ['products', 'customers', 'employees', 'transactions', 'companies', 'users', 'subscription_plans', 'company_subscriptions', 'support_tickets', 'support_messages'];
-  return validTables.includes(tableName.toLowerCase());
-};
-
 const isOnline = () => navigator.onLine;
 
 const getElectronApi = () => {

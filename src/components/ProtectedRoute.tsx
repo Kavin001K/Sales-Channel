@@ -97,6 +97,18 @@ export const AdminOnly: React.FC<{ children: React.ReactNode }> = ({ children })
   </ProtectedRoute>
 );
 
+export const CompanyOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute allowedRoles={['company']}>
+    {children}
+  </ProtectedRoute>
+);
+
+export const EmployeeOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute allowedRoles={['admin', 'manager', 'cashier']}>
+    {children}
+  </ProtectedRoute>
+);
+
 export const CashierOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ProtectedRoute allowedRoles={['cashier', 'manager', 'admin']}>
     {children}
