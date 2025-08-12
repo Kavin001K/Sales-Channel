@@ -10,7 +10,11 @@ const sanitizeInput = (input: any): any => {
 
 // Security: Validate SQL table names to prevent injection
 const isValidTableName = (tableName: string): boolean => {
-  const validTables = ['products', 'customers', 'employees', 'transactions', 'companies', 'users', 'subscription_plans', 'company_subscriptions', 'support_tickets', 'support_messages'];
+  const validTables = [
+    'products', 'customers', 'employees', 'transactions', 'companies', 'users', 
+    'subscription_plans', 'company_subscriptions', 'support_tickets', 'support_messages',
+    'company', 'product', 'customer', 'employee', 'transaction' // Allow singular forms too
+  ];
   return validTables.includes(tableName.toLowerCase());
 };
 
@@ -100,12 +104,13 @@ const cloudDB = {
 };
 
 const createHybridService = (entityName: string, localKey: string) => {
-  // Security: Validate entity name
-  if (!isValidTableName(entityName + 's')) {
+  // Security: Validate entity name - handle both singular and plural forms
+  const singularEntityName = entityName.replace(/s$/, ''); // Remove trailing 's' if present
+  const pluralEntityName = `${singularEntityName}s`;
+  
+  if (!isValidTableName(pluralEntityName)) {
     throw new Error(`Invalid entity name: ${entityName}`);
   }
-  
-  const pluralEntityName = `${entityName}s`;
 
   return {
     getAll: async (companyId?: string) => {
