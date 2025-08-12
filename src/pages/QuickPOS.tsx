@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
+import PaymentDialog from '@/components/PaymentDialog';
 
 export default function QuickPOS() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -349,8 +350,8 @@ export default function QuickPOS() {
     return cats;
   }, [products]);
 
-  // Handle payment
-  const handlePayment = useCallback(async () => {
+  // Handle payment dialog open
+  const handlePaymentClick = useCallback(() => {
     if (cart.items.length === 0) {
       toast.error('Cart is empty');
       return;
@@ -361,7 +362,13 @@ export default function QuickPOS() {
       return;
     }
 
+    setIsPaymentDialogOpen(true);
+  }, [cart.items.length, customerName]);
+
+  // Handle payment completion from dialog
+  const handlePaymentComplete = useCallback(async (paymentData: any) => {
     setIsProcessing(true);
+    setIsPaymentDialogOpen(false);
 
     try {
       // Create or update customer
@@ -425,7 +432,7 @@ export default function QuickPOS() {
         tax,
         discount: 0,
         total,
-        paymentMethod,
+        paymentMethod: paymentData.paymentMethod,
         status: 'completed',
         customerName,
         timestamp: new Date(),
@@ -435,9 +442,9 @@ export default function QuickPOS() {
         notes: '',
         receipt: '',
         paymentDetails: {
-          cashAmount: paymentMethod === 'cash' ? total : 0,
-          change: paymentMethod === 'cash' ? (parseFloat(cashAmount) - total) : 0,
-          cardAmount: paymentMethod === 'card' ? total : 0
+          cashAmount: paymentData.paymentMethod === 'cash' ? paymentData.amount : 0,
+          change: paymentData.change || 0,
+          cardAmount: paymentData.paymentMethod === 'card' ? paymentData.amount : 0
         }
       };
 
@@ -449,7 +456,7 @@ export default function QuickPOS() {
     } finally {
       setIsProcessing(false);
     }
-  }, [cart, customerName, customerPhone, customerGST, total, paymentMethod, cashAmount, products, company, employee, handleTransactionComplete]);
+  }, [cart, customerName, customerPhone, customerGST, total, products, company, employee, handleTransactionComplete]);
 
   // Handle logout
   const handleLogout = useCallback(() => {
@@ -471,10 +478,13 @@ export default function QuickPOS() {
       )}
 
       {/* Header - Streamlined with Logo, Search, and Session Info */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between shadow-lg">
         {/* Logo */}
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-blue-600">ACE-POS</h1>
+          <div className="bg-white bg-opacity-20 rounded-lg p-2 mr-3">
+            <Package className="h-6 w-6 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold">ACE-POS</h1>
         </div>
 
         {/* Universal Search Bar */}
@@ -487,38 +497,39 @@ export default function QuickPOS() {
               placeholder="Search by Item Name, Code, or Tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 text-lg"
+              className="pl-10 pr-4 py-3 text-lg bg-white text-gray-800 border-0 rounded-lg shadow-sm focus:ring-2 focus:ring-white focus:ring-opacity-50"
             />
           </div>
         </div>
 
         {/* Session Info */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
             <User className="h-4 w-4" />
-            <span>{employee?.name || 'Cashier'}</span>
+            <span className="font-medium">{employee?.name || 'Cashier'}</span>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
             <Calendar className="h-4 w-4" />
             <span>{currentTime.toLocaleDateString()}</span>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
             <Clock className="h-4 w-4" />
             <span>{currentTime.toLocaleTimeString()}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="tax-included" className="text-sm">Tax Inc.</Label>
+          <div className="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-1">
+            <Label htmlFor="tax-included" className="text-sm font-medium cursor-pointer">Tax Inc.</Label>
             <Switch
               id="tax-included"
               checked={taxIncluded}
               onCheckedChange={setTaxIncluded}
+              className="data-[state=checked]:bg-white data-[state=unchecked]:bg-white bg-opacity-30"
             />
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className="flex items-center space-x-1"
+            className="flex items-center space-x-1 bg-white text-blue-600 hover:bg-gray-100 border-white"
           >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
@@ -527,15 +538,19 @@ export default function QuickPOS() {
       </div>
 
       {/* Category Tabs - Horizontal */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2">
-        <div className="flex space-x-2 overflow-x-auto">
+      <div className="bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
+        <div className="flex space-x-3 overflow-x-auto">
           {categories.map((category) => (
             <Button
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(category)}
-              className="whitespace-nowrap"
+              className={`whitespace-nowrap font-medium transition-all duration-200 ${
+                selectedCategory === category 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'hover:bg-blue-50 hover:text-blue-600 border-blue-200'
+              }`}
             >
               {category}
             </Button>
@@ -617,39 +632,42 @@ export default function QuickPOS() {
             ) : (
               <div className="space-y-3">
                 {cart.items.map((item, index) => (
-                  <div key={index} className="bg-white p-3 rounded-lg border">
+                  <div key={index} className="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-sm">{item.product.name}</h4>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm text-gray-800">{item.product.name}</h4>
+                        <p className="text-xs text-gray-500">₹{item.product.price.toFixed(2)} each</p>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => cart.removeItem(item.product.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 bg-gray-50 rounded-lg px-2 py-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => cart.updateQuantity(item.product.id, Math.max(0, item.quantity - 1))}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                        <span className="text-sm font-bold w-8 text-center text-gray-800">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-green-50 hover:text-green-600"
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <span className="font-semibold">₹{(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-bold text-green-600">₹{(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
@@ -659,34 +677,34 @@ export default function QuickPOS() {
 
           {/* Totals and Payment */}
           <div className="bg-white p-4 border-t border-gray-200">
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="font-medium">₹{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Tax (18%):</span>
-                <span>₹{tax.toFixed(2)}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tax (18%):</span>
+                <span className="font-medium">₹{tax.toFixed(2)}</span>
               </div>
               <Separator />
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
+              <div className="flex justify-between text-xl font-bold text-green-600">
+                <span>TOTAL:</span>
                 <span>₹{total.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Payment Method */}
             <div className="mb-4">
-              <Label className="text-sm font-medium mb-2 block">Payment Method</Label>
+              <Label className="text-sm font-medium mb-3 block text-gray-700">Payment Method</Label>
               <RadioGroup value={paymentMethod} onValueChange={(value: 'cash' | 'card' | 'wallet') => setPaymentMethod(value)}>
-                <div className="flex space-x-4">
-                  <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
                     <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash" className="text-sm">Cash</Label>
+                    <Label htmlFor="cash" className="text-sm font-medium cursor-pointer">Cash</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
                     <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="text-sm">Card</Label>
+                    <Label htmlFor="card" className="text-sm font-medium cursor-pointer">Card</Label>
                   </div>
                 </div>
               </RadioGroup>
@@ -694,11 +712,18 @@ export default function QuickPOS() {
 
             {/* Pay Button */}
             <Button
-              onClick={handlePayment}
+              onClick={handlePaymentClick}
               disabled={cart.items.length === 0 || isProcessing}
-              className="w-full py-3 text-lg font-semibold"
+              className="w-full py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {isProcessing ? 'Processing...' : `PAY ₹${total.toFixed(2)}`}
+              {isProcessing ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                `PAY ₹${total.toFixed(2)}`
+              )}
             </Button>
 
             {/* Reprint Button */}
@@ -796,6 +821,15 @@ export default function QuickPOS() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Dialog */}
+      <PaymentDialog
+        isOpen={isPaymentDialogOpen}
+        onClose={() => setIsPaymentDialogOpen(false)}
+        onPaymentComplete={handlePaymentComplete}
+        billAmount={total}
+        customerName={customerName}
+      />
     </div>
   );
 }

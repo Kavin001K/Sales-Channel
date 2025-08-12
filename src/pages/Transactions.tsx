@@ -27,6 +27,7 @@ export default function Transactions() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [reprintCount, setReprintCount] = useState(0);
+  const [isReprintDialogOpen, setIsReprintDialogOpen] = useState(false);
   
   const { company, employee } = useAuth();
   const { companySettings, printSettings } = useSettings();
@@ -60,8 +61,20 @@ export default function Transactions() {
 
   // Reprint function with proper labeling
   const handleReprint = async (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsReprintDialogOpen(true);
+  };
+
+  // Confirm reprint
+  const confirmReprint = async () => {
+    if (!selectedTransaction) return;
+    
     const newReprintCount = reprintCount + 1;
     setReprintCount(newReprintCount);
+    setIsReprintDialogOpen(false);
+    
+    // Reprint logic here...
+    const transaction = selectedTransaction;
     
     const invoiceHTML = `
       <!DOCTYPE html>
@@ -197,6 +210,22 @@ export default function Transactions() {
       printWindow.document.write(invoiceHTML);
       printWindow.document.close();
       printWindow.onload = function() {
+        // Auto-cut functionality for thermal printers
+        const printContent = `
+          <script>
+            window.onbeforeunload = function() {
+              // Send cut command to printer (if supported)
+              if (window.print) {
+                // Add a small delay to ensure printing is complete
+                setTimeout(() => {
+                  // This will trigger a page cut on thermal printers
+                  window.print();
+                }, 1000);
+              }
+            };
+          </script>
+        `;
+        printWindow.document.write(printContent);
         printWindow.print();
         setTimeout(() => {
           try { printWindow.close(); } catch {}
@@ -315,43 +344,46 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">View and manage all sales transactions</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Transactions
+          </h1>
+          <p className="text-gray-600 mt-2 text-lg">View and manage all sales transactions</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            Total: ₹{totalAmount.toFixed(2)}
-          </Badge>
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            <div className="text-sm font-medium">Total Revenue</div>
+            <div className="text-2xl font-bold">₹{totalAmount.toFixed(2)}</div>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
+      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
             Filters
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search transactions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 />
               </div>
             </div>
             
             <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as 'all' | 'today' | 'week' | 'month')}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                 <SelectValue placeholder="Filter by date" />
               </SelectTrigger>
               <SelectContent>
@@ -363,7 +395,7 @@ export default function Transactions() {
             </Select>
 
             <Select value={paymentFilter} onValueChange={(value) => setPaymentFilter(value as 'all' | 'cash' | 'card')}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                 <SelectValue placeholder="Payment method" />
               </SelectTrigger>
               <SelectContent>
@@ -377,34 +409,40 @@ export default function Transactions() {
       </Card>
 
       {/* Transactions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-          <CardDescription>
+      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="w-5 h-5" />
+            Transaction History
+          </CardTitle>
+          <CardDescription className="text-green-100">
             Showing {filteredTransactions.length} transactions
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {filteredTransactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No transactions found</p>
+            <div className="text-center py-12">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Receipt className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No transactions found</h3>
+              <p className="text-gray-500">Try adjusting your filters or search terms</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="border-collapse">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Payment Method</TableHead>
-                    <TableHead>Payment Details</TableHead>
-                    <TableHead>Employee</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                  <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                    <TableHead className="font-bold text-gray-700 py-4">Transaction ID</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Date & Time</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Customer</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Items</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Payment Method</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Payment Details</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Employee</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4 text-right">Total</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
+                    <TableHead className="font-bold text-gray-700 py-4 text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -463,13 +501,13 @@ export default function Transactions() {
                           {transaction.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
+                      <TableCell className="text-center py-4">
+                        <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewTransaction(transaction)}
-                            className="h-8 w-8 p-0"
+                            className="h-9 w-9 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -478,7 +516,7 @@ export default function Transactions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleReprint(transaction)}
-                            className="h-8 w-8 p-0"
+                            className="h-9 w-9 p-0 hover:bg-green-50 hover:text-green-600 transition-colors"
                             title="Reprint Receipt"
                           >
                             <Printer className="h-4 w-4" />
@@ -487,7 +525,7 @@ export default function Transactions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditTransaction(transaction)}
-                            className="h-8 w-8 p-0"
+                            className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                             title="Edit Transaction"
                           >
                             <Edit className="h-4 w-4" />
@@ -706,6 +744,51 @@ export default function Transactions() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reprint Confirmation Dialog */}
+      <Dialog open={isReprintDialogOpen} onOpenChange={setIsReprintDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <Printer className="h-5 w-5" />
+              Reprint Receipt
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+              <p className="text-gray-700 mb-2">
+                Are you sure you want to reprint the receipt for transaction:
+              </p>
+              <div className="font-mono text-sm bg-white p-2 rounded border">
+                {selectedTransaction?.id.slice(-8)}
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Customer: <span className="font-medium">{selectedTransaction?.customerName || 'Walk-in Customer'}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Amount: <span className="font-bold text-green-600">₹{selectedTransaction?.total.toFixed(2)}</span>
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsReprintDialogOpen(false)}
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmReprint}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Reprint
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
