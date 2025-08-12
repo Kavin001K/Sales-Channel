@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
+import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
 import PaymentDialog from '@/components/PaymentDialog';
 
 export default function QuickPOS() {
@@ -232,7 +233,39 @@ export default function QuickPOS() {
     try {
       await saveTransaction(transaction);
       setLastTransaction(transaction);
-      toast.success('Transaction completed successfully!');
+      
+      // Prepare receipt data for thermal printer
+      const receiptData: ReceiptData = {
+        companyName: companySettings?.name || 'ACE Business',
+        companyAddress: companySettings?.address || '',
+        companyPhone: companySettings?.phone || '',
+        companyTaxId: companySettings?.taxId || '',
+        receiptNumber: transaction.id,
+        date: new Date(transaction.timestamp).toLocaleString(),
+        cashierName: employee?.name || 'Unknown',
+        customerName: transaction.customerName || 'Walk-in Customer',
+        items: transaction.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        })),
+        subtotal: transaction.subtotal,
+        tax: transaction.tax,
+        total: transaction.total,
+        paymentMethod: transaction.paymentMethod,
+        paymentDetails: transaction.paymentDetails
+      };
+
+      // Print receipt using thermal printer service
+      const printSuccess = await thermalPrinter.printReceipt(receiptData);
+      
+      if (printSuccess) {
+        toast.success('Transaction completed and receipt printed successfully!');
+      } else {
+        toast.success('Transaction completed successfully!');
+        toast.warning('Receipt printing failed - check printer connection');
+      }
       
       // Clear cart and form
       cart.clearCart();
@@ -254,7 +287,7 @@ export default function QuickPOS() {
       console.error('Error saving transaction:', error);
       toast.error('Failed to save transaction');
     }
-  }, [cart, ensureFullscreen]);
+  }, [cart, ensureFullscreen, companySettings, employee]);
 
   // Handle reprint
   const handleReprint = useCallback(() => {
