@@ -45,11 +45,13 @@ export default function QuickPOS() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'wallet'>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerGST, setCustomerGST] = useState('');
+  const [currentCustomer, setCurrentCustomer] = useState<any>(null);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(false);
   const [cashAmount, setCashAmount] = useState('');
   const [cardTransactionId, setCardTransactionId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [customerGST, setCustomerGST] = useState('');
   const [taxIncluded, setTaxIncluded] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   
@@ -156,6 +158,95 @@ export default function QuickPOS() {
     setIsQtyDialogOpen(false);
   }, [qtyDialogProduct, qtyDialogQty, mainQty, subQty, cart]);
 
+  // Customer management functions
+  const handleCustomerPhoneChange = useCallback(async (phone: string) => {
+    setCustomerPhone(phone);
+    
+    // Only search if phone number is valid (at least 10 digits)
+    if (phone.length >= 10 && /^\d+$/.test(phone)) {
+      setIsCustomerLoading(true);
+      try {
+        // Search for existing customer by phone
+        const customers = await getCustomers(company?.id || '');
+        const existingCustomer = customers.find(c => c.phone === phone);
+        
+        if (existingCustomer) {
+          // Customer found - populate fields
+          setCurrentCustomer(existingCustomer);
+          setCustomerName(existingCustomer.name || '');
+          setCustomerGST(existingCustomer.gst || '');
+          toast.success(`Customer found: ${existingCustomer.name}`);
+        } else {
+          // No customer found - clear current customer
+          setCurrentCustomer(null);
+          // Keep the name if user has already entered it
+          if (!customerName) {
+            setCustomerName('');
+          }
+          setCustomerGST('');
+        }
+      } catch (error) {
+        console.error('Error searching for customer:', error);
+        toast.error('Error searching for customer');
+      } finally {
+        setIsCustomerLoading(false);
+      }
+    } else {
+      // Clear customer if phone is invalid
+      setCurrentCustomer(null);
+    }
+  }, [company?.id, customerName]);
+
+  // Auto-create or update customer when transaction is completed
+  const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
+    if (!phone || !name || !company?.id) return;
+
+    try {
+      const customers = await getCustomers(company.id);
+      const existingCustomer = customers.find(c => c.phone === phone);
+      
+      if (existingCustomer) {
+        // Update existing customer
+        const updatedCustomer = {
+          ...existingCustomer,
+          name: name,
+          gst: gst,
+          visitCount: (existingCustomer.visitCount || 0) + 1,
+          lastVisit: new Date()
+        };
+        
+        await updateCustomer(existingCustomer.id, updatedCustomer);
+        setCurrentCustomer(updatedCustomer);
+        toast.success('Customer updated successfully');
+      } else {
+        // Create new customer
+        const newCustomer = {
+          id: `customer_${Date.now()}`,
+          companyId: company.id,
+          name: name,
+          phone: phone,
+          gst: gst,
+          email: '',
+          address: '',
+          isActive: true,
+          visitCount: 1,
+          loyaltyPoints: 0,
+          totalSpent: 0,
+          lastVisit: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await saveCustomer(newCustomer);
+        setCurrentCustomer(newCustomer);
+        toast.success('New customer created successfully');
+      }
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      toast.error('Error saving customer details');
+    }
+  }, [company?.id]);
+
   // Initialize data and fullscreen
   useEffect(() => {
     initializeSampleData();
@@ -234,6 +325,11 @@ export default function QuickPOS() {
       await saveTransaction(transaction);
       setLastTransaction(transaction);
       
+      // Auto-save/update customer information
+      if (customerPhone && customerName) {
+        await handleCustomerSave(customerPhone, customerName, customerGST);
+      }
+      
       // Prepare receipt data for thermal printer
       const receiptData: ReceiptData = {
         companyName: companySettings?.name || 'ACE Business',
@@ -272,6 +368,7 @@ export default function QuickPOS() {
       setCustomerName('');
       setCustomerPhone('');
       setCustomerGST('');
+      setCurrentCustomer(null);
       setCashAmount('');
       setCardTransactionId('');
       
@@ -287,7 +384,7 @@ export default function QuickPOS() {
       console.error('Error saving transaction:', error);
       toast.error('Failed to save transaction');
     }
-  }, [cart, ensureFullscreen, companySettings, employee]);
+  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave]);
 
   // Handle reprint
   const handleReprint = useCallback(async () => {
@@ -627,26 +724,57 @@ export default function QuickPOS() {
         <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col">
           {/* Customer Info */}
           <div className="bg-white p-4 border-b border-gray-200">
-            <h3 className="font-semibold mb-3">Customer Information</h3>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              Customer Information
+              {isCustomerLoading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              )}
+              {currentCustomer && (
+                <Badge variant="secondary" className="text-xs">
+                  Existing Customer
+                </Badge>
+              )}
+            </h3>
             <div className="space-y-3">
               <Input
                 placeholder="Customer Name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="text-sm"
+                disabled={isCustomerLoading}
               />
-              <Input
-                placeholder="Mobile Number"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="text-sm"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Mobile Number"
+                  value={customerPhone}
+                  onChange={(e) => handleCustomerPhoneChange(e.target.value)}
+                  className="text-sm"
+                  disabled={isCustomerLoading}
+                />
+                {currentCustomer && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      Found
+                    </Badge>
+                  </div>
+                )}
+              </div>
               <Input
                 placeholder="GST Number (Optional)"
                 value={customerGST}
                 onChange={(e) => setCustomerGST(e.target.value)}
                 className="text-sm"
+                disabled={isCustomerLoading}
               />
+              {currentCustomer && (
+                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                  <div><strong>Visit Count:</strong> {currentCustomer.visitCount || 0}</div>
+                  <div><strong>Last Visit:</strong> {currentCustomer.lastVisit ? new Date(currentCustomer.lastVisit).toLocaleDateString() : 'Never'}</div>
+                  {currentCustomer.loyaltyPoints > 0 && (
+                    <div><strong>Loyalty Points:</strong> {currentCustomer.loyaltyPoints}</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

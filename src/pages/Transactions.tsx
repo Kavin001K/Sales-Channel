@@ -3,6 +3,7 @@ import { Transaction } from '@/lib/types';
 import { transactionService } from '@/lib/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings } from '@/hooks/useSettings';
+import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,170 +74,48 @@ export default function Transactions() {
     setReprintCount(newReprintCount);
     setIsReprintDialogOpen(false);
     
-    // Reprint logic here...
     const transaction = selectedTransaction;
     
-    const invoiceHTML = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Receipt - ${transaction.id} (REPRINT)</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { height: auto !important; }
-            body {
-              font-family: 'Courier New', monospace;
-              width: ${printSettings.paperSize === 'thermal' ? '300px' : '210mm'};
-              margin: 0 auto;
-              padding: 10px 0 0 0;
-              font-size: ${printSettings.fontSize}px;
-              line-height: 1.3;
-              background: #fff;
-              color: #000;
-            }
-            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; color: #000; }
-            .store-name { font-size: ${printSettings.fontSize + 4}px; font-weight: bold; color: #000; letter-spacing: 1px; }
-            .company-detail { font-weight: bold; color: #000; white-space: pre-line; }
-            .reprint-notice { 
-              background: #ff0000; 
-              color: #fff; 
-              text-align: center; 
-              padding: 5px; 
-              font-weight: bold; 
-              margin: 5px 0;
-              border: 2px solid #000;
-            }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-            th, td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
-            th { font-weight: bold; background: #fff; }
-            .amount, .total-bold { font-weight: bold; }
-            .total-row td { border-top: 2px solid #000; font-weight: bold; }
-            .footer { text-align: center; margin-top: 15px; font-size: ${printSettings.fontSize - 2}px; color: #000; font-weight: bold; }
-            @media print {
-              html, body { height: auto !important; }
-              body { margin: 0; padding: 0; background: #fff; color: #000; }
-              .no-print { display: none; }
-              .footer { margin-bottom: 0; color: #000; font-weight: bold; }
-              @page { margin: 0; size: auto; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
-          <div class="header">
-            <div class="store-name">${companySettings.name}</div>
-            <div class="company-detail">${(companySettings.address || '').replace(/\n/g, '<br/>')}</div>
-            <div class="company-detail">Phone: ${companySettings.phone}</div>
-            ${companySettings.email ? `<div class="company-detail">Email: ${companySettings.email}</div>` : ''}
-          </div>
-          <div style="margin: 10px 0 10px 0; color: #000; font-weight: bold; text-align: left;">
-            <div>Receipt #: ${transaction.id.slice(-8)}</div>
-            <div>Date: ${new Date(transaction.timestamp).toLocaleDateString()}</div>
-            <div>Time: ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
-            <div>Reprint Date: ${new Date().toLocaleDateString()}</div>
-            <div>Reprint Time: ${new Date().toLocaleTimeString()}</div>
-            ${transaction.employeeName ? `<div>Cashier: ${transaction.employeeName}</div>` : ''}
-            ${transaction.customerName ? `<div>Customer: ${transaction.customerName}</div>` : ''}
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width:32px">S.No</th>
-                <th>PARTICULARS</th>
-                <th style="width:40px">QTY</th>
-                <th style="width:70px">RATE<br/>M.R.P.</th>
-                <th style="width:70px">AMOUNT</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${transaction.items.map((item, idx) => `
-                <tr>
-                  <td>${idx + 1}</td>
-                  <td>${item.name}</td>
-                  <td>${item.quantity}</td>
-                  <td>
-                    ₹${item.price.toFixed(2)}
-                    ${item.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.mrp.toFixed(2)}</span>` : ''}
-                  </td>
-                  <td class="amount">₹${(item.price * item.quantity).toFixed(2)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <div style="border-top: 2px solid #000; margin: 8px 0;"></div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>Total Qty : ${transaction.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
-            <span>Sub Total <span style="font-weight: bold;">₹${transaction.subtotal.toFixed(2)}</span></span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>Round Off</span>
-            <span>₹${(Math.round(transaction.total) - transaction.total).toFixed(2)}</span>
-          </div>
-          <div class="total-row" style="font-size: ${printSettings.fontSize + 2}px; margin-top: 8px;">
-            <table style="width:100%; border:none;">
-              <tr>
-                <td style="border:none; text-align:right; font-weight:bold;">TOTAL</td>
-                <td style="border:none; text-align:right; font-weight:bold;">₹ ${Math.round(transaction.total).toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>Total Savings</span>
-            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.mrp || 0) - item.price) * item.quantity, 0)).toFixed(2)}</span>
-          </div>
-          <div style="margin: 10px 0; color: #000; font-weight: bold;">
-            <div><strong>Payment:</strong> ${transaction.paymentMethod === 'cash' ? 'Cash' : transaction.paymentMethod === 'card' ? 'Credit/Debit Card' : 'Mobile Wallet'}</div>
-            ${transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount ? `
-              <div>Cash: ₹${transaction.paymentDetails.cashAmount.toFixed(2)}</div>
-              ${transaction.paymentDetails.change ? `<div>Change: ₹${transaction.paymentDetails.change.toFixed(2)}</div>` : ''}
-            ` : ''}
-            ${transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount ? `
-              <div>Card: ₹${transaction.paymentDetails.cardAmount.toFixed(2)}</div>
-              ${transaction.receipt ? `<div>Txn ID: ${transaction.receipt}</div>` : ''}
-            ` : ''}
-            ${transaction.paymentMethod === 'wallet' ? `<div>Wallet Payment</div>` : ''}
-          </div>
-          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
-          <div class="footer">
-            <div>${printSettings.header}</div>
-            <div>${printSettings.footer}</div>
-          </div>
-        </body>
-      </html>
-    `;
+    // Prepare receipt data for thermal printer
+    const receiptData: ReceiptData = {
+      companyName: companySettings?.name || 'ACE Business',
+      companyAddress: companySettings?.address || '',
+      companyPhone: companySettings?.phone || '',
+      companyTaxId: companySettings?.taxId || '',
+      receiptNumber: transaction.id,
+      date: new Date(transaction.timestamp).toLocaleString(),
+      cashierName: transaction.employeeName || 'Unknown',
+      customerName: transaction.customerName || 'Walk-in Customer',
+      items: transaction.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.total
+      })),
+      subtotal: transaction.subtotal,
+      tax: transaction.tax,
+      total: transaction.total,
+      paymentMethod: transaction.paymentMethod,
+      paymentDetails: transaction.paymentDetails,
+      isReprint: true,
+      reprintCount: newReprintCount
+    };
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(invoiceHTML);
-      printWindow.document.close();
-      printWindow.onload = function() {
-        // Auto-cut functionality for thermal printers
-        const printContent = `
-          <script>
-            window.onbeforeunload = function() {
-              // Send cut command to printer (if supported)
-              if (window.print) {
-                // Add a small delay to ensure printing is complete
-                setTimeout(() => {
-                  // This will trigger a page cut on thermal printers
-                  window.print();
-                }, 1000);
-              }
-            };
-          </script>
-        `;
-        printWindow.document.write(printContent);
-        printWindow.print();
-        setTimeout(() => {
-          try { printWindow.close(); } catch {}
-        }, 300);
-      };
-    }
+    // Print receipt using thermal printer service
+    const printSuccess = await thermalPrinter.printReceipt(receiptData);
     
-    toast({
-      title: "Receipt Reprinted",
-      description: `Receipt reprinted successfully! (Reprint #${newReprintCount})`,
-    });
+    if (printSuccess) {
+      toast({
+        title: "Success",
+        description: `Receipt reprinted successfully! (Reprint #${newReprintCount})`,
+      });
+    } else {
+      toast({
+        title: "Warning",
+        description: "Reprint failed - check printer connection",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewTransaction = (transaction: Transaction) => {
