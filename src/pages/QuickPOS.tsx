@@ -60,6 +60,8 @@ export default function QuickPOS() {
   const cart = useCart();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
+  const exitRequestedRef = useRef(false);
+  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
   const { companySettings, printSettings } = useSettings();
   const { logout, company, employee } = useAuth();
 
@@ -71,6 +73,18 @@ export default function QuickPOS() {
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fullscreen helper that falls back to a user prompt
+  const ensureFullscreen = useCallback(async () => {
+    if (!document.fullscreenEnabled) return;
+    if (document.fullscreenElement) return;
+    try {
+      await document.documentElement.requestFullscreen();
+      setNeedsFullscreenPrompt(false);
+    } catch (err) {
+      setNeedsFullscreenPrompt(true);
+    }
   }, []);
 
   // Function to determine if a unit is decimal-based
@@ -557,9 +571,9 @@ export default function QuickPOS() {
         printWindow.onload = function() {
           printWindow.print();
           setTimeout(() => {
-            printWindow.close();
-            window.location.href = 'https://acebusiness.shop/quickpos';
-          }, 1000);
+            try { printWindow.close(); } catch {}
+            setTimeout(() => { void ensureFullscreen(); }, 50);
+          }, 300);
         };
       }
     }
@@ -575,12 +589,9 @@ export default function QuickPOS() {
     setPaymentMethod('cash');
     setIsProcessing(false);
     
-    // Focus back to search
-    setTimeout(() => searchRef.current?.focus(), 100);
-    // Always re-request fullscreen after billing
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
+    // Focus back to search and ensure fullscreen
+    setTimeout(() => searchRef.current?.focus(), 120);
+    setTimeout(() => { void ensureFullscreen(); }, 120);
   };
 
   const cashAmountFloat = parseFloat(cashAmount) || 0;
@@ -609,54 +620,65 @@ export default function QuickPOS() {
   // 3. Filter products by selected category
   const displayedProducts = selectedCategory === 'All' ? products : products.filter(p => p.category === selectedCategory);
 
-  // Always request fullscreen on mount
+  // Enter fullscreen on mount; lock scroll; ESC exits to dashboard
   useEffect(() => {
-    const requestFullscreen = async () => {
-      try {
-        if (document.fullscreenEnabled && !document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        }
-      } catch (error) {
-        console.log('Fullscreen request failed:', error);
-      }
-    };
-    
-    requestFullscreen();
-    
-    // Handle ESC key to navigate to dashboard
+    const previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    void ensureFullscreen();
+
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        exitRequestedRef.current = true;
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
         navigate('/dashboard');
       }
     };
-    
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [navigate]);
 
-  // Track fullscreen state
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+      document.documentElement.style.overflow = previousOverflow;
+    };
+  }, [ensureFullscreen, navigate]);
+
+  // Track fullscreen state and immediately re-request unless ESC used
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   useEffect(() => {
     const handleFullscreenChange = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
-      
-      // If user exits fullscreen, request it again
       if (!isFull) {
-        setTimeout(() => {
-          document.documentElement.requestFullscreen().catch(() => {});
-        }, 100);
+        if (exitRequestedRef.current) {
+          exitRequestedRef.current = false;
+        } else {
+          void ensureFullscreen();
+        }
       }
     };
-    
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, [ensureFullscreen]);
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {(!isFullscreen && needsFullscreenPrompt) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-white rounded-lg p-6 max-w-md w-[90%] text-center shadow-xl">
+            <h2 className="text-xl font-bold mb-2">Enter Fullscreen POS</h2>
+            <p className="text-sm text-gray-600 mb-4">Your browser blocked automatic fullscreen. Click the button below to continue billing.</p>
+            <button
+              className="px-6 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+              onClick={() => void ensureFullscreen()}
+            >
+              Enter Fullscreen
+            </button>
+          </div>
+        </div>
+      )}
       {/* Top Bar - Fully Compact */}
       <div className="flex items-center gap-4 bg-white dark:bg-gray-800 border-b px-4 py-2 flex-shrink-0">
         {/* Logo/Company Name */}
