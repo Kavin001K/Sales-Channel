@@ -209,11 +209,16 @@ export default function QuickPOS() {
     }
   }, []);
 
-  // Handle ESC key to exit to dashboard
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         exitRequestedRef.current = true;
+        navigate('/dashboard');
+      }
+      // Add Ctrl+D shortcut for dashboard
+      if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
         navigate('/dashboard');
       }
     };
@@ -469,10 +474,27 @@ export default function QuickPOS() {
       {/* Fullscreen Prompt Overlay */}
       {needsFullscreenPrompt && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg text-center">
-            <h3 className="text-lg font-semibold mb-4">Fullscreen Required</h3>
-            <p className="mb-4">Please press F11 or click the fullscreen button to continue.</p>
-            <Button onClick={ensureFullscreen}>Enter Fullscreen</Button>
+          <div className="bg-white p-8 rounded-xl text-center shadow-2xl max-w-md w-full mx-4">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg mb-6">
+              <h3 className="text-xl font-bold">Fullscreen Required</h3>
+            </div>
+            <p className="text-gray-600 mb-6 text-lg">Please press F11 or click the fullscreen button to continue with POS operations.</p>
+            <p className="text-gray-500 mb-4 text-sm">💡 Tip: Press ESC or Ctrl+D anytime to return to Dashboard</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                onClick={ensureFullscreen}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Enter Fullscreen
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+                className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-semibold py-3 px-6 transition-all duration-200"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -528,8 +550,18 @@ export default function QuickPOS() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleLogout}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-1 bg-white text-blue-600 hover:bg-gray-100 border-white"
+            title="Go to Dashboard (ESC or Ctrl+D)"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="flex items-center space-x-1 bg-white text-red-600 hover:bg-red-50 border-white"
           >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
