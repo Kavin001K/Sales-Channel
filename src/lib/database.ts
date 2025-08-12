@@ -1,5 +1,39 @@
 // src/lib/database.ts
 
+// Security: Input validation and sanitization
+const sanitizeInput = (input: any): any => {
+  if (typeof input === 'string') {
+    return input.trim().replace(/[<>]/g, '');
+  }
+  return input;
+};
+
+// Security: Validate SQL table names to prevent injection
+const isValidTableName = (tableName: string): boolean => {
+  const validTables = ['products', 'customers', 'employees', 'transactions', 'companies', 'users', 'subscription_plans', 'company_subscriptions', 'support_tickets', 'support_messages'];
+  return validTables.includes(tableName.toLowerCase());
+};
+
+// Security: Validate column names to prevent injection
+const isValidColumnName = (columnName: string): boolean => {
+  const validColumns = ['id', 'name', 'email', 'phone', 'address', 'companyId', 'employeeId', 'customerId', 'price', 'stock', 'category', 'sku', 'barcode', 'description', 'supplier', 'taxRate', 'isActive', 'createdAt', 'updatedAt', 'position', 'salary', 'hireDate', 'items', 'subtotal', 'tax', 'discount', 'total', 'paymentMethod', 'status', 'notes', 'timestamp', 'customerName', 'employeeName', 'receipt', 'paymentDetails', 'loyaltyPoints', 'totalSpent', 'visits', 'visitCount', 'gst', 'unit', 'mrp'];
+  return validColumns.includes(columnName.toLowerCase());
+};
+
+// Security: Input validation and sanitization
+const sanitizeInput = (input: any): any => {
+  if (typeof input === 'string') {
+    return input.trim().replace(/[<>]/g, '');
+  }
+  return input;
+};
+
+// Security: Validate SQL table names to prevent injection
+const isValidTableName = (tableName: string): boolean => {
+  const validTables = ['products', 'customers', 'employees', 'transactions', 'companies', 'users', 'subscription_plans', 'company_subscriptions', 'support_tickets', 'support_messages'];
+  return validTables.includes(tableName.toLowerCase());
+};
+
 const isOnline = () => navigator.onLine;
 
 const getElectronApi = () => {
@@ -14,6 +48,12 @@ const getElectronApi = () => {
 const localDB = {
   getItem: (key: string) => {
     try {
+      // Security: Validate key
+      if (!key || typeof key !== 'string' || key.length > 100) {
+        console.error('Invalid localStorage key:', key);
+        return null;
+      }
+      
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : null;
     } catch (error) {
@@ -23,6 +63,17 @@ const localDB = {
   },
   setItem: (key: string, value: any) => {
     try {
+      // Security: Validate key and value
+      if (!key || typeof key !== 'string' || key.length > 100) {
+        console.error('Invalid localStorage key:', key);
+        return;
+      }
+      
+      if (value === undefined || value === null) {
+        localStorage.removeItem(key);
+        return;
+      }
+      
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.error(`Error setting item ${key} in localStorage`, error);
@@ -32,119 +83,241 @@ const localDB = {
 
 const cloudDB = {
   query: async (text: string, params?: any[]) => {
-    const electronAPI = getElectronApi();
-    if (!electronAPI) {
-      throw new Error("Electron API is not available.");
+    try {
+      // Security: Validate SQL query
+      if (!text || typeof text !== 'string') {
+        throw new Error("Invalid SQL query");
+      }
+      
+      // Security: Prevent SQL injection by validating table names
+      const tableMatch = text.match(/FROM\s+(\w+)/i);
+      if (tableMatch && !isValidTableName(tableMatch[1])) {
+        throw new Error("Invalid table name in query");
+      }
+      
+      // Security: Validate parameters
+      if (params && !Array.isArray(params)) {
+        throw new Error("Invalid parameters format");
+      }
+      
+      const electronAPI = getElectronApi();
+      if (!electronAPI) {
+        throw new Error("Electron API is not available.");
+      }
+      
+      return electronAPI.dbQuery(text, params);
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
     }
-    return electronAPI.dbQuery(text, params);
   }
 };
 
 const createHybridService = (entityName: string, localKey: string) => {
+  // Security: Validate entity name
+  if (!isValidTableName(entityName + 's')) {
+    throw new Error(`Invalid entity name: ${entityName}`);
+  }
+  
   const pluralEntityName = `${entityName}s`;
 
   return {
     getAll: async (companyId?: string) => {
-      if (isOnline() && getElectronApi()) {
-        try {
-          let query = `SELECT * FROM ${pluralEntityName}`;
-          let params: any[] = [];
-          
-          if (companyId) {
-            query += ` WHERE companyId = $1`;
-            params.push(companyId);
+      try {
+        // Security: Validate companyId
+        if (companyId && (typeof companyId !== 'string' || companyId.length > 100)) {
+          console.error('Invalid companyId:', companyId);
+          return [];
+        }
+        
+        if (isOnline() && getElectronApi()) {
+          try {
+            let query = `SELECT * FROM ${pluralEntityName}`;
+            let params: any[] = [];
+            
+            if (companyId) {
+              query += ` WHERE companyId = $1`;
+              params.push(sanitizeInput(companyId));
+            }
+            
+            const data = await cloudDB.query(query, params);
+            
+            // Security: Validate returned data
+            if (Array.isArray(data)) {
+              localDB.setItem(localKey, data);
+              return data;
+            } else {
+              console.error('Invalid data format returned from cloud database');
+              throw new Error('Invalid data format');
+            }
+          } catch (error) {
+            console.warn(`Could not fetch ${pluralEntityName} from cloud, falling back to local.`, error);
+            const localData = localDB.getItem(localKey) || [];
+            if (companyId) {
+              return localData.filter((item: any) => item.companyId === companyId);
+            }
+            return localData;
           }
-          
-          const data = await cloudDB.query(query, params);
-          localDB.setItem(localKey, data);
-          return data;
-        } catch (error) {
-          console.warn(`Could not fetch ${pluralEntityName} from cloud, falling back to local.`, error);
+        } else {
           const localData = localDB.getItem(localKey) || [];
           if (companyId) {
             return localData.filter((item: any) => item.companyId === companyId);
           }
           return localData;
         }
-      } else {
-        const localData = localDB.getItem(localKey) || [];
-        if (companyId) {
-          return localData.filter((item: any) => item.companyId === companyId);
-        }
-        return localData;
+      } catch (error) {
+        console.error(`Error in getAll for ${pluralEntityName}:`, error);
+        return [];
       }
     },
     
     getById: async (id: string, companyId?: string) => {
-       if (isOnline() && getElectronApi()) {
-        try {
-          let query = `SELECT * FROM ${pluralEntityName} WHERE id = $1`;
-          let params = [id];
-          
-          if (companyId) {
-            query += ` AND companyId = $2`;
-            params.push(companyId);
-          }
-          
-          const data = await cloudDB.query(query, params);
-          return data[0] || null;
-        } catch (error) {
-          console.warn(`Could not fetch ${entityName} from cloud, falling back to local.`, error);
+      try {
+        // Security: Validate id and companyId
+        if (!id || typeof id !== 'string' || id.length > 100) {
+          console.error('Invalid id:', id);
+          return null;
         }
+        
+        if (companyId && (typeof companyId !== 'string' || companyId.length > 100)) {
+          console.error('Invalid companyId:', companyId);
+          return null;
+        }
+        
+        if (isOnline() && getElectronApi()) {
+          try {
+            let query = `SELECT * FROM ${pluralEntityName} WHERE id = $1`;
+            let params = [sanitizeInput(id)];
+            
+            if (companyId) {
+              query += ` AND companyId = $2`;
+              params.push(sanitizeInput(companyId));
+            }
+            
+            const data = await cloudDB.query(query, params);
+            return data[0] || null;
+          } catch (error) {
+            console.warn(`Could not fetch ${entityName} from cloud, falling back to local.`, error);
+          }
+        }
+        
+        const allItems = localDB.getItem(localKey) || [];
+        let item = allItems.find((item: any) => item.id === id);
+        if (companyId && item) {
+          item = item.companyId === companyId ? item : null;
+        }
+        return item || null;
+      } catch (error) {
+        console.error(`Error in getById for ${entityName}:`, error);
+        return null;
       }
-      const allItems = localDB.getItem(localKey) || [];
-      let item = allItems.find((item: any) => item.id === id);
-      if (companyId && item) {
-        item = item.companyId === companyId ? item : null;
-      }
-      return item || null;
     },
 
     add: async (item: any) => {
-        const newItem = { ...item, id: item.id || `local_${Date.now()}`, createdAt: new Date(), updatedAt: new Date() };
-      if (isOnline() && getElectronApi()) {
-        try {
+      try {
+        // Security: Validate item
+        if (!item || typeof item !== 'object') {
+          throw new Error('Invalid item data');
+        }
+        
+        // Security: Sanitize item data
+        const sanitizedItem = Object.keys(item).reduce((acc, key) => {
+          if (isValidColumnName(key)) {
+            acc[key] = sanitizeInput(item[key]);
+          }
+          return acc;
+        }, {} as any);
+        
+        const newItem = { 
+          ...sanitizedItem, 
+          id: sanitizedItem.id || `local_${Date.now()}`, 
+          createdAt: new Date(), 
+          updatedAt: new Date() 
+        };
+        
+        if (isOnline() && getElectronApi()) {
+          try {
             const columns = Object.keys(newItem).join(', ');
             const placeholders = Object.keys(newItem).map((_, i) => `$${i + 1}`).join(', ');
             const values = Object.values(newItem);
-          await cloudDB.query(`INSERT INTO ${pluralEntityName} (${columns}) VALUES (${placeholders})`, values);
-        } catch (error) {
-          console.warn(`Could not add ${entityName} to cloud, saving locally.`, error);
+            await cloudDB.query(`INSERT INTO ${pluralEntityName} (${columns}) VALUES (${placeholders})`, values);
+          } catch (error) {
+            console.warn(`Could not add ${entityName} to cloud, saving locally.`, error);
+          }
         }
+        
+        const allItems = localDB.getItem(localKey) || [];
+        localDB.setItem(localKey, [...allItems, newItem]);
+        return newItem;
+      } catch (error) {
+        console.error(`Error in add for ${entityName}:`, error);
+        throw error;
       }
-      const allItems = localDB.getItem(localKey) || [];
-      localDB.setItem(localKey, [...allItems, newItem]);
-      return newItem;
     },
 
     update: async (id: string, updates: any) => {
-        const updatedItemData = { ...updates, updatedAt: new Date() };
-      if (isOnline() && getElectronApi()) {
-        try {
-            const setClauses = Object.keys(updatedItemData).map((key, i) => `${key} = $${i + 1}`).join(', ');
-            const values = [...Object.values(updatedItemData), id];
-          await cloudDB.query(`UPDATE ${pluralEntityName} SET ${setClauses} WHERE id = $${Object.keys(updatedItemData).length + 1}`, values);
-        } catch (error) {
-          console.warn(`Could not update ${entityName} in cloud, updating locally.`, error);
+      try {
+        // Security: Validate id and updates
+        if (!id || typeof id !== 'string' || id.length > 100) {
+          throw new Error('Invalid id');
         }
+        
+        if (!updates || typeof updates !== 'object') {
+          throw new Error('Invalid updates data');
+        }
+        
+        // Security: Sanitize updates data
+        const sanitizedUpdates = Object.keys(updates).reduce((acc, key) => {
+          if (isValidColumnName(key)) {
+            acc[key] = sanitizeInput(updates[key]);
+          }
+          return acc;
+        }, {} as any);
+        
+        const updatedItemData = { ...sanitizedUpdates, updatedAt: new Date() };
+        
+        if (isOnline() && getElectronApi()) {
+          try {
+            const setClauses = Object.keys(updatedItemData).map((key, i) => `${key} = $${i + 1}`).join(', ');
+            const values = [...Object.values(updatedItemData), sanitizeInput(id)];
+            await cloudDB.query(`UPDATE ${pluralEntityName} SET ${setClauses} WHERE id = $${Object.keys(updatedItemData).length + 1}`, values);
+          } catch (error) {
+            console.warn(`Could not update ${entityName} in cloud, updating locally.`, error);
+          }
+        }
+        
+        const allItems = localDB.getItem(localKey) || [];
+        const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, ...updatedItemData } : item);
+        localDB.setItem(localKey, updatedItems);
+        return updatedItems.find((item: any) => item.id === id);
+      } catch (error) {
+        console.error(`Error in update for ${entityName}:`, error);
+        throw error;
       }
-      const allItems = localDB.getItem(localKey) || [];
-      const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, ...updatedItemData } : item);
-      localDB.setItem(localKey, updatedItems);
-       return updatedItems.find((item: any) => item.id === id);
     },
 
     delete: async (id: string) => {
-      if (isOnline() && getElectronApi()) {
-        try {
-          await cloudDB.query(`UPDATE ${pluralEntityName} SET isActive = false WHERE id = $1`, [id]);
-        } catch (error) {
-          console.warn(`Could not delete ${entityName} in cloud, deleting locally.`, error);
+      try {
+        // Security: Validate id
+        if (!id || typeof id !== 'string' || id.length > 100) {
+          throw new Error('Invalid id');
         }
+        
+        if (isOnline() && getElectronApi()) {
+          try {
+            await cloudDB.query(`UPDATE ${pluralEntityName} SET isActive = false WHERE id = $1`, [sanitizeInput(id)]);
+          } catch (error) {
+            console.warn(`Could not delete ${entityName} in cloud, deleting locally.`, error);
+          }
+        }
+        
+        const allItems = localDB.getItem(localKey) || [];
+        const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, isActive: false } : item);
+        localDB.setItem(localKey, updatedItems);
+      } catch (error) {
+        console.error(`Error in delete for ${entityName}:`, error);
+        throw error;
       }
-      const allItems = localDB.getItem(localKey) || [];
-      const updatedItems = allItems.map((item: any) => item.id === id ? { ...item, isActive: false } : item);
-      localDB.setItem(localKey, updatedItems);
     }
   };
 };
@@ -214,7 +387,7 @@ const supportService = {
         
         if (companyId) {
           query += ' WHERE companyId = $1';
-          params.push(companyId);
+          params.push(sanitizeInput(companyId));
         }
         
         query += ' ORDER BY createdAt DESC';
@@ -307,7 +480,7 @@ const userService = {
   authenticateUser: async (email: string, password: string) => {
     if (isOnline() && getElectronApi()) {
       try {
-        const data = await cloudDB.query('SELECT * FROM users WHERE email = $1 AND isActive = true', [email]);
+        const data = await cloudDB.query('SELECT * FROM users WHERE email = $1 AND isActive = true', [sanitizeInput(email)]);
         if (data.length > 0) {
           const user = data[0];
           if (userService.verifyPassword(password, user.password)) {
@@ -338,7 +511,7 @@ const userService = {
   getUserById: async (id: string) => {
     if (isOnline() && getElectronApi()) {
       try {
-        const data = await cloudDB.query('SELECT * FROM users WHERE id = $1 AND isActive = true', [id]);
+        const data = await cloudDB.query('SELECT * FROM users WHERE id = $1 AND isActive = true', [sanitizeInput(id)]);
         if (data.length > 0) {
           return { ...data[0], password: undefined };
         }
@@ -358,7 +531,7 @@ const userService = {
     if (isOnline() && getElectronApi()) {
       try {
         const setClauses = Object.keys(updatedUserData).map((key, i) => `${key} = $${i + 1}`).join(', ');
-        const values = [...Object.values(updatedUserData), id];
+        const values = [...Object.values(updatedUserData), sanitizeInput(id)];
         await cloudDB.query(`UPDATE users SET ${setClauses} WHERE id = $${Object.keys(updatedUserData).length + 1}`, values);
       } catch (error) {
         console.warn('Could not update user in cloud, updating locally.', error);
@@ -383,7 +556,7 @@ const userService = {
         
         if (companyId) {
           query += ' AND companyId = $1';
-          params.push(companyId);
+          params.push(sanitizeInput(companyId));
         }
         
         const data = await cloudDB.query(query, params);

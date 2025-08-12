@@ -1036,6 +1036,15 @@ export default function QuickPOS() {
             >
               Generate Bill
             </button>
+            {lastTransaction && (
+              <button 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm mt-2 flex items-center justify-center gap-2" 
+                onClick={() => setIsReprintDialogOpen(true)}
+              >
+                <Printer className="w-4 h-4" />
+                Reprint Last Bill
+              </button>
+            )}
               </div>
             </div>
       </div>
@@ -1187,8 +1196,42 @@ export default function QuickPOS() {
                 ))}
             </div>
           </div>
+                      </div>
+            </div>
+      )}
+
+      {/* Reprint Dialog */}
+      {isReprintDialogOpen && lastTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Reprint Receipt</h2>
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">Receipt #: {lastTransaction.id.slice(-8)}</p>
+              <p className="text-gray-600 mb-2">Date: {new Date(lastTransaction.timestamp).toLocaleDateString()}</p>
+              <p className="text-gray-600 mb-2">Time: {new Date(lastTransaction.timestamp).toLocaleTimeString()}</p>
+              <p className="text-gray-600 mb-2">Total: ₹{lastTransaction.total.toFixed(2)}</p>
+              <p className="text-gray-600 mb-4">Customer: {lastTransaction.customerName || 'Walk-in Customer'}</p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded" 
+                onClick={() => setIsReprintDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded flex items-center justify-center gap-2" 
+                onClick={() => {
+                  handleReprint(lastTransaction);
+                  setIsReprintDialogOpen(false);
+                }}
+              >
+                <Printer className="w-4 h-4" />
+                Reprint
+              </button>
             </div>
           </div>
+        </div>
       )}
     </div>
   );

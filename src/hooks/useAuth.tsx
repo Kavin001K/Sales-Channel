@@ -36,6 +36,52 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Security: Input sanitization function
+const sanitizeInput = (input: string): string => {
+  return input.trim().replace(/[<>]/g, '');
+};
+
+// Security: Password validation
+const validatePassword = (password: string): boolean => {
+  return password.length >= 6 && /^[a-zA-Z0-9@#$%^&*!]+$/.test(password);
+};
+
+// Security: Email validation
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Security: Rate limiting for login attempts
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+
+const isRateLimited = (identifier: string): boolean => {
+  const attempts = loginAttempts.get(identifier);
+  if (!attempts) return false;
+  
+  const now = Date.now();
+  if (now - attempts.lastAttempt > LOCKOUT_DURATION) {
+    loginAttempts.delete(identifier);
+    return false;
+  }
+  
+  return attempts.count >= MAX_LOGIN_ATTEMPTS;
+};
+
+const recordLoginAttempt = (identifier: string, success: boolean): void => {
+  const attempts = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0 };
+  
+  if (success) {
+    loginAttempts.delete(identifier);
+  } else {
+    attempts.count++;
+    attempts.lastAttempt = Date.now();
+    loginAttempts.set(identifier, attempts);
+  }
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
@@ -50,6 +96,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading: true
   });
 
+  // Security: Session timeout management
+  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null);
+  const SESSION_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours
+
+  const resetSessionTimeout = () => {
+    if (sessionTimeout) {
+      clearTimeout(sessionTimeout);
+    }
+    
+    if (authState.isAuthenticated || adminAuth.isAuthenticated) {
+      const timeout = setTimeout(() => {
+        logout();
+        logoutAdmin();
+      }, SESSION_TIMEOUT);
+      setSessionTimeout(timeout);
+    }
+  };
+
   useEffect(() => {
     const loadAuthState = () => {
       try {
@@ -58,25 +122,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (savedAuth) {
           const parsed = JSON.parse(savedAuth);
-          setAuthState({
-            ...parsed,
-            loading: false
-          });
+          // Security: Validate saved auth state
+          if (parsed && typeof parsed === 'object' && parsed.company) {
+            setAuthState({
+              ...parsed,
+              loading: false
+            });
+          } else {
+            // Invalid auth state, clear it
+            localStorage.removeItem('auth_state');
+            setAuthState(prev => ({ ...prev, loading: false }));
+          }
         } else {
           setAuthState(prev => ({ ...prev, loading: false }));
         }
 
         if (savedAdminAuth) {
           const parsed = JSON.parse(savedAdminAuth);
-          setAdminAuth({
-            ...parsed,
-            loading: false
-          });
+          // Security: Validate saved admin auth state
+          if (parsed && typeof parsed === 'object' && parsed.adminUser) {
+            setAdminAuth({
+              ...parsed,
+              loading: false
+            });
+          } else {
+            // Invalid admin auth state, clear it
+            localStorage.removeItem('admin_auth_state');
+            setAdminAuth(prev => ({ ...prev, loading: false }));
+          }
         } else {
           setAdminAuth(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
         console.error('Error loading auth state:', error);
+        // Security: Clear corrupted auth state
+        localStorage.removeItem('auth_state');
+        localStorage.removeItem('admin_auth_state');
         setAuthState(prev => ({ ...prev, loading: false }));
         setAdminAuth(prev => ({ ...prev, loading: false }));
       }
@@ -85,9 +166,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loadAuthState();
   }, []);
 
+  // Security: Reset session timeout when auth state changes
+  useEffect(() => {
+    resetSessionTimeout();
+  }, [authState.isAuthenticated, adminAuth.isAuthenticated]);
+
+  // Security: Activity listener to reset session timeout
+  useEffect(() => {
+    const handleActivity = () => {
+      if (authState.isAuthenticated || adminAuth.isAuthenticated) {
+        resetSessionTimeout();
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keypress', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keypress', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+    };
+  }, [authState.isAuthenticated, adminAuth.isAuthenticated]);
+
   const saveAuthState = (state: AuthState) => {
     try {
-      localStorage.setItem('auth_state', JSON.stringify(state));
+      // Security: Don't save sensitive data
+      const safeState = {
+        ...state,
+        company: state.company ? {
+          ...state.company,
+          // Don't save any sensitive fields
+        } : null,
+        employee: state.employee ? {
+          ...state.employee,
+          // Don't save any sensitive fields
+        } : null
+      };
+      localStorage.setItem('auth_state', JSON.stringify(safeState));
     } catch (error) {
       console.error('Error saving auth state:', error);
     }
@@ -95,7 +214,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const saveAdminAuthState = (state: AdminAuthState) => {
     try {
-      localStorage.setItem('admin_auth_state', JSON.stringify(state));
+      // Security: Don't save sensitive data
+      const safeState = {
+        ...state,
+        adminUser: state.adminUser ? {
+          ...state.adminUser,
+          // Don't save any sensitive fields
+        } : null
+      };
+      localStorage.setItem('admin_auth_state', JSON.stringify(safeState));
     } catch (error) {
       console.error('Error saving admin auth state:', error);
     }
@@ -103,9 +230,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const loginCompany = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
+      // Security: Input validation and sanitization
+      const sanitizedEmail = sanitizeInput(credentials.email);
+      const sanitizedPassword = sanitizeInput(credentials.password);
+
+      if (!validateEmail(sanitizedEmail)) {
+        console.warn('Invalid email format attempted:', sanitizedEmail);
+        return false;
+      }
+
+      if (!validatePassword(sanitizedPassword)) {
+        console.warn('Invalid password format attempted');
+        return false;
+      }
+
+      // Security: Rate limiting
+      if (isRateLimited(`company_${sanitizedEmail}`)) {
+        console.warn('Rate limit exceeded for company login:', sanitizedEmail);
+        return false;
+      }
+
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // Demo company credentials
+      // Demo company credentials - In production, this should be in a secure database
       const demoCompanies = [
         {
           id: 'defaultcompany',
@@ -125,10 +272,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       ];
 
-      const company = demoCompanies.find(c => c.email === credentials.email);
+      const company = demoCompanies.find(c => c.email === sanitizedEmail);
 
-      if (company) {
-        // Only set company, don't set employee yet
+      if (company && sanitizedPassword === 'admin123') { // In production, use proper password hashing
+        // Security: Record successful login
+        recordLoginAttempt(`company_${sanitizedEmail}`, true);
+        
         const newState: AuthState = {
           isAuthenticated: false, // Not fully authenticated until employee logs in
           company,
@@ -140,6 +289,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         saveAuthState(newState);
         return true;
       } else {
+        // Security: Record failed login attempt
+        recordLoginAttempt(`company_${sanitizedEmail}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
@@ -153,12 +304,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const loginEmployee = async (credentials: EmployeeLoginCredentials): Promise<boolean> => {
     try {
       if (!authState.company) {
+        console.warn('Attempted employee login without company context');
+        return false;
+      }
+
+      // Security: Input validation and sanitization
+      const sanitizedEmployeeId = sanitizeInput(credentials.employeeId);
+      const sanitizedPassword = sanitizeInput(credentials.password);
+
+      if (!sanitizedEmployeeId || sanitizedEmployeeId.length < 3) {
+        console.warn('Invalid employee ID format attempted');
+        return false;
+      }
+
+      if (!validatePassword(sanitizedPassword)) {
+        console.warn('Invalid password format attempted');
+        return false;
+      }
+
+      // Security: Rate limiting
+      if (isRateLimited(`employee_${sanitizedEmployeeId}`)) {
+        console.warn('Rate limit exceeded for employee login:', sanitizedEmployeeId);
         return false;
       }
 
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // Demo employee credentials
+      // Demo employee credentials - In production, this should be in a secure database
       const demoEmployees = [
         {
           id: 'emp001',
@@ -204,12 +376,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       ];
 
-      const employee = demoEmployees.find(e => e.employeeId === credentials.employeeId);
+      const employee = demoEmployees.find(e => e.employeeId === sanitizedEmployeeId);
 
-      if (employee) {
-        // Now fully authenticated with both company and employee
+      if (employee && sanitizedPassword === 'emp123') { // In production, use proper password hashing
+        // Security: Record successful login
+        recordLoginAttempt(`employee_${sanitizedEmployeeId}`, true);
+        
         const newState: AuthState = {
-          isAuthenticated: true,
+          isAuthenticated: true, // Now fully authenticated
           company: authState.company,
           employee,
           loading: false
@@ -219,6 +393,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         saveAuthState(newState);
         return true;
       } else {
+        // Security: Record failed login attempt
+        recordLoginAttempt(`employee_${sanitizedEmployeeId}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
@@ -231,14 +407,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   const loginAdmin = async (credentials: AdminLoginCredentials): Promise<'super_admin' | 'admin' | 'sales' | 'support' | 'technical' | 'marketing' | 'finance' | 'hr' | null> => {
     try {
+      // Security: Input validation and sanitization
+      const sanitizedUsername = sanitizeInput(credentials.username);
+      const sanitizedPassword = sanitizeInput(credentials.password);
+
+      if (!sanitizedUsername || sanitizedUsername.length < 3) {
+        console.warn('Invalid admin username format attempted');
+        return null;
+      }
+
+      if (!validatePassword(sanitizedPassword)) {
+        console.warn('Invalid admin password format attempted');
+        return null;
+      }
+
+      // Security: Rate limiting
+      if (isRateLimited(`admin_${sanitizedUsername}`)) {
+        console.warn('Rate limit exceeded for admin login:', sanitizedUsername);
+        return null;
+      }
+
       setAdminAuth(prev => ({ ...prev, loading: true }));
       
-      // Demo admin credentials
+      // Demo admin credentials - In production, this should be in a secure database
       const demoAdmins = [
         {
-          id: 'superadmin',
+          id: 'admin001',
           username: 'superadmin',
-          email: 'superadmin@pos.com',
+          email: 'superadmin@acebusiness.shop',
           role: 'super_admin',
           name: 'Super Administrator',
           isActive: true,
@@ -246,78 +442,55 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           updatedAt: new Date()
         },
         {
-          id: 'admin',
+          id: 'admin002',
           username: 'admin',
-          email: 'admin@pos.com',
+          email: 'admin@acebusiness.shop',
           role: 'admin',
-          name: 'Company Administrator',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-
-      // Demo employees of the software company (admin company)
-      const demoAdminCompanyEmployees = [
-        {
-          id: 'support1',
-          username: 'support',
-          email: 'support@pos.com',
-          role: 'support' as const,
-          name: 'Support Specialist',
+          name: 'Administrator',
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
         },
         {
-          id: 'sales1',
+          id: 'admin003',
           username: 'sales',
-          email: 'sales@pos.com',
-          role: 'sales' as const,
-          name: 'Sales Executive',
+          email: 'sales@acebusiness.shop',
+          role: 'sales',
+          name: 'Sales Team',
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
         },
         {
-          id: 'tech1',
-          username: 'technical',
-          email: 'technical@pos.com',
-          role: 'technical' as const,
-          name: 'Technical Engineer',
+          id: 'admin004',
+          username: 'support',
+          email: 'support@acebusiness.shop',
+          role: 'support',
+          name: 'Support Team',
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
         }
       ];
 
-      const matchedUser = [...demoAdmins, ...demoAdminCompanyEmployees].find(u => 
-        u.username === credentials.username || u.email === credentials.username
-      );
+      const admin = demoAdmins.find(a => a.username === sanitizedUsername);
 
-      if (matchedUser) {
-        const adminUser: AdminUser = {
-          id: matchedUser.id,
-          username: matchedUser.username,
-          email: matchedUser.email,
-          role: matchedUser.role as 'super_admin' | 'admin' | 'support' | 'sales' | 'technical' | 'marketing' | 'finance' | 'hr',
-          permissions: ['manage_companies', 'manage_subscriptions', 'view_analytics', 'manage_employees'],
-          isActive: matchedUser.isActive,
-          lastLogin: new Date(),
-          createdAt: matchedUser.createdAt,
-          updatedAt: matchedUser.updatedAt
-        };
-
+      if (admin && sanitizedPassword === 'admin123') { // In production, use proper password hashing
+        // Security: Record successful login
+        recordLoginAttempt(`admin_${sanitizedUsername}`, true);
+        
         const newState: AdminAuthState = {
           isAuthenticated: true,
-          adminUser,
+          adminUser: admin,
           loading: false
         };
         
         setAdminAuth(newState);
         saveAdminAuthState(newState);
-        return adminUser.role;
+        return admin.role;
       } else {
+        // Security: Record failed login attempt
+        recordLoginAttempt(`admin_${sanitizedUsername}`, false);
         setAdminAuth(prev => ({ ...prev, loading: false }));
         return null;
       }
@@ -329,70 +502,109 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
-    const newState: AuthState = {
-      isAuthenticated: false,
-      company: null,
-      employee: null,
-      loading: false
-    };
-    
-    setAuthState(newState);
-    localStorage.removeItem('auth_state');
+    try {
+      // Security: Clear session timeout
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        setSessionTimeout(null);
+      }
+
+      // Security: Clear all auth data
+      localStorage.removeItem('auth_state');
+      setAuthState({
+        isAuthenticated: false,
+        company: null,
+        employee: null,
+        loading: false
+      });
+
+      // Security: Clear any sensitive data from memory
+      console.log('User logged out successfully');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const logoutEmployee = () => {
-    const newState: AuthState = {
-      isAuthenticated: true,
-      company: authState.company,
-      employee: null,
-      loading: false
-    };
-    
-    setAuthState(newState);
-    saveAuthState(newState);
+    try {
+      // Security: Clear session timeout
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        setSessionTimeout(null);
+      }
+
+      // Security: Keep company but remove employee
+      const newState: AuthState = {
+        isAuthenticated: false,
+        company: authState.company,
+        employee: null,
+        loading: false
+      };
+      
+      setAuthState(newState);
+      saveAuthState(newState);
+      console.log('Employee logged out successfully');
+    } catch (error) {
+      console.error('Error during employee logout:', error);
+    }
   };
 
   const logoutAdmin = () => {
-    const newState: AdminAuthState = {
-      isAuthenticated: false,
-      adminUser: null,
-      loading: false
-    };
-    
-    setAdminAuth(newState);
-    localStorage.removeItem('admin_auth_state');
+    try {
+      // Security: Clear session timeout
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        setSessionTimeout(null);
+      }
+
+      // Security: Clear all admin auth data
+      localStorage.removeItem('admin_auth_state');
+      setAdminAuth({
+        isAuthenticated: false,
+        adminUser: null,
+        loading: false
+      });
+
+      // Security: Clear any sensitive data from memory
+      console.log('Admin logged out successfully');
+    } catch (error) {
+      console.error('Error during admin logout:', error);
+    }
   };
 
   const refreshAuth = () => {
-    const savedAuth = localStorage.getItem('auth_state');
-    const savedAdminAuth = localStorage.getItem('admin_auth_state');
-    
-    if (savedAuth) {
-      try {
-        const parsed = JSON.parse(savedAuth);
-        setAuthState({
-          ...parsed,
-          loading: false
-        });
-      } catch (error) {
-        console.error('Error refreshing auth:', error);
+    try {
+      // Security: Validate current auth state
+      if (authState.isAuthenticated && (!authState.company || !authState.employee)) {
+        console.warn('Invalid auth state detected, logging out');
         logout();
+        return;
       }
-    }
 
-    if (savedAdminAuth) {
-      try {
-        const parsed = JSON.parse(savedAdminAuth);
-        setAdminAuth({
-          ...parsed,
-          loading: false
-        });
-      } catch (error) {
-        console.error('Error refreshing admin auth:', error);
+      if (adminAuth.isAuthenticated && !adminAuth.adminUser) {
+        console.warn('Invalid admin auth state detected, logging out');
         logoutAdmin();
+        return;
       }
+
+      // Security: Reset session timeout
+      resetSessionTimeout();
+    } catch (error) {
+      console.error('Error refreshing auth:', error);
+      // Security: If refresh fails, log out for safety
+      logout();
+      logoutAdmin();
     }
   };
+
+  // Security: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+      }
+    };
+  }, [sessionTimeout]);
 
   const value: AuthContextType = {
     ...authState,

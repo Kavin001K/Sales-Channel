@@ -16,97 +16,101 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { company, employee, adminAuth, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
+  // Security: Show loading spinner while checking authentication
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // If authentication is not required, render children
+  // Security: If authentication is not required, render children
   if (!requireAuth) {
     return <>{children}</>;
   }
 
-  // Check if user is authenticated
+  // Security: Check if user is authenticated
   // For company users, they need both company AND employee to be authenticated
   // For admin users, they just need adminAuth to be authenticated
   const isAuthenticated = (company && employee) || adminAuth.isAuthenticated;
-  
+
   if (!isAuthenticated) {
-    // If company is logged in but no employee, redirect to employee login
-    if (company && !employee) {
-      return <Navigate to="/employee-login" state={{ from: location }} replace />;
-    }
-    // Otherwise redirect to main login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Security: Redirect to appropriate login page
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const redirectPath = isAdminRoute ? '/login' : '/login';
+    
+    console.warn('Unauthorized access attempt:', {
+      path: location.pathname,
+      company: !!company,
+      employee: !!employee,
+      adminAuth: adminAuth.isAuthenticated
+    });
+    
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // If no specific roles are required, allow access
-  if (allowedRoles.length === 0) {
-    return <>{children}</>;
-  }
+  // Security: Role-based access control
+  if (allowedRoles.length > 0) {
+    let userRole: string | null = null;
 
-  // Determine user role
-  const getUserRole = () => {
     if (adminAuth.isAuthenticated && adminAuth.adminUser) {
-      return adminAuth.adminUser.role;
+      userRole = adminAuth.adminUser.role;
+    } else if (employee) {
+      userRole = employee.position?.toLowerCase() || 'cashier';
+    } else if (company) {
+      userRole = 'company';
     }
-    if (employee) {
-      return employee.position?.toLowerCase() || 'cashier';
-    }
-    if (company) {
-      return 'company';
-    }
-    return null;
-  };
 
-  const userRole = getUserRole();
-
-  // Check if user has required role
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    // Redirect to unauthorized page or dashboard
-    return <Navigate to="/unauthorized" replace />;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      console.warn('Insufficient permissions:', {
+        path: location.pathname,
+        userRole,
+        allowedRoles,
+        company: !!company,
+        employee: !!employee,
+        adminAuth: adminAuth.isAuthenticated
+      });
+      
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
+
+  // Security: Log successful access
+  console.log('Authorized access granted:', {
+    path: location.pathname,
+    company: company?.name,
+    employee: employee?.name,
+    adminUser: adminAuth.adminUser?.username
+  });
 
   return <>{children}</>;
 };
 
-// Helper components for specific roles
+// Security: Specific role-based route components
 export const AdminOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
     {children}
   </ProtectedRoute>
 );
 
-export const CompanyOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute allowedRoles={['company']}>
-    {children}
-  </ProtectedRoute>
-);
-
-export const EmployeeOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute allowedRoles={['admin', 'manager', 'cashier']}>
+export const CashierOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute allowedRoles={['cashier', 'manager', 'admin']}>
     {children}
   </ProtectedRoute>
 );
 
 export const ManagerOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute allowedRoles={['admin', 'manager']}>
-    {children}
-  </ProtectedRoute>
-);
-
-export const CashierOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute allowedRoles={['admin', 'manager', 'cashier']}>
+  <ProtectedRoute allowedRoles={['manager', 'admin']}>
     {children}
   </ProtectedRoute>
 );
 
 export const SoftwareCompanyEmployeeOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute allowedRoles={['sales', 'support', 'technical', 'marketing', 'finance', 'hr']}>
+  <ProtectedRoute allowedRoles={['super_admin', 'admin', 'sales', 'support', 'technical', 'marketing', 'finance', 'hr']}>
     {children}
   </ProtectedRoute>
 ); 

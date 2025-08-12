@@ -2,13 +2,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
 import { transactionService } from '@/lib/database';
 import { useAuth } from '@/hooks/useAuth';
+import { useSettings } from '@/hooks/useSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, Receipt, Printer } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Calendar, Search, Filter, Receipt, Printer, Eye, Edit, Save, X } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 
@@ -18,8 +22,14 @@ export default function Transactions() {
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'card'>('all');
   const [loading, setLoading] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [reprintCount, setReprintCount] = useState(0);
   
-  const { company } = useAuth();
+  const { company, employee } = useAuth();
+  const { companySettings, printSettings } = useSettings();
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -48,26 +58,192 @@ export default function Transactions() {
     loadTransactions();
   }, [company]);
 
+  // Reprint function with proper labeling
   const handleReprint = async (transaction: Transaction) => {
+    const newReprintCount = reprintCount + 1;
+    setReprintCount(newReprintCount);
+    
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - ${transaction.id} (REPRINT)</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: auto !important; }
+            body {
+              font-family: 'Courier New', monospace;
+              width: ${printSettings.paperSize === 'thermal' ? '300px' : '210mm'};
+              margin: 0 auto;
+              padding: 10px 0 0 0;
+              font-size: ${printSettings.fontSize}px;
+              line-height: 1.3;
+              background: #fff;
+              color: #000;
+            }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; color: #000; }
+            .store-name { font-size: ${printSettings.fontSize + 4}px; font-weight: bold; color: #000; letter-spacing: 1px; }
+            .company-detail { font-weight: bold; color: #000; white-space: pre-line; }
+            .reprint-notice { 
+              background: #ff0000; 
+              color: #fff; 
+              text-align: center; 
+              padding: 5px; 
+              font-weight: bold; 
+              margin: 5px 0;
+              border: 2px solid #000;
+            }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+            th, td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            th { font-weight: bold; background: #fff; }
+            .amount, .total-bold { font-weight: bold; }
+            .total-row td { border-top: 2px solid #000; font-weight: bold; }
+            .footer { text-align: center; margin-top: 15px; font-size: ${printSettings.fontSize - 2}px; color: #000; font-weight: bold; }
+            @media print {
+              html, body { height: auto !important; }
+              body { margin: 0; padding: 0; background: #fff; color: #000; }
+              .no-print { display: none; }
+              .footer { margin-bottom: 0; color: #000; font-weight: bold; }
+              @page { margin: 0; size: auto; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
+          <div class="header">
+            <div class="store-name">${companySettings.name}</div>
+            <div class="company-detail">${(companySettings.address || '').replace(/\n/g, '<br/>')}</div>
+            <div class="company-detail">Phone: ${companySettings.phone}</div>
+            ${companySettings.email ? `<div class="company-detail">Email: ${companySettings.email}</div>` : ''}
+          </div>
+          <div style="margin: 10px 0 10px 0; color: #000; font-weight: bold; text-align: left;">
+            <div>Receipt #: ${transaction.id.slice(-8)}</div>
+            <div>Date: ${new Date(transaction.timestamp).toLocaleDateString()}</div>
+            <div>Time: ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
+            <div>Reprint Date: ${new Date().toLocaleDateString()}</div>
+            <div>Reprint Time: ${new Date().toLocaleTimeString()}</div>
+            ${transaction.employeeName ? `<div>Cashier: ${transaction.employeeName}</div>` : ''}
+            ${transaction.customerName ? `<div>Customer: ${transaction.customerName}</div>` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:32px">S.No</th>
+                <th>PARTICULARS</th>
+                <th style="width:40px">QTY</th>
+                <th style="width:70px">RATE<br/>M.R.P.</th>
+                <th style="width:70px">AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${transaction.items.map((item, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>
+                    ₹${item.price.toFixed(2)}
+                    ${item.mrp ? `<br/><span style='font-size:${printSettings.fontSize - 2}px'>UNT ₹${item.mrp.toFixed(2)}</span>` : ''}
+                  </td>
+                  <td class="amount">₹${(item.price * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div style="border-top: 2px solid #000; margin: 8px 0;"></div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Total Qty : ${transaction.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            <span>Sub Total <span style="font-weight: bold;">₹${transaction.subtotal.toFixed(2)}</span></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Round Off</span>
+            <span>₹${(Math.round(transaction.total) - transaction.total).toFixed(2)}</span>
+          </div>
+          <div class="total-row" style="font-size: ${printSettings.fontSize + 2}px; margin-top: 8px;">
+            <table style="width:100%; border:none;">
+              <tr>
+                <td style="border:none; text-align:right; font-weight:bold;">TOTAL</td>
+                <td style="border:none; text-align:right; font-weight:bold;">₹ ${Math.round(transaction.total).toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Total Savings</span>
+            <span>₹${(transaction.items.reduce((sum, item) => sum + ((item.mrp || 0) - item.price) * item.quantity, 0)).toFixed(2)}</span>
+          </div>
+          <div style="margin: 10px 0; color: #000; font-weight: bold;">
+            <div><strong>Payment:</strong> ${transaction.paymentMethod === 'cash' ? 'Cash' : transaction.paymentMethod === 'card' ? 'Credit/Debit Card' : 'Mobile Wallet'}</div>
+            ${transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount ? `
+              <div>Cash: ₹${transaction.paymentDetails.cashAmount.toFixed(2)}</div>
+              ${transaction.paymentDetails.change ? `<div>Change: ₹${transaction.paymentDetails.change.toFixed(2)}</div>` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount ? `
+              <div>Card: ₹${transaction.paymentDetails.cardAmount.toFixed(2)}</div>
+              ${transaction.receipt ? `<div>Txn ID: ${transaction.receipt}</div>` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'wallet' ? `<div>Wallet Payment</div>` : ''}
+          </div>
+          <div class="reprint-notice">*** REPRINT - ORIGINAL DATE: ${new Date(transaction.timestamp).toLocaleDateString()} ${new Date(transaction.timestamp).toLocaleTimeString()} ***</div>
+          <div class="footer">
+            <div>${printSettings.header}</div>
+            <div>${printSettings.footer}</div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(invoiceHTML);
+      printWindow.document.close();
+      printWindow.onload = function() {
+        printWindow.print();
+        setTimeout(() => {
+          try { printWindow.close(); } catch {}
+        }, 300);
+      };
+    }
+    
+    toast({
+      title: "Receipt Reprinted",
+      description: `Receipt reprinted successfully! (Reprint #${newReprintCount})`,
+    });
+  };
+
+  const handleViewTransaction = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction({ ...transaction });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveTransaction = async () => {
+    if (!editingTransaction) return;
+
     try {
-      // Here you would typically call a print service
-      // For now, we'll simulate printing by showing a toast
-      toast({
-        title: "Reprinting Receipt",
-        description: `Reprinting receipt for transaction ${transaction.id.slice(-8)}`,
-      });
+      // Save transaction with cloud backup
+      await transactionService.update(editingTransaction.id, editingTransaction);
       
-      // Simulate print delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update local state
+      setTransactions(prev => prev.map(t => 
+        t.id === editingTransaction.id ? editingTransaction : t
+      ));
+      
+      setIsEditDialogOpen(false);
+      setEditingTransaction(null);
       
       toast({
-        title: "Receipt Printed",
-        description: "Receipt has been sent to the printer",
+        title: "Transaction Updated",
+        description: "Transaction saved and backed up to cloud successfully!",
       });
     } catch (error) {
+      console.error('Error updating transaction:', error);
       toast({
-        title: "Print Error",
-        description: "Failed to print receipt",
+        title: "Update Error",
+        description: "Transaction saved locally but cloud backup failed",
         variant: "destructive",
       });
     }
@@ -261,14 +437,14 @@ export default function Transactions() {
                       <TableCell>
                         <div className="text-sm">
                           <div>Paid: ₹{transaction.total.toFixed(2)}</div>
-                          {transaction.paymentMethod === 'cash' && (
+                          {transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount && (
                             <div className="text-muted-foreground">
-                              Cash Payment
+                              Cash: ₹{transaction.paymentDetails.cashAmount.toFixed(2)}
                             </div>
                           )}
-                          {transaction.paymentMethod === 'card' && (
+                          {transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount && (
                             <div className="text-muted-foreground">
-                              Card Payment
+                              Card: ₹{transaction.paymentDetails.cardAmount.toFixed(2)}
                             </div>
                           )}
                         </div>
@@ -288,15 +464,35 @@ export default function Transactions() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReprint(transaction)}
-                          className="h-8 w-8 p-0"
-                          title="Reprint Receipt"
-                        >
-                          <Printer className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewTransaction(transaction)}
+                            className="h-8 w-8 p-0"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReprint(transaction)}
+                            className="h-8 w-8 p-0"
+                            title="Reprint Receipt"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditTransaction(transaction)}
+                            className="h-8 w-8 p-0"
+                            title="Edit Transaction"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -306,6 +502,212 @@ export default function Transactions() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Transaction Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-semibold">Transaction ID</Label>
+                  <p className="text-sm text-muted-foreground">{selectedTransaction.id}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Date & Time</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(selectedTransaction.timestamp), 'MMM dd, yyyy hh:mm a')}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Customer</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTransaction.customerName || 'Walk-in Customer'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Employee</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTransaction.employeeName || 'System'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Payment Method</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTransaction.paymentMethod?.toUpperCase()}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Status</Label>
+                  <Badge variant={
+                    selectedTransaction.status === 'completed' ? 'default' :
+                    selectedTransaction.status === 'refunded' ? 'destructive' : 'secondary'
+                  }>
+                    {selectedTransaction.status}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="font-semibold">Items</Label>
+                <div className="mt-2 border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedTransaction.items.map((item, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>₹{item.price.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div>
+                  <Label className="font-semibold">Subtotal</Label>
+                  <p className="text-lg font-bold">₹{selectedTransaction.subtotal.toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Tax</Label>
+                  <p className="text-lg font-bold">₹{selectedTransaction.tax.toFixed(2)}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Total</Label>
+                  <p className="text-lg font-bold">₹{selectedTransaction.total.toFixed(2)}</p>
+                </div>
+              </div>
+              
+              {selectedTransaction.notes && (
+                <div>
+                  <Label className="font-semibold">Notes</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedTransaction.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Transaction</DialogTitle>
+          </DialogHeader>
+          {editingTransaction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customerName">Customer Name</Label>
+                  <Input
+                    id="customerName"
+                    value={editingTransaction.customerName || ''}
+                    onChange={(e) => setEditingTransaction({
+                      ...editingTransaction,
+                      customerName: e.target.value
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <Select
+                    value={editingTransaction.paymentMethod || 'cash'}
+                    onValueChange={(value) => setEditingTransaction({
+                      ...editingTransaction,
+                      paymentMethod: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="wallet">Wallet</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={editingTransaction.status || 'completed'}
+                    onValueChange={(value) => setEditingTransaction({
+                      ...editingTransaction,
+                      status: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="total">Total Amount</Label>
+                  <Input
+                    id="total"
+                    type="number"
+                    step="0.01"
+                    value={editingTransaction.total}
+                    onChange={(e) => setEditingTransaction({
+                      ...editingTransaction,
+                      total: parseFloat(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={editingTransaction.notes || ''}
+                  onChange={(e) => setEditingTransaction({
+                    ...editingTransaction,
+                    notes: e.target.value
+                  })}
+                  placeholder="Add any additional notes..."
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingTransaction(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveTransaction}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
