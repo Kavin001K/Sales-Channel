@@ -290,79 +290,43 @@ export default function QuickPOS() {
   }, [cart, ensureFullscreen, companySettings, employee]);
 
   // Handle reprint
-  const handleReprint = useCallback(() => {
+  const handleReprint = useCallback(async () => {
     if (!lastTransaction) return;
     
     const reprintCount = 1; // Simple reprint counter
-    const reprintNotice = `*** REPRINT #${reprintCount} ***`;
-    const reprintDate = new Date().toLocaleString();
     
-    const receiptHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Receipt - Reprint</title>
-        <style>
-          body { font-family: 'Courier New', monospace; font-size: 12px; margin: 0; padding: 10px; }
-          .header { text-align: center; margin-bottom: 10px; }
-          .reprint-notice { color: red; font-weight: bold; text-align: center; margin: 5px 0; }
-          .item { display: flex; justify-content: space-between; margin: 2px 0; }
-          .total { font-weight: bold; border-top: 1px solid #000; padding-top: 5px; margin-top: 10px; }
-          .footer { text-align: center; margin-top: 10px; font-size: 10px; }
-        </style>
-      </head>
-      <body>
-        <div class="reprint-notice">${reprintNotice}</div>
-        <div class="header">
-          <h2>${companySettings?.name || 'ACE Business'}</h2>
-          <p>${companySettings?.address || ''}</p>
-          <p>Phone: ${companySettings?.phone || ''}</p>
-          <p>Tax ID: ${companySettings?.taxId || ''}</p>
-        </div>
-        <div class="reprint-notice">${reprintNotice}</div>
-        <div>
-          <p><strong>Receipt #:</strong> ${lastTransaction.id}</p>
-          <p><strong>Date:</strong> ${new Date(lastTransaction.timestamp).toLocaleString()}</p>
-          <p><strong>Cashier:</strong> ${employee?.name || 'Unknown'}</p>
-          <p><strong>Customer:</strong> ${lastTransaction.customerName || 'Walk-in Customer'}</p>
-          <p><strong>Reprint Date:</strong> ${reprintDate}</p>
-        </div>
-        <hr>
-        ${lastTransaction.items.map(item => `
-          <div class="item">
-            <span>${item.name} x ${item.quantity}</span>
-            <span>₹${item.price.toFixed(2)}</span>
-          </div>
-        `).join('')}
-        <hr>
-        <div class="total">
-          <div class="item">
-            <span>Subtotal:</span>
-            <span>₹${lastTransaction.subtotal.toFixed(2)}</span>
-          </div>
-          <div class="item">
-            <span>Tax:</span>
-            <span>₹${lastTransaction.tax.toFixed(2)}</span>
-          </div>
-          <div class="item">
-            <span>Total:</span>
-            <span>₹${lastTransaction.total.toFixed(2)}</span>
-          </div>
-        </div>
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Reprint #${reprintCount} - ${reprintDate}</p>
-        </div>
-        <div class="reprint-notice">${reprintNotice}</div>
-      </body>
-      </html>
-    `;
+    // Prepare receipt data for thermal printer
+    const receiptData: ReceiptData = {
+      companyName: companySettings?.name || 'ACE Business',
+      companyAddress: companySettings?.address || '',
+      companyPhone: companySettings?.phone || '',
+      companyTaxId: companySettings?.taxId || '',
+      receiptNumber: lastTransaction.id,
+      date: new Date(lastTransaction.timestamp).toLocaleString(),
+      cashierName: employee?.name || 'Unknown',
+      customerName: lastTransaction.customerName || 'Walk-in Customer',
+      items: lastTransaction.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.total
+      })),
+      subtotal: lastTransaction.subtotal,
+      tax: lastTransaction.tax,
+      total: lastTransaction.total,
+      paymentMethod: lastTransaction.paymentMethod,
+      paymentDetails: lastTransaction.paymentDetails,
+      isReprint: true,
+      reprintCount: reprintCount
+    };
+
+    // Print receipt using thermal printer service
+    const printSuccess = await thermalPrinter.printReceipt(receiptData);
     
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(receiptHTML);
-      printWindow.document.close();
-      printWindow.print();
+    if (printSuccess) {
+      toast.success('Receipt reprinted successfully!');
+    } else {
+      toast.warning('Reprint failed - check printer connection');
     }
     
     setReprintCount(reprintCount);
