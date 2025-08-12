@@ -91,6 +91,16 @@ export default function QuickPOS() {
   const DECIMAL_UNITS = ['KGS', 'GMS', 'LTR', 'MLT', 'TON', 'SQM', 'SQF', 'MTR', 'CMS', 'CCM', 'CBM'];
   const isDecimalUnit = (unit: string) => DECIMAL_UNITS.includes((unit || '').toUpperCase());
 
+  // Quick add handler must be defined before effects that depend on it
+  const handleQuickAdd = useCallback((product: Product) => {
+    if (product.stock > 0) {
+      cart.addItem(product);
+      toast.success(`${product.name} added`, { duration: 1000 });
+    } else {
+      toast.error('Out of stock');
+    }
+  }, [cart]);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -195,15 +205,7 @@ export default function QuickPOS() {
     }
   }, [isQtyDialogOpen, qtyDialogProduct]);
 
-  const handleQuickAdd = useCallback((product: Product) => {
-    if (product.stock > 0) {
-      cart.addItem(product);
-      // Brief success indication
-      toast.success(`${product.name} added`, { duration: 1000 });
-    } else {
-      toast.error('Out of stock');
-    }
-  }, [cart]);
+  // (moved up)
 
   // Refactor product selection to open the dialog
   const handleProductSelect = (product: Product) => {
