@@ -104,11 +104,12 @@ const cloudDB = {
 };
 
 const createHybridService = (entityName: string, localKey: string) => {
-  // Security: Validate entity name - handle both singular and plural forms
+  // Security: Validate entity name - allow both singular and plural forms
   const singularEntityName = entityName.replace(/s$/, ''); // Remove trailing 's' if present
   const pluralEntityName = `${singularEntityName}s`;
   
-  if (!isValidTableName(pluralEntityName)) {
+  // Check if either the singular or plural form is valid
+  if (!isValidTableName(singularEntityName) && !isValidTableName(pluralEntityName)) {
     throw new Error(`Invalid entity name: ${entityName}`);
   }
 
