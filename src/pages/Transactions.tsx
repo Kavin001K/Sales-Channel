@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
-import { transactionService } from '@/lib/database';
+import { getTransactions, saveTransaction, updateTransaction } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings } from '@/hooks/useSettings';
 import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
@@ -33,14 +33,86 @@ export default function Transactions() {
   const { company, employee } = useAuth();
   const { companySettings, printSettings } = useSettings();
 
+  // Test function to create a sample transaction
+  const createTestTransaction = async () => {
+    if (!company?.id) {
+      toast({
+        title: "Error",
+        description: "No company ID available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const testTransaction: Transaction = {
+        id: `TEST-${Date.now()}`,
+        companyId: company.id,
+        employeeId: employee?.id || 'test-employee',
+        employeeName: employee?.name || 'Test Employee',
+        customerName: 'Test Customer',
+        customerPhone: '1234567890',
+        items: [
+          {
+            productId: 'test-product-1',
+            name: 'Test Product 1',
+            price: 100.00,
+            quantity: 2,
+            total: 200.00
+          },
+          {
+            productId: 'test-product-2',
+            name: 'Test Product 2',
+            price: 50.00,
+            quantity: 1,
+            total: 50.00
+          }
+        ],
+        subtotal: 250.00,
+        tax: 45.00,
+        discount: 0,
+        total: 295.00,
+        paymentMethod: 'cash',
+        paymentDetails: {
+          cashAmount: 300.00,
+          change: 5.00
+        },
+        timestamp: new Date(),
+        status: 'completed'
+      };
+
+      console.log('Creating test transaction:', testTransaction);
+      const savedTransaction = await saveTransaction(testTransaction);
+      console.log('Test transaction saved:', savedTransaction);
+      
+      toast({
+        title: "Success",
+        description: "Test transaction created successfully",
+      });
+
+      // Reload transactions
+      const data = await getTransactions(company.id);
+      setTransactions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error creating test transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create test transaction",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const loadTransactions = async () => {
       if (!company) return;
       
       try {
         setLoading(true);
-        const data = await transactionService.getAll(company?.id);
+        const data = await getTransactions(company?.id);
+        console.log('Loading transactions for company:', company?.id);
         console.log('Loaded transactions:', data, 'Type:', typeof data, 'IsArray:', Array.isArray(data));
+        console.log('Transaction count:', Array.isArray(data) ? data.length : 0);
         
         // Ensure we always have an array
         const transactionArray = Array.isArray(data) ? data : [];
@@ -133,7 +205,7 @@ export default function Transactions() {
 
     try {
       // Save transaction with cloud backup
-      await transactionService.update(editingTransaction.id, editingTransaction);
+              await updateTransaction(editingTransaction.id, editingTransaction);
       
       // Update local state
       setTransactions(prev => prev.map(t => 
@@ -232,6 +304,12 @@ export default function Transactions() {
           <p className="text-gray-600 mt-2 text-lg">View and manage all sales transactions</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            onClick={createTestTransaction}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Create Test Transaction
+          </Button>
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg">
             <div className="text-sm font-medium">Total Revenue</div>
             <div className="text-2xl font-bold">₹{totalAmount.toFixed(2)}</div>

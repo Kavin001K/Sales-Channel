@@ -13,8 +13,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Plus, Edit, Trash2, Search, Users, Star, DollarSign, Upload, Eye, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Customers() {
+  const { company } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -59,6 +61,46 @@ export default function Customers() {
     } catch (error) {
       console.error('Error loading customers:', error);
       setCustomers([]);
+    }
+  };
+
+  // Test function to create a sample customer
+  const createTestCustomer = async () => {
+    if (!company?.id) {
+      toast.error('No company ID available');
+      return;
+    }
+
+    try {
+      const testCustomer: Customer = {
+        id: `TEST-CUST-${Date.now()}`,
+        companyId: company.id,
+        name: 'Test Customer',
+        email: 'test@example.com',
+        phone: '9876543210',
+        address: {
+          street: '123 Test Street',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345'
+        },
+        loyaltyPoints: 0,
+        totalSpent: 0,
+        visitCount: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log('Creating test customer:', testCustomer);
+      const savedCustomer = await addCustomer(testCustomer);
+      console.log('Test customer saved:', savedCustomer);
+      
+      toast.success('Test customer created successfully');
+      loadCustomers();
+    } catch (error) {
+      console.error('Error creating test customer:', error);
+      toast.error('Failed to create test customer');
     }
   };
 
@@ -203,8 +245,15 @@ export default function Customers() {
           <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database and relationships</p>
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
+        <div className="flex gap-2">
+          <Button 
+            onClick={createTestCustomer}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Create Test Customer
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
             <Button onClick={() => { resetForm(); setEditingCustomer(null); }} size="sm" className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Customer
@@ -303,6 +352,7 @@ export default function Customers() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs defaultValue="customers" className="w-full">

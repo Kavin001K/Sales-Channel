@@ -25,16 +25,32 @@ export const updateProduct = (id: string, updatedProduct: Partial<Product>): Pro
 export const deleteProduct = (id: string): Promise<void> => productService.delete(id);
 
 // Transactions storage
-export const getTransactions = (companyId?: string): Promise<Transaction[]> => transactionService.getAll(companyId);
-export const saveTransaction = (transaction: Transaction): Promise<Transaction> => transactionService.add(transaction);
+export const getTransactions = (companyId?: string): Promise<Transaction[]> => {
+  console.log('getTransactions called with companyId:', companyId);
+  return transactionService.getAll(companyId);
+};
+export const saveTransaction = (transaction: Transaction): Promise<Transaction> => {
+  console.log('saveTransaction called with transaction:', transaction);
+  return transactionService.add(transaction);
+};
 export const updateTransaction = (id: string, updates: Partial<Transaction>): Promise<Transaction> => transactionService.update(id, updates);
 
 // Customers storage
-export const getCustomers = (companyId?: string): Promise<Customer[]> => customerService.getAll(companyId);
-export const addCustomer = (customer: Customer): Promise<Customer> => customerService.add(customer);
-export const updateCustomer = (id: string, updates: Partial<Customer>): Promise<Customer> => customerService.update(id, updates);
+export const getCustomers = (companyId?: string): Promise<Customer[]> => {
+  console.log('getCustomers called with companyId:', companyId);
+  return customerService.getAll(companyId);
+};
+export const addCustomer = (customer: Customer): Promise<Customer> => {
+  console.log('addCustomer called with customer:', customer);
+  return customerService.add(customer);
+};
+export const updateCustomer = (id: string, updates: Partial<Customer>): Promise<Customer> => {
+  console.log('updateCustomer called with id:', id, 'updates:', updates);
+  return customerService.update(id, updates);
+};
 export const deleteCustomer = (id: string): Promise<void> => customerService.delete(id);
 export const saveCustomer = (customer: Customer): Promise<Customer> => {
+    console.log('saveCustomer called with customer:', customer);
     if (customer.id && customer.id.startsWith('local_')) {
         return customerService.add(customer);
     }

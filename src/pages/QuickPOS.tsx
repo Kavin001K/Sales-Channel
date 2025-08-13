@@ -319,7 +319,9 @@ export default function QuickPOS() {
   // Handle transaction completion
   const handleTransactionComplete = useCallback(async (transaction: Transaction) => {
     try {
-      await saveTransaction(transaction);
+      console.log('Saving transaction:', transaction);
+      const savedTransaction = await saveTransaction(transaction);
+      console.log('Transaction saved successfully:', savedTransaction);
       
       // Auto-save/update customer information and link transaction to customer
       if (customerPhone && customerName) {

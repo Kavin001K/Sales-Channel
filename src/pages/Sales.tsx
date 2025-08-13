@@ -240,7 +240,9 @@ export default function Sales() {
 
   const handleTransactionComplete = async (transaction: Transaction) => {
     try {
-      await saveTransaction(transaction);
+      console.log('Saving transaction from Sales:', transaction);
+      const savedTransaction = await saveTransaction(transaction);
+      console.log('Transaction saved successfully from Sales:', savedTransaction);
       
       // Auto-save/update customer information and link transaction to customer
       if (customerPhone && customerName) {
