@@ -1,10 +1,11 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Product, Transaction } from '@/lib/types';
+import { Product, Transaction, Customer } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
-import { getProducts, initializeSampleData, saveTransaction } from '@/lib/storage';
+import { getProducts, initializeSampleData, saveTransaction, getCustomers, saveCustomer, updateCustomer } from '@/lib/storage';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingCart, Zap, X, CreditCard, DollarSign, Keyboard, Printer, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +26,13 @@ export default function Sales() {
   const [inputErrors, setInputErrors] = useState<{ [productId: string]: string }>({});
   const inputRefs = useRef<{ [productId: string]: HTMLInputElement | null }>({});
   const { company, employee } = useAuth();
+
+  // Customer management state
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerGST, setCustomerGST] = useState('');
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(false);
 
   // Add state for search type and invoice type
   const [searchType, setSearchType] = useState<'serial' | 'code' | 'name'>('name');
@@ -141,23 +149,140 @@ export default function Sales() {
     setIsCheckoutOpen(true);
   };
 
-  const handleTransactionComplete = (transaction: Transaction) => {
-    saveTransaction(transaction);
-    cart.clearCart();
-    toast.success('Transaction completed successfully!');
+  // Customer management functions
+  const handleCustomerPhoneChange = useCallback(async (phone: string) => {
+    setCustomerPhone(phone);
     
-    // Update product stock
-    const updatedProducts = products.map(product => {
-      const cartItem = transaction.items.find(item => item.product.id === product.id);
-      if (cartItem) {
-        return { ...product, stock: product.stock - cartItem.quantity };
+    // Only search if phone number is valid (at least 10 digits)
+    if (phone.length >= 10 && /^\d+$/.test(phone)) {
+      setIsCustomerLoading(true);
+      try {
+        // Search for existing customer by phone
+        const customers = await getCustomers(company?.id || '');
+        const existingCustomer = customers.find(c => c.phone === phone);
+        
+        if (existingCustomer) {
+          // Customer found - populate fields
+          setCurrentCustomer(existingCustomer);
+          setCustomerName(existingCustomer.name || '');
+          setCustomerGST(existingCustomer.gst || '');
+          toast.success(`Customer found: ${existingCustomer.name}`);
+        } else {
+          // No customer found - clear current customer
+          setCurrentCustomer(null);
+          // Clear the name if no customer found
+          setCustomerName('');
+          setCustomerGST('');
+        }
+      } catch (error) {
+        console.error('Error searching for customer:', error);
+        toast.error('Error searching for customer');
+      } finally {
+        setIsCustomerLoading(false);
       }
-      return product;
-    });
-    setProducts(updatedProducts);
-    setFilteredProducts(updatedProducts);
-    
-    // Stay on the Sales page for continued billing
+    } else {
+      // Clear customer if phone is invalid
+      setCurrentCustomer(null);
+      setCustomerName('');
+      setCustomerGST('');
+    }
+  }, [company?.id]);
+
+  // Auto-create or update customer when transaction is completed
+  const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
+    if (!phone || !name || !company?.id) return;
+
+    try {
+      const customers = await getCustomers(company.id);
+      const existingCustomer = customers.find(c => c.phone === phone);
+      
+      if (existingCustomer) {
+        // Update existing customer
+        const updatedCustomer = {
+          ...existingCustomer,
+          name: name,
+          gst: gst,
+          visitCount: (existingCustomer.visitCount || 0) + 1,
+          lastVisit: new Date()
+        };
+        
+        await updateCustomer(existingCustomer.id, updatedCustomer);
+        setCurrentCustomer(updatedCustomer);
+        toast.success('Customer updated successfully');
+      } else {
+        // Create new customer
+        const newCustomer = {
+          id: `customer_${Date.now()}`,
+          companyId: company.id,
+          name: name,
+          phone: phone,
+          gst: gst,
+          email: '',
+          address: '',
+          isActive: true,
+          visitCount: 1,
+          loyaltyPoints: 0,
+          totalSpent: 0,
+          lastVisit: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await saveCustomer(newCustomer);
+        setCurrentCustomer(newCustomer);
+        toast.success('New customer created successfully');
+      }
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      toast.error('Error saving customer details');
+    }
+  }, [company?.id]);
+
+  const handleTransactionComplete = async (transaction: Transaction) => {
+    try {
+      await saveTransaction(transaction);
+      
+      // Auto-save/update customer information and link transaction to customer
+      if (customerPhone && customerName) {
+        await handleCustomerSave(customerPhone, customerName, customerGST);
+        
+        // Update customer's transaction history and spending
+        if (currentCustomer) {
+          const updatedCustomer = {
+            ...currentCustomer,
+            totalSpent: (currentCustomer.totalSpent || 0) + transaction.total,
+            visitCount: (currentCustomer.visitCount || 0) + 1,
+            lastVisit: new Date()
+          };
+          await updateCustomer(currentCustomer.id, updatedCustomer);
+        }
+      }
+      
+      cart.clearCart();
+      toast.success('Transaction completed successfully!');
+      
+      // Update product stock
+      const updatedProducts = products.map(product => {
+        const cartItem = transaction.items.find(item => item.product.id === product.id);
+        if (cartItem) {
+          return { ...product, stock: product.stock - cartItem.quantity };
+        }
+        return product;
+      });
+      setProducts(updatedProducts);
+      setFilteredProducts(updatedProducts);
+      
+      // Clear customer form
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerGST('');
+      setCurrentCustomer(null);
+      
+      // Stay on the Sales page for continued billing
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      toast.error('Failed to save transaction');
+    }
   };
 
   const handleRemoveCartItem = (idx: number) => {
@@ -408,13 +533,61 @@ export default function Sales() {
       {/* Checkout Dialog - Responsive */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 w-full max-w-md shadow-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg sm:text-xl font-bold mb-4 dark:text-white">Complete Transaction</h2>
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm sm:text-base dark:text-white">Total Amount:</span>
-                <span className="font-bold text-sm sm:text-base dark:text-white">₹{cart.getTotal().toFixed(2)}</span>
+              {/* Customer Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm dark:text-white">Customer Information</h3>
+                <Input
+                  placeholder="Customer Name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="text-sm"
+                  disabled={isCustomerLoading}
+                />
+                <div className="relative">
+                  <Input
+                    placeholder="Mobile Number"
+                    value={customerPhone}
+                    onChange={(e) => handleCustomerPhoneChange(e.target.value)}
+                    className="text-sm"
+                    disabled={isCustomerLoading}
+                  />
+                  {currentCustomer && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        Found
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                <Input
+                  placeholder="GST Number (Optional)"
+                  value={customerGST}
+                  onChange={(e) => setCustomerGST(e.target.value)}
+                  className="text-sm"
+                  disabled={isCustomerLoading}
+                />
+                {currentCustomer && (
+                  <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200 dark:bg-gray-700 dark:text-gray-300">
+                    <div><strong>Visit Count:</strong> {currentCustomer.visitCount || 0}</div>
+                    <div><strong>Last Visit:</strong> {currentCustomer.lastVisit ? new Date(currentCustomer.lastVisit).toLocaleDateString() : 'Never'}</div>
+                    {currentCustomer.loyaltyPoints > 0 && (
+                      <div><strong>Loyalty Points:</strong> {currentCustomer.loyaltyPoints}</div>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Transaction Summary */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between">
+                  <span className="text-sm sm:text-base dark:text-white">Total Amount:</span>
+                  <span className="font-bold text-sm sm:text-base dark:text-white">₹{cart.getTotal().toFixed(2)}</span>
+                </div>
+              </div>
+
               <div className="flex gap-2 sm:gap-4">
                 <button 
                   className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-sm sm:text-base dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500" 
@@ -431,6 +604,8 @@ export default function Sales() {
                       companyId: company?.id || '',
                       employeeId: employee?.id,
                       employeeName: employee?.name,
+                      customerName: customerName || undefined,
+                      customerPhone: customerPhone || undefined,
                       items: cart.items.map(item => ({
                         productId: item.product.id,
                         name: item.product.name,
@@ -449,6 +624,7 @@ export default function Sales() {
                     handleTransactionComplete(transaction);
                     setIsCheckoutOpen(false);
                   }}
+                  disabled={!customerName.trim()}
                 >
                   Complete
                 </button>

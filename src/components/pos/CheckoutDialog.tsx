@@ -47,7 +47,7 @@ export const CheckoutDialog = ({
 
   // Auto-fetch customer details when phone number is entered
   useEffect(() => {
-    if (customerPhone.length === 10) {
+    if (customerPhone.length >= 10 && /^\d+$/.test(customerPhone)) {
       const customers = getCustomers();
       const foundCustomer = customers.find(c => c.phone === customerPhone);
       if (foundCustomer) {
@@ -55,9 +55,11 @@ export const CheckoutDialog = ({
         setCustomerName(foundCustomer.name);
       } else {
         setCustomer(null);
+        setCustomerName('');
       }
     } else {
       setCustomer(null);
+      setCustomerName('');
     }
   }, [customerPhone]);
 
@@ -86,7 +88,8 @@ export const CheckoutDialog = ({
           phone: customerPhone,
           loyaltyPoints: 0,
           totalSpent: total,
-          visits: 1,
+          visitCount: 1,
+          lastVisit: new Date(),
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -98,10 +101,11 @@ export const CheckoutDialog = ({
         const updatedCustomer = {
           ...customer,
           totalSpent: customer.totalSpent + total,
-          visits: customer.visits + 1,
+          visitCount: (customer.visitCount || 0) + 1,
+          lastVisit: new Date(),
           updatedAt: new Date()
         };
-        saveCustomer(updatedCustomer);
+        updateCustomer(customer.id, updatedCustomer);
       }
     }
     
@@ -131,6 +135,7 @@ export const CheckoutDialog = ({
       timestamp: new Date(),
       customerId,
       customerName: customerName || undefined,
+      customerPhone: customerPhone || undefined,
       receipt: paymentMethod === 'card' ? cardTransactionId : undefined,
       status: 'completed'
     };

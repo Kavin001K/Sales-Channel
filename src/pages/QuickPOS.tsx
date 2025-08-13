@@ -70,9 +70,6 @@ export default function QuickPOS() {
   const searchRef = useRef<HTMLInputElement>(null);
   const exitRequestedRef = useRef(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
-  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
-  const [isReprintDialogOpen, setIsReprintDialogOpen] = useState(false);
-  const [reprintCount, setReprintCount] = useState(0);
   const { companySettings, printSettings } = useSettings();
   const { logout, company, employee } = useAuth();
 
@@ -179,10 +176,8 @@ export default function QuickPOS() {
         } else {
           // No customer found - clear current customer
           setCurrentCustomer(null);
-          // Keep the name if user has already entered it
-          if (!customerName) {
-            setCustomerName('');
-          }
+          // Clear the name if no customer found
+          setCustomerName('');
           setCustomerGST('');
         }
       } catch (error) {
@@ -194,8 +189,10 @@ export default function QuickPOS() {
     } else {
       // Clear customer if phone is invalid
       setCurrentCustomer(null);
+      setCustomerName('');
+      setCustomerGST('');
     }
-  }, [company?.id, customerName]);
+  }, [company?.id]);
 
   // Auto-create or update customer when transaction is completed
   const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
@@ -323,11 +320,21 @@ export default function QuickPOS() {
   const handleTransactionComplete = useCallback(async (transaction: Transaction) => {
     try {
       await saveTransaction(transaction);
-      setLastTransaction(transaction);
       
-      // Auto-save/update customer information
+      // Auto-save/update customer information and link transaction to customer
       if (customerPhone && customerName) {
         await handleCustomerSave(customerPhone, customerName, customerGST);
+        
+        // Update customer's transaction history and spending
+        if (currentCustomer) {
+          const updatedCustomer = {
+            ...currentCustomer,
+            totalSpent: (currentCustomer.totalSpent || 0) + transaction.total,
+            visitCount: (currentCustomer.visitCount || 0) + 1,
+            lastVisit: new Date()
+          };
+          await updateCustomer(currentCustomer.id, updatedCustomer);
+        }
       }
       
       // Prepare receipt data for thermal printer
@@ -384,51 +391,9 @@ export default function QuickPOS() {
       console.error('Error saving transaction:', error);
       toast.error('Failed to save transaction');
     }
-  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave]);
+  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave, currentCustomer]);
 
-  // Handle reprint
-  const handleReprint = useCallback(async () => {
-    if (!lastTransaction) return;
-    
-    const reprintCount = 1; // Simple reprint counter
-    
-    // Prepare receipt data for thermal printer
-    const receiptData: ReceiptData = {
-      companyName: companySettings?.name || 'ACE Business',
-      companyAddress: companySettings?.address || '',
-      companyPhone: companySettings?.phone || '',
-      companyTaxId: companySettings?.taxId || '',
-      receiptNumber: lastTransaction.id,
-      date: new Date(lastTransaction.timestamp).toLocaleString(),
-      cashierName: employee?.name || 'Unknown',
-      customerName: lastTransaction.customerName || 'Walk-in Customer',
-      items: lastTransaction.items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        total: item.total
-      })),
-      subtotal: lastTransaction.subtotal,
-      tax: lastTransaction.tax,
-      total: lastTransaction.total,
-      paymentMethod: lastTransaction.paymentMethod,
-      paymentDetails: lastTransaction.paymentDetails,
-      isReprint: true,
-      reprintCount: reprintCount
-    };
 
-    // Print receipt using thermal printer service
-    const printSuccess = await thermalPrinter.printReceipt(receiptData);
-    
-    if (printSuccess) {
-      toast.success('Receipt reprinted successfully!');
-    } else {
-      toast.warning('Reprint failed - check printer connection');
-    }
-    
-    setReprintCount(reprintCount);
-    setIsReprintDialogOpen(false);
-  }, [lastTransaction, companySettings, employee]);
 
   // Calculate totals
   const subtotal = useMemo(() => {
@@ -883,17 +848,7 @@ export default function QuickPOS() {
               )}
             </Button>
 
-            {/* Reprint Button */}
-            {lastTransaction && (
-              <Button
-                variant="outline"
-                onClick={() => setIsReprintDialogOpen(true)}
-                className="w-full mt-2"
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Reprint Last Bill
-              </Button>
-            )}
+
           </div>
         </div>
       </div>
@@ -961,23 +916,7 @@ export default function QuickPOS() {
         </DialogContent>
       </Dialog>
 
-      {/* Reprint Dialog */}
-      <Dialog open={isReprintDialogOpen} onOpenChange={setIsReprintDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reprint Last Bill</DialogTitle>
-          </DialogHeader>
-          <p>Are you sure you want to reprint the last bill?</p>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => setIsReprintDialogOpen(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleReprint} className="flex-1">
-              Reprint
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Payment Dialog */}
       <PaymentDialog
