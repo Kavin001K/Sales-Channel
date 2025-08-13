@@ -77,75 +77,195 @@ export class ThermalPrintDriver {
         <head>
           <title>Receipt</title>
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
+            * { 
+              margin: 0; 
+              padding: 0; 
+              box-sizing: border-box; 
+              color: #000 !important;
+            }
             body {
               font-family: 'Courier New', monospace;
-              width: 300px;
+              width: 80mm;
               margin: 0;
-              padding: 0;
-              font-size: 12px;
-              line-height: 1.3;
+              padding: 5mm;
+              font-size: 11px;
+              line-height: 1.2;
+              background: white;
+              color: #000;
+              font-weight: 500;
             }
             .center { text-align: center; }
             .bold { font-weight: bold; }
-            .large { font-size: 16px; }
+            .large { font-size: 14px; font-weight: bold; }
+            .medium { font-size: 12px; }
             .small { font-size: 10px; }
-            .line { border-bottom: 1px dashed #000; margin: 5px 0; }
-            .row { display: flex; justify-content: space-between; margin: 2px 0; }
+            .line { 
+              border-bottom: 1px solid #000; 
+              margin: 3px 0; 
+              height: 1px;
+              background: #000;
+            }
+            .row { 
+              display: flex; 
+              justify-content: space-between; 
+              margin: 2px 0; 
+              align-items: center;
+            }
+            .item-row {
+              margin: 3px 0;
+              border-bottom: 1px dotted #333;
+              padding-bottom: 2px;
+            }
+            .item-name {
+              font-weight: bold;
+              margin-bottom: 1px;
+            }
+            .item-details {
+              font-size: 9px;
+              color: #333;
+              margin-left: 2px;
+            }
+            .total-section {
+              border-top: 2px solid #000;
+              margin-top: 5px;
+              padding-top: 5px;
+            }
+            .payment-info {
+              background: #f0f0f0;
+              padding: 3px;
+              margin: 5px 0;
+              border: 1px solid #000;
+            }
+            .footer-text {
+              text-align: center;
+              margin-top: 8px;
+              font-size: 9px;
+              color: #333;
+              border-top: 1px solid #000;
+              padding-top: 5px;
+            }
             @media print {
-              body { margin: 0 !important; padding: 0 !important; }
-              @page { margin: 0 !important; size: 80mm auto; }
+              body { 
+                margin: 0 !important; 
+                padding: 2mm !important; 
+                width: 80mm !important;
+                font-size: 11px !important;
+                color: #000 !important;
+                background: white !important;
+              }
+              @page { 
+                margin: 0 !important; 
+                size: 80mm auto !important;
+              }
+              * {
+                color: #000 !important;
+                background: transparent !important;
+              }
+              .payment-info {
+                background: #f0f0f0 !important;
+                border: 1px solid #000 !important;
+              }
             }
           </style>
         </head>
         <body>
           <div class="center">
-            <div class="large bold">${companySettings.name}</div>
+            <div class="large">${companySettings.name}</div>
             <div class="small">${companySettings.address}</div>
             <div class="small">Phone: ${companySettings.phone}</div>
             ${companySettings.email ? `<div class="small">Email: ${companySettings.email}</div>` : ''}
+            ${companySettings.taxId ? `<div class="small">GST: ${companySettings.taxId}</div>` : ''}
           </div>
           
           <div class="line"></div>
           
-          <div>
-            <div>Receipt: ${transaction.id.slice(-8)}</div>
-            <div>Date: ${new Date(transaction.timestamp).toLocaleDateString()}</div>
-            <div>Time: ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
-            ${transaction.customerName ? `<div>Customer: ${transaction.customerName}</div>` : ''}
+          <div class="medium">
+            <div class="row">
+              <span>Receipt #:</span>
+              <span>${transaction.id.slice(-8)}</span>
+            </div>
+            <div class="row">
+              <span>Date:</span>
+              <span>${new Date(transaction.timestamp).toLocaleDateString()}</span>
+            </div>
+            <div class="row">
+              <span>Time:</span>
+              <span>${new Date(transaction.timestamp).toLocaleTimeString()}</span>
+            </div>
+            ${transaction.customerName ? `
+              <div class="row">
+                <span>Customer:</span>
+                <span>${transaction.customerName}</span>
+              </div>
+            ` : ''}
           </div>
           
           <div class="line"></div>
           
           ${transaction.items.map(item => `
-            <div class="row">
-              <span>${item.product.name}</span>
-              <span>₹${(item.product.price * item.quantity).toFixed(2)}</span>
-            </div>
-            <div class="small" style="color: #666;">
-              ${item.quantity} x ₹${item.product.price.toFixed(2)}
+            <div class="item-row">
+              <div class="item-name">${item.product.name}</div>
+              <div class="row">
+                <span class="item-details">${item.quantity} x ₹${item.product.price.toFixed(2)}</span>
+                <span class="bold">₹${(item.product.price * item.quantity).toFixed(2)}</span>
+              </div>
             </div>
           `).join('')}
           
           <div class="line"></div>
           
-          <div class="row bold">
-            <span>TOTAL:</span>
-            <span>₹${transaction.total.toFixed(2)}</span>
+          <div class="total-section">
+            <div class="row">
+              <span class="bold">SUBTOTAL:</span>
+              <span class="bold">₹${transaction.subtotal.toFixed(2)}</span>
+            </div>
+            ${transaction.tax > 0 ? `
+              <div class="row">
+                <span>GST (18%):</span>
+                <span>₹${transaction.tax.toFixed(2)}</span>
+              </div>
+            ` : ''}
+            ${transaction.discount > 0 ? `
+              <div class="row">
+                <span>Discount:</span>
+                <span>-₹${transaction.discount.toFixed(2)}</span>
+              </div>
+            ` : ''}
+            <div class="row large">
+              <span>TOTAL:</span>
+              <span>₹${transaction.total.toFixed(2)}</span>
+            </div>
           </div>
           
-          <div class="line"></div>
-          
-          <div>
-            <div>Payment: ${transaction.paymentMethod.toUpperCase()}</div>
+          <div class="payment-info">
+            <div class="row">
+              <span class="bold">Payment Method:</span>
+              <span class="bold">${transaction.paymentMethod.toUpperCase()}</span>
+            </div>
             ${transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount ? `
-              <div>Cash: ₹${transaction.paymentDetails.cashAmount.toFixed(2)}</div>
-              ${transaction.paymentDetails.change ? `<div>Change: ₹${transaction.paymentDetails.change.toFixed(2)}</div>` : ''}
+              <div class="row">
+                <span>Cash Received:</span>
+                <span>₹${transaction.paymentDetails.cashAmount.toFixed(2)}</span>
+              </div>
+              ${transaction.paymentDetails.change ? `
+                <div class="row">
+                  <span>Change:</span>
+                  <span>₹${transaction.paymentDetails.change.toFixed(2)}</span>
+                </div>
+              ` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'card' && transaction.receipt ? `
+              <div class="row">
+                <span>Transaction ID:</span>
+                <span>${transaction.receipt}</span>
+              </div>
             ` : ''}
           </div>
           
-          <div class="center small" style="margin-top: 20px;">
-            <div>${printSettings.footer}</div>
+          <div class="footer-text">
+            <div>Thank you for your business!</div>
+            <div>${printSettings.footer || 'Please visit again'}</div>
+            <div style="margin-top: 5px;">Generated by Sales Channel PoS</div>
           </div>
           
           <script>
@@ -183,93 +303,157 @@ export class ThermalPrintDriver {
         <head>
           <title>Invoice - ${transaction.id}</title>
           <style>
+            * {
+              color: #000 !important;
+              box-sizing: border-box;
+            }
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Times New Roman', serif;
               max-width: 210mm;
               margin: 0 auto;
-              padding: 20px;
-              font-size: 14px;
-              line-height: 1.5;
+              padding: 15mm;
+              font-size: 12px;
+              line-height: 1.4;
+              color: #000;
+              background: white;
             }
             .header {
               text-align: center;
-              border-bottom: 2px solid #000;
-              padding-bottom: 15px;
-              margin-bottom: 20px;
+              border-bottom: 3px solid #000;
+              padding-bottom: 10px;
+              margin-bottom: 15px;
             }
             .company-name {
-              font-size: 24px;
+              font-size: 20px;
               font-weight: bold;
-              margin-bottom: 10px;
+              margin-bottom: 5px;
+              color: #000;
+            }
+            .company-details {
+              font-size: 11px;
+              color: #000;
             }
             .invoice-details {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 20px;
-              margin-bottom: 20px;
+              gap: 15px;
+              margin-bottom: 15px;
+              font-size: 11px;
+            }
+            .invoice-details h3 {
+              font-size: 13px;
+              font-weight: bold;
+              margin-bottom: 5px;
+              color: #000;
+              border-bottom: 1px solid #000;
+              padding-bottom: 2px;
             }
             .items-table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
+              font-size: 11px;
             }
             .items-table th,
             .items-table td {
-              border: 1px solid #ddd;
-              padding: 8px;
+              border: 1px solid #000;
+              padding: 6px;
               text-align: left;
+              color: #000;
             }
             .items-table th {
-              background-color: #f5f5f5;
+              background-color: #f0f0f0;
               font-weight: bold;
+              color: #000;
+            }
+            .items-table td {
+              vertical-align: top;
             }
             .total-section {
               margin-left: auto;
-              width: 300px;
-              border-top: 2px solid #000;
-              padding-top: 10px;
+              width: 250px;
+              border: 2px solid #000;
+              padding: 10px;
+              background: #f9f9f9;
             }
             .total-row {
               display: flex;
               justify-content: space-between;
-              margin-bottom: 5px;
+              margin-bottom: 3px;
+              font-size: 11px;
             }
             .total-final {
               font-weight: bold;
-              font-size: 16px;
-              border-top: 1px solid #000;
+              font-size: 14px;
+              border-top: 2px solid #000;
               padding-top: 5px;
+              margin-top: 5px;
+            }
+            .payment-info {
+              margin-top: 10px;
+              padding: 8px;
+              border: 1px solid #000;
+              background: #f0f0f0;
+              font-size: 11px;
             }
             .footer {
               text-align: center;
-              margin-top: 30px;
-              color: #666;
+              margin-top: 20px;
+              color: #000;
+              font-size: 10px;
+              border-top: 1px solid #000;
+              padding-top: 10px;
+            }
+            .sku {
+              font-size: 9px;
+              color: #333;
+              font-style: italic;
             }
             @media print {
-              body { margin: 0; padding: 15px; }
-              @page { margin: 1cm; }
+              body { 
+                margin: 0; 
+                padding: 10mm; 
+                font-size: 12px !important;
+                color: #000 !important;
+                background: white !important;
+              }
+              @page { 
+                margin: 10mm; 
+                size: A4;
+              }
+              * {
+                color: #000 !important;
+              }
+              .total-section {
+                background: #f9f9f9 !important;
+                border: 2px solid #000 !important;
+              }
+              .payment-info {
+                background: #f0f0f0 !important;
+                border: 1px solid #000 !important;
+              }
             }
           </style>
         </head>
         <body>
           <div class="header">
             <div class="company-name">${companySettings.name}</div>
-            <div>${companySettings.address}</div>
-            <div>Phone: ${companySettings.phone} | Email: ${companySettings.email}</div>
-            ${companySettings.taxId ? `<div>Tax ID: ${companySettings.taxId}</div>` : ''}
+            <div class="company-details">${companySettings.address}</div>
+            <div class="company-details">Phone: ${companySettings.phone} | Email: ${companySettings.email}</div>
+            ${companySettings.taxId ? `<div class="company-details">GST: ${companySettings.taxId}</div>` : ''}
           </div>
           
           <div class="invoice-details">
             <div>
-              <h3>Invoice Details</h3>
+              <h3>INVOICE DETAILS</h3>
               <div><strong>Invoice #:</strong> ${transaction.id}</div>
               <div><strong>Date:</strong> ${new Date(transaction.timestamp).toLocaleDateString()}</div>
               <div><strong>Time:</strong> ${new Date(transaction.timestamp).toLocaleTimeString()}</div>
             </div>
             <div>
-              <h3>Customer Details</h3>
+              <h3>CUSTOMER DETAILS</h3>
               ${transaction.customerName ? `<div><strong>Name:</strong> ${transaction.customerName}</div>` : ''}
-              <div><strong>Payment:</strong> ${transaction.paymentMethod.toUpperCase()}</div>
+              <div><strong>Payment Method:</strong> ${transaction.paymentMethod.toUpperCase()}</div>
             </div>
           </div>
           
@@ -277,7 +461,7 @@ export class ThermalPrintDriver {
             <thead>
               <tr>
                 <th>Description</th>
-                <th>Quantity</th>
+                <th>Qty</th>
                 <th>Unit Price</th>
                 <th>Total</th>
               </tr>
@@ -285,10 +469,13 @@ export class ThermalPrintDriver {
             <tbody>
               ${transaction.items.map(item => `
                 <tr>
-                  <td>${item.product.name}<br><small>${item.product.sku || ''}</small></td>
+                  <td>
+                    <strong>${item.product.name}</strong>
+                    ${item.product.sku ? `<br><span class="sku">SKU: ${item.product.sku}</span>` : ''}
+                  </td>
                   <td>${item.quantity}</td>
                   <td>₹${item.product.price.toFixed(2)}</td>
-                  <td>₹${(item.product.price * item.quantity).toFixed(2)}</td>
+                  <td><strong>₹${(item.product.price * item.quantity).toFixed(2)}</strong></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -301,7 +488,7 @@ export class ThermalPrintDriver {
             </div>
             ${transaction.tax > 0 ? `
               <div class="total-row">
-                <span>Tax:</span>
+                <span>GST (18%):</span>
                 <span>₹${transaction.tax.toFixed(2)}</span>
               </div>
             ` : ''}
@@ -312,14 +499,26 @@ export class ThermalPrintDriver {
               </div>
             ` : ''}
             <div class="total-row total-final">
-              <span>Total Amount:</span>
+              <span>TOTAL AMOUNT:</span>
               <span>₹${transaction.total.toFixed(2)}</span>
             </div>
           </div>
           
+          <div class="payment-info">
+            <div><strong>Payment Details:</strong></div>
+            ${transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount ? `
+              <div>Cash Received: ₹${transaction.paymentDetails.cashAmount.toFixed(2)}</div>
+              ${transaction.paymentDetails.change ? `<div>Change: ₹${transaction.paymentDetails.change.toFixed(2)}</div>` : ''}
+            ` : ''}
+            ${transaction.paymentMethod === 'card' && transaction.receipt ? `
+              <div>Transaction ID: ${transaction.receipt}</div>
+            ` : ''}
+          </div>
+          
           <div class="footer">
-            <div>${printSettings.header}</div>
-            <div>${printSettings.footer}</div>
+            <div><strong>${printSettings.header || 'Thank you for your business!'}</strong></div>
+            <div>${printSettings.footer || 'Please visit again'}</div>
+            <div style="margin-top: 5px;">Generated by Sales Channel PoS System</div>
           </div>
           
           <script>

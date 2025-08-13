@@ -25,6 +25,7 @@ import AdminSettings from "./pages/AdminSettings";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
 import SupportCenter from "./pages/SupportCenter";
+import BillTestPage from "./pages/BillTestPage";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
@@ -195,6 +196,13 @@ function AppRoutes() {
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Bill Test Page - Available to all authenticated users */}
+            <Route path="/bill-test" element={
+              <ProtectedRoute>
+                <BillTestPage />
               </ProtectedRoute>
             } />
             
