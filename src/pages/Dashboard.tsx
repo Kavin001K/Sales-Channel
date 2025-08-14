@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { getTransactions, getProducts, getCustomers } from '@/lib/storage';
 import { Transaction, Product, InventoryAlert } from '@/lib/types';
 import { useAuth } from '@/hooks/useAuth';
+import { getInvoices, getInvoiceStats } from '@/lib/invoice-utils';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -16,13 +17,15 @@ import {
   Calendar,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  FileText
 } from 'lucide-react';
 
 export default function Dashboard() {
   const { logout, logoutEmployee, employee } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlert[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [todayStats, setTodayStats] = useState({
@@ -41,14 +44,17 @@ export default function Dashboard() {
       const allTransactions = await getTransactions();
       const allProducts = await getProducts();
       const allCustomers = await getCustomers();
+      const allInvoices = getInvoices();
 
       // Ensure we have arrays
       const transactionsArray = Array.isArray(allTransactions) ? allTransactions : [];
       const productsArray = Array.isArray(allProducts) ? allProducts : [];
       const customersArray = Array.isArray(allCustomers) ? allCustomers : [];
+      const invoicesArray = Array.isArray(allInvoices) ? allInvoices : [];
 
       setTransactions(transactionsArray);
       setProducts(productsArray);
+      setInvoices(invoicesArray);
 
       // Calculate today's stats
       const today = new Date();
@@ -167,7 +173,7 @@ export default function Dashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today&apos;s Sales</CardTitle>
@@ -220,6 +226,21 @@ export default function Dashboard() {
             <div className="flex items-center text-xs text-muted-foreground">
               <TrendingDown className="w-3 h-3 mr-1" />
               -2.3% from yesterday
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Invoices</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{getInvoiceStats(invoices).total}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="text-green-600">{getInvoiceStats(invoices).paid} paid</span>
+              <span className="mx-1">•</span>
+              <span className="text-yellow-600">{getInvoiceStats(invoices).pending} pending</span>
             </div>
           </CardContent>
         </Card>

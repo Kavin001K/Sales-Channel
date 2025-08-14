@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Receipt, Printer, Bell, Info } from "lucide-react";
+import { Building2, Receipt, Printer, Bell, Info, FileText } from "lucide-react";
 import { getEmployeeIdSettings, setEmployeeIdSettings } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +53,22 @@ interface GeneralSettings {
   dateFormat: string;
   autoBackup: boolean;
   sessionTimeout: number;
+}
+
+interface InvoiceTemplateSettings {
+  defaultTemplate: number;
+  defaultCurrency: string;
+  defaultTaxRate: number;
+  defaultNotes: string;
+  showLogo: boolean;
+  showTaxBreakdown: boolean;
+  showCustomerInfo: boolean;
+  autoGenerateInvoiceNumber: boolean;
+  invoiceNumberPrefix: string;
+  includeTerms: boolean;
+  termsText: string;
+  includePaymentInstructions: boolean;
+  paymentInstructions: string;
 }
 
 const Settings = () => {
@@ -102,6 +118,22 @@ const Settings = () => {
     sessionTimeout: 60
   });
 
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceTemplateSettings>({
+    defaultTemplate: 1,
+    defaultCurrency: "INR",
+    defaultTaxRate: 18,
+    defaultNotes: "Thank you for your business!",
+    showLogo: true,
+    showTaxBreakdown: true,
+    showCustomerInfo: true,
+    autoGenerateInvoiceNumber: true,
+    invoiceNumberPrefix: "INV",
+    includeTerms: false,
+    termsText: "Payment is due within 30 days. Late payments may incur additional charges.",
+    includePaymentInstructions: false,
+    paymentInstructions: "Please make payment to the account details provided above."
+  });
+
   const [companyErrors, setCompanyErrors] = useState<string[]>([]);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
   const [empIdPrefix, setEmpIdPrefix] = useState("EMP");
@@ -124,11 +156,13 @@ const Settings = () => {
     const savedPrint = localStorage.getItem('print_settings');
     const savedNotifications = localStorage.getItem('notification_settings');
     const savedGeneral = localStorage.getItem('general_settings');
+    const savedInvoice = localStorage.getItem('invoice_settings');
 
     if (savedCompany) setCompanySettings(JSON.parse(savedCompany));
     if (savedPrint) setPrintSettings(JSON.parse(savedPrint));
     if (savedNotifications) setNotificationSettings(JSON.parse(savedNotifications));
     if (savedGeneral) setGeneralSettings(JSON.parse(savedGeneral));
+    if (savedInvoice) setInvoiceSettings(JSON.parse(savedInvoice));
 
     // Load employee ID settings from backend/local
     (async () => {
@@ -204,6 +238,15 @@ const Settings = () => {
     });
   };
 
+  const saveInvoiceSettings = () => {
+    localStorage.setItem('invoice_settings', JSON.stringify(invoiceSettings));
+    window.dispatchEvent(new CustomEvent('settingsUpdated'));
+    toast({
+      title: "Invoice settings saved",
+      description: "Your invoice template preferences have been updated.",
+    });
+  };
+
   // 1. Add state and handler for logo upload and delete
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -231,9 +274,10 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="print">Print Template</TabsTrigger>
+          <TabsTrigger value="invoice">Invoice Templates</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
@@ -550,6 +594,202 @@ const Settings = () => {
               <Button onClick={savePrintSettings}>
                 <Printer className="h-4 w-4 mr-2" />
                 Save Print Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="invoice" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Invoice Template Settings
+              </CardTitle>
+              <CardDescription>
+                Customize your invoice templates and default settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Default Template Selection */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Default Template</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((templateNum) => (
+                    <div
+                      key={templateNum}
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+                        invoiceSettings.defaultTemplate === templateNum
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setInvoiceSettings({...invoiceSettings, defaultTemplate: templateNum})}
+                    >
+                      <div className="text-center">
+                        <div className="w-full h-20 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                          <span className="text-sm font-medium">Template {templateNum}</span>
+                        </div>
+                        <span className="text-sm">Template {templateNum}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Default Settings */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Default Settings</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="default-currency">Default Currency</Label>
+                    <select
+                      id="default-currency"
+                      className="w-full p-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400"
+                      value={invoiceSettings.defaultCurrency}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, defaultCurrency: e.target.value})}
+                    >
+                      <option value="INR">INR (₹)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="default-tax-rate">Default Tax Rate (%)</Label>
+                    <Input
+                      id="default-tax-rate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={invoiceSettings.defaultTaxRate}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, defaultTaxRate: parseFloat(e.target.value) || 0})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invoice-prefix">Invoice Number Prefix</Label>
+                    <Input
+                      id="invoice-prefix"
+                      value={invoiceSettings.invoiceNumberPrefix}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, invoiceNumberPrefix: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="default-notes">Default Notes</Label>
+                    <Textarea
+                      id="default-notes"
+                      value={invoiceSettings.defaultNotes}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, defaultNotes: e.target.value})}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Display Options */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Display Options</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-logo-invoice">Show Company Logo</Label>
+                    <Switch
+                      id="show-logo-invoice"
+                      checked={invoiceSettings.showLogo}
+                      onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, showLogo: checked})}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-tax-breakdown">Show Tax Breakdown</Label>
+                    <Switch
+                      id="show-tax-breakdown"
+                      checked={invoiceSettings.showTaxBreakdown}
+                      onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, showTaxBreakdown: checked})}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-customer-info">Show Customer Info</Label>
+                    <Switch
+                      id="show-customer-info"
+                      checked={invoiceSettings.showCustomerInfo}
+                      onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, showCustomerInfo: checked})}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auto-generate-number">Auto Generate Invoice Number</Label>
+                    <Switch
+                      id="auto-generate-number"
+                      checked={invoiceSettings.autoGenerateInvoiceNumber}
+                      onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, autoGenerateInvoiceNumber: checked})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Terms and Conditions */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="include-terms">Include Terms & Conditions</Label>
+                    <p className="text-sm text-muted-foreground">Add terms and conditions to your invoices</p>
+                  </div>
+                  <Switch
+                    id="include-terms"
+                    checked={invoiceSettings.includeTerms}
+                    onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, includeTerms: checked})}
+                  />
+                </div>
+                {invoiceSettings.includeTerms && (
+                  <div className="space-y-2">
+                    <Label htmlFor="terms-text">Terms & Conditions Text</Label>
+                    <Textarea
+                      id="terms-text"
+                      value={invoiceSettings.termsText}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, termsText: e.target.value})}
+                      rows={3}
+                      placeholder="Enter your terms and conditions..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Payment Instructions */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="include-payment">Include Payment Instructions</Label>
+                    <p className="text-sm text-muted-foreground">Add payment instructions to your invoices</p>
+                  </div>
+                  <Switch
+                    id="include-payment"
+                    checked={invoiceSettings.includePaymentInstructions}
+                    onCheckedChange={(checked) => setInvoiceSettings({...invoiceSettings, includePaymentInstructions: checked})}
+                  />
+                </div>
+                {invoiceSettings.includePaymentInstructions && (
+                  <div className="space-y-2">
+                    <Label htmlFor="payment-instructions">Payment Instructions</Label>
+                    <Textarea
+                      id="payment-instructions"
+                      value={invoiceSettings.paymentInstructions}
+                      onChange={(e) => setInvoiceSettings({...invoiceSettings, paymentInstructions: e.target.value})}
+                      rows={3}
+                      placeholder="Enter payment instructions..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <Button onClick={saveInvoiceSettings} className="w-full">
+                <FileText className="h-4 w-4 mr-2" />
+                Save Invoice Settings
               </Button>
             </CardContent>
           </Card>

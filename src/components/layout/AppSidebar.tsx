@@ -12,7 +12,8 @@ import {
   Settings,
   Shield,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -37,6 +38,7 @@ const allNavigationItems = [
   { title: "Products", url: "/products", icon: Package, description: "Manage Inventory", roles: ['company', 'admin', 'manager'] },
   { title: "Customers", url: "/customers", icon: Users, description: "Customer Management", roles: ['company', 'admin', 'manager', 'cashier', 'sales', 'support'] },
   { title: "Employees", url: "/employees", icon: UserCheck, description: "Staff Management", roles: ['company', 'admin'] },
+  { title: "Invoices", url: "/invoices", icon: FileText, description: "Invoice Management", roles: ['company', 'admin', 'manager'] },
   { title: "Transactions", url: "/transactions", icon: Receipt, description: "Transaction History", roles: ['company', 'admin', 'manager', 'cashier'] },
   { title: "Reports", url: "/reports", icon: TrendingUp, description: "Sales Analytics", roles: ['company', 'admin', 'manager'] },
   { title: "Admin Company Dashboard", url: "/admin/company-dashboard", icon: Users, description: "Internal Team Workspace", roles: ['sales', 'support', 'technical', 'marketing', 'finance', 'hr'] },

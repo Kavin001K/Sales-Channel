@@ -26,6 +26,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
 import SupportCenter from "./pages/SupportCenter";
 import BillTestPage from "./pages/BillTestPage";
+import Invoices from "./pages/Invoices";
 import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
@@ -189,6 +190,12 @@ function AppRoutes() {
             <Route path="/reports" element={
               <ProtectedRoute allowedRoles={['company','admin','manager']}>
                 <Reports />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices" element={
+              <ProtectedRoute allowedRoles={['company','admin','manager']}>
+                <Invoices />
               </ProtectedRoute>
             } />
             
