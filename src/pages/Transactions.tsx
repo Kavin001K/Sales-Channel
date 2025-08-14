@@ -90,6 +90,9 @@ export default function Transactions() {
         description: "Test transaction created successfully",
       });
 
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('transactionUpdated'));
+      
       // Reload transactions
       const data = await getTransactions(company.id);
       setTransactions(Array.isArray(data) ? data : []);
@@ -130,6 +133,39 @@ export default function Transactions() {
     };
 
     loadTransactions();
+  }, [company]);
+
+  // Add refresh function that can be called from other components
+  const refreshTransactions = async () => {
+    if (!company) return;
+    
+    try {
+      setLoading(true);
+      const data = await getTransactions(company?.id);
+      const transactionArray = Array.isArray(data) ? data : [];
+      setTransactions(transactionArray);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh transactions",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Listen for transaction updates from other components
+  useEffect(() => {
+    const handleTransactionUpdate = () => {
+      refreshTransactions();
+    };
+
+    window.addEventListener('transactionUpdated', handleTransactionUpdate);
+    return () => {
+      window.removeEventListener('transactionUpdated', handleTransactionUpdate);
+    };
   }, [company]);
 
   // Reprint function with proper labeling

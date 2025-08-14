@@ -146,7 +146,7 @@ const Settings = () => {
       navigate('/admin/settings', { replace: true });
       return;
     }
-    // Non-admin employees cannot access settings
+    // Only company owners and admin employees can access settings
     if (employee && (employee.position?.toLowerCase() !== 'admin')) {
       navigate('/unauthorized', { replace: true });
       return;

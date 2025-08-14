@@ -53,6 +53,18 @@ export default function Customers() {
     loadCustomers();
   }, []);
 
+  // Listen for customer updates from other components
+  useEffect(() => {
+    const handleCustomerUpdate = () => {
+      loadCustomers();
+    };
+
+    window.addEventListener('customerUpdated', handleCustomerUpdate);
+    return () => {
+      window.removeEventListener('customerUpdated', handleCustomerUpdate);
+    };
+  }, []);
+
   const loadCustomers = async () => {
     try {
       const customersData = await getCustomers();
@@ -97,6 +109,10 @@ export default function Customers() {
       console.log('Test customer saved:', savedCustomer);
       
       toast.success('Test customer created successfully');
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('customerUpdated'));
+      
       loadCustomers();
     } catch (error) {
       console.error('Error creating test customer:', error);
@@ -167,6 +183,10 @@ export default function Customers() {
       addCustomer(newCustomer);
       toast.success('Customer added successfully');
     }
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('customerUpdated'));
+    
     loadCustomers();
     resetForm();
     setIsAddDialogOpen(false);
@@ -220,6 +240,10 @@ export default function Customers() {
 
   const handleDelete = (id: string) => {
     deleteCustomer(id);
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('customerUpdated'));
+    
     loadCustomers();
     toast.success('Customer deleted successfully');
   };

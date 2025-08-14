@@ -261,6 +261,10 @@ export default function Sales() {
       }
       
       cart.clearCart();
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('transactionUpdated'));
+      
       toast.success('Transaction completed successfully!');
       
       // Update product stock

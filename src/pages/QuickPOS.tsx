@@ -372,6 +372,9 @@ export default function QuickPOS() {
         toast.warning('Receipt printing failed - check printer connection');
       }
       
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('transactionUpdated'));
+      
       // Clear cart and form
       cart.clearCart();
       setCustomerName('');
