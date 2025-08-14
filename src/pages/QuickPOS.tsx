@@ -320,6 +320,18 @@ export default function QuickPOS() {
   const handleTransactionComplete = useCallback(async (transaction: Transaction) => {
     try {
       console.log('Saving transaction:', transaction);
+      
+      // Validate transaction data before saving
+      if (!transaction.companyId) {
+        throw new Error('Company ID is required');
+      }
+      if (!transaction.items || transaction.items.length === 0) {
+        throw new Error('Transaction must have at least one item');
+      }
+      if (transaction.total <= 0) {
+        throw new Error('Transaction total must be greater than 0');
+      }
+      
       const savedTransaction = await saveTransaction(transaction);
       console.log('Transaction saved successfully:', savedTransaction);
       
@@ -394,7 +406,18 @@ export default function QuickPOS() {
       
     } catch (error) {
       console.error('Error saving transaction:', error);
-      toast.error('Failed to save transaction');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to save transaction: ${errorMessage}`);
+      
+      // Log additional debugging information
+      console.log('Transaction data that failed to save:', {
+        id: transaction.id,
+        companyId: transaction.companyId,
+        itemsCount: transaction.items?.length,
+        total: transaction.total,
+        hasEmployee: !!transaction.employeeId,
+        hasCustomer: !!transaction.customerName
+      });
     }
   }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave, currentCustomer]);
 
@@ -494,7 +517,6 @@ export default function QuickPOS() {
           price: item.product.price,
           quantity: item.quantity,
           total: item.product.price * item.quantity,
-          receipt: '',
           mrp: item.product.mrp || 0
         })),
         subtotal,

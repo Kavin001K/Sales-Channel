@@ -31,6 +31,18 @@ export const getTransactions = (companyId?: string): Promise<Transaction[]> => {
 };
 export const saveTransaction = (transaction: Transaction): Promise<Transaction> => {
   console.log('saveTransaction called with transaction:', transaction);
+  
+  // Additional validation before saving
+  if (!transaction.companyId) {
+    return Promise.reject(new Error('Company ID is required for transaction'));
+  }
+  if (!transaction.items || transaction.items.length === 0) {
+    return Promise.reject(new Error('Transaction must have at least one item'));
+  }
+  if (!transaction.total || transaction.total <= 0) {
+    return Promise.reject(new Error('Transaction total must be greater than 0'));
+  }
+  
   return transactionService.add(transaction);
 };
 export const updateTransaction = (id: string, updates: Partial<Transaction>): Promise<Transaction> => transactionService.update(id, updates);

@@ -92,6 +92,7 @@ const cloudDB = {
       
       const electronAPI = getElectronApi();
       if (!electronAPI) {
+        console.warn("Electron API is not available, using local storage only");
         throw new Error("Electron API is not available.");
       }
       
@@ -212,6 +213,19 @@ const createHybridService = (entityName: string, localKey: string) => {
           throw new Error('Invalid item data');
         }
         
+        // Additional validation for transactions
+        if (localKey === 'transactions') {
+          if (!item.companyId) {
+            throw new Error('Transaction must have a companyId');
+          }
+          if (!item.items || !Array.isArray(item.items) || item.items.length === 0) {
+            throw new Error('Transaction must have at least one item');
+          }
+          if (!item.total || item.total <= 0) {
+            throw new Error('Transaction total must be greater than 0');
+          }
+        }
+        
         // Security: Sanitize item data
         const sanitizedItem = Object.keys(item).reduce((acc, key) => {
           if (isValidColumnName(key)) {
@@ -239,7 +253,16 @@ const createHybridService = (entityName: string, localKey: string) => {
         }
         
         const allItems = localDB.getItem(localKey) || [];
-        localDB.setItem(localKey, [...allItems, newItem]);
+        const updatedItems = [...allItems, newItem];
+        localDB.setItem(localKey, updatedItems);
+        
+        // Verify the item was saved
+        const savedItems = localDB.getItem(localKey) || [];
+        const savedItem = savedItems.find((item: any) => item.id === newItem.id);
+        if (!savedItem) {
+          throw new Error('Failed to save item to localStorage');
+        }
+        
         return newItem;
       } catch (error) {
         console.error(`Error in add for ${entityName}:`, error);
