@@ -443,6 +443,24 @@ const supportService = {
     return newTicket;
   },
 
+  updateTicket: async (ticketId: string, updates: any) => {
+    if (isOnline() && getElectronApi()) {
+      try {
+        const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+        const values = [ticketId, ...Object.values(updates)];
+        await cloudDB.query(`UPDATE support_tickets SET ${setClause} WHERE id = $1`, values);
+      } catch (error) {
+        console.warn('Could not update support ticket in cloud, updating locally.', error);
+      }
+    }
+    const allTickets = localDB.getItem('support_tickets') || [];
+    const updatedTickets = allTickets.map((ticket: any) => 
+      ticket.id === ticketId ? { ...ticket, ...updates } : ticket
+    );
+    localDB.setItem('support_tickets', updatedTickets);
+    return updatedTickets.find((ticket: any) => ticket.id === ticketId);
+  },
+
   addMessage: async (message: any) => {
     const newMessage = { ...message, id: message.id || `msg_${Date.now()}`, createdAt: new Date() };
     const all = localDB.getItem('support_messages') || [];

@@ -10,7 +10,7 @@ import { subscriptionPlanService, companyService, supportTicketService } from '.
 
 // --- Subscription Plans ---
 export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
-  return await subscriptionPlanService.getAll();
+  return await subscriptionPlanService.getPlans();
 };
 export const saveSubscriptionPlan = async (plan: SubscriptionPlan): Promise<void> => {
   await subscriptionPlanService.add(plan);
@@ -28,7 +28,7 @@ export const saveSubscribedCompany = async (company: Company): Promise<void> => 
 export const getCompanySubscriptions = async (): Promise<CompanySubscription[]> => {
   // Fallback to local list from companyService for demo
   const companies = await companyService.getAll();
-  const plans = await subscriptionPlanService.getAll();
+  const plans = await subscriptionPlanService.getPlans();
   // Map companies to a synthetic active subscription if planId exists in company meta (optional)
   return companies
     .filter((c: any) => c.subscriptionPlanId)
@@ -56,7 +56,7 @@ export const getSubscriptionByCompany = async (companyId: string): Promise<Compa
   };
 };
 export const assignSubscriptionToCompany = async (companyId: string, planId: string): Promise<void> => {
-  const plans = await subscriptionPlanService.getAll();
+  const plans = await subscriptionPlanService.getPlans();
   const plan = plans.find(p => p.id === planId);
   if (!plan) throw new Error('Subscription plan not found');
 
@@ -82,10 +82,10 @@ export const assignSubscriptionToCompany = async (companyId: string, planId: str
 
 // --- Support Tickets ---
 export const getSupportTickets = async (): Promise<SupportTicket[]> => {
-  return await supportTicketService.getAll();
+  return await supportTicketService.getTickets();
 };
 export const getTicketsByCompany = async (companyId: string): Promise<SupportTicket[]> => {
-  const tickets = await supportTicketService.getAll();
+  const tickets = await supportTicketService.getTickets();
   return tickets.filter(t => t.companyId === companyId);
 };
 export const createSupportTicket = async (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<SupportTicket> => {
@@ -96,9 +96,9 @@ export const createSupportTicket = async (ticketData: Omit<SupportTicket, 'id' |
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  await supportTicketService.add(newTicket);
+  await supportTicketService.createTicket(newTicket);
   return newTicket;
 };
 export const updateSupportTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed'): Promise<void> => {
-  await supportTicketService.update(ticketId, { status, updatedAt: new Date() });
+  await supportTicketService.updateTicket(ticketId, { status, updatedAt: new Date() });
 };
