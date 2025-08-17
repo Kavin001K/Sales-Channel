@@ -49,11 +49,23 @@ export default function CompanyDashboard() {
         
         if (sub) {
           setSubscription(sub);
-          const activePlan = plans.find(p => p.id === sub.planId);
-          setPlan(activePlan || null);
+          // Ensure plans is an array before calling .find()
+          if (Array.isArray(plans)) {
+            const activePlan = plans.find(p => p.id === sub.planId);
+            setPlan(activePlan || null);
+          } else {
+            console.warn('getSubscriptionPlans() did not return an array:', plans);
+            setPlan(null);
+          }
         }
         
-        setTickets(supportTickets);
+        // Ensure supportTickets is an array before setting it
+        if (Array.isArray(supportTickets)) {
+          setTickets(supportTickets);
+        } else {
+          console.warn('getTicketsByCompany() did not return an array:', supportTickets);
+          setTickets([]);
+        }
 
       } catch (error) {
         console.error("Failed to fetch company data:", error);
@@ -89,7 +101,12 @@ export default function CompanyDashboard() {
       setNewTicketMessage('');
       // Refresh tickets
       const supportTickets = await getTicketsByCompany(company.id);
-      setTickets(supportTickets);
+      if (Array.isArray(supportTickets)) {
+        setTickets(supportTickets);
+      } else {
+        console.warn('getTicketsByCompany() did not return an array:', supportTickets);
+        setTickets([]);
+      }
     } catch (error) {
       toast.error('Failed to create support ticket.');
     }
@@ -130,9 +147,13 @@ export default function CompanyDashboard() {
               <div>
                 <h4 className="font-semibold mb-2">Plan Features:</h4>
                 <ul className="list-disc list-inside">
-                  {plan.features.map((feature, index) => (
-                    <li key={index}>{feature}</li>
-                  ))}
+                  {Array.isArray(plan.features) ? (
+                    plan.features.map((feature, index) => (
+                      <li key={index}>{feature}</li>
+                    ))
+                  ) : (
+                    <li>No features listed</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -172,13 +193,21 @@ export default function CompanyDashboard() {
           <Table>
             <TableHeader><TableRow><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead>Last Updated</TableHead></TableRow></TableHeader>
             <TableBody>
-              {tickets.map(ticket => (
-                <TableRow key={ticket.id}>
-                  <TableCell>{ticket.subject}</TableCell>
-                  <TableCell><Badge variant={ticket.status === 'closed' ? 'secondary' : 'default'}>{ticket.status}</Badge></TableCell>
-                  <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+              {Array.isArray(tickets) && tickets.length > 0 ? (
+                tickets.map(ticket => (
+                  <TableRow key={ticket.id}>
+                    <TableCell>{ticket.subject}</TableCell>
+                    <TableCell><Badge variant={ticket.status === 'closed' ? 'secondary' : 'default'}>{ticket.status}</Badge></TableCell>
+                    <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-gray-500">
+                    No support tickets found
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
