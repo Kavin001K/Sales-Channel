@@ -20,11 +20,11 @@ const isDecimalUnit = (unit: string) => DECIMAL_UNITS.includes((unit || '').toUp
 export const ProductGrid = ({ products, onProductSelect, searchQuery = '' }: ProductGridProps) => {
   const [weights, setWeights] = useState<{ [productId: string]: number }>({});
 
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = Array.isArray(products) ? products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.sku?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">

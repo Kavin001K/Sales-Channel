@@ -50,7 +50,12 @@ export default function Sales() {
     if (!Array.isArray(products) || products.length === 0) {
       return ['All'];
     }
-    return ['All', ...Array.from(new Set(products.map(p => p.category)))];
+    try {
+      return ['All', ...Array.from(new Set(products.map(p => p.category)))];
+    } catch (error) {
+      console.error('Error getting categories:', error);
+      return ['All'];
+    }
   }, [products]);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -88,12 +93,12 @@ export default function Sales() {
   useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) {
-      setFilteredProducts(products);
+      setFilteredProducts(Array.isArray(products) ? products : []);
       return;
     }
     // Enhanced keyword/fuzzy search
     const words = query.split(/\s+/).filter(Boolean);
-    const filtered = products.filter(product => {
+    const filtered = Array.isArray(products) ? products.filter(product => {
       const fields = [
         product.name,
         product.sku,
@@ -105,7 +110,7 @@ export default function Sales() {
       return words.every(word => 
         fields.some(field => field.includes(word))
       );
-    });
+    }) : [];
     setFilteredProducts(filtered);
   }, [searchQuery, products]);
 

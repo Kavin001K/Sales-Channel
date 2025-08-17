@@ -202,19 +202,20 @@ export default function Products() {
   };
 
   const getCategories = () => {
+    if (!Array.isArray(products)) return [];
     const categories = new Set(products.map(p => p.category));
     return Array.from(categories);
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = Array.isArray(products) ? products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.barcode?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  });
+  }) : [];
 
-  const lowStockProducts = products.filter(p => p.stock <= p.minStock);
+  const lowStockProducts = Array.isArray(products) ? products.filter(p => p.stock <= p.minStock) : [];
 
   const UOM_OPTIONS = [
     'UNT', 'TON', 'TBS', 'SQY', 'SQM', 'SQF', 'SET', 'ROL', 'QTL', 'PCS', 'PAC', 'NOS', 'MTR', 'MLT', 'KLR', 'KGS', 'GMS', 'DOZ', 'CTN', 'CMS', 'CCM', 'CBM', 'CAN', 'BUN', 'BTL', 'BOX', 'BKL', 'BDL', 'BAL', 'BAG'

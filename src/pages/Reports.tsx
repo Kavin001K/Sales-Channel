@@ -45,7 +45,7 @@ export default function Reports() {
   }, []);
 
   const filteredTransactions = useMemo(() => {
-    if (dateFilter === 'all') return transactions;
+    if (dateFilter === 'all') return Array.isArray(transactions) ? transactions : [];
 
     const now = new Date();
     let startDate: Date;
@@ -65,13 +65,13 @@ export default function Reports() {
         endDate = endOfMonth(now);
         break;
       default:
-        return transactions;
+        return Array.isArray(transactions) ? transactions : [];
     }
 
-    return transactions.filter(transaction => {
+    return Array.isArray(transactions) ? transactions.filter(transaction => {
       const transactionDate = new Date(transaction.timestamp);
       return isWithinInterval(transactionDate, { start: startDate, end: endDate });
-    });
+    }) : [];
   }, [transactions, dateFilter]);
 
   // Sales Overview

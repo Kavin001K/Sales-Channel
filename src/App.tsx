@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCRM from "./pages/AdminCRM";
@@ -71,151 +72,153 @@ function AppRoutes() {
           </header>
         )}
         <main className="flex-1 overflow-auto">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<CompanyLogin />} />
-            <Route path="/employee-login" element={<EmployeeLogin />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Navigate to="/dashboard" replace />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin routes */}
-            <Route path="/admin" element={
-              <AdminOnly>
-                <AdminDashboard />
-              </AdminOnly>
-            } />
-            <Route path="/admin/settings" element={
-              <AdminOnly>
-                <AdminSettings />
-              </AdminOnly>
-            } />
-            
-            <Route path="/admin/crm" element={
-              <SoftwareCompanyEmployeeOnly>
-                <AdminCRM />
-              </SoftwareCompanyEmployeeOnly>
-            } />
-            
-            <Route path="/admin/company/:companyId" element={
-              <AdminOnly>
-                <CompanyDetails />
-              </AdminOnly>
-            } />
-            
-            <Route path="/admin/subscriptions" element={
-              <AdminOnly>
-                <SubscriptionAdminDashboard />
-              </AdminOnly>
-            } />
-            
-            {/* Admin Company Employee routes */}
-            <Route path="/admin/company-dashboard" element={
-              <SoftwareCompanyEmployeeOnly>
-                <AdminCompanyDashboard />
-              </SoftwareCompanyEmployeeOnly>
-            } />
-            <Route path="/admin/support" element={
-              <SoftwareCompanyEmployeeOnly>
-                <SupportCenter />
-              </SoftwareCompanyEmployeeOnly>
-            } />
-            
-            {/* Company routes */}
-            <Route path="/company/dashboard" element={
-              <CompanyOnly>
-                <CompanyDashboard />
-              </CompanyOnly>
-            } />
-            
-            {/* POS Operations - Available to company users and employees */}
-            <Route path="/sales" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
-                <Sales />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/quickpos" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
-                <QuickPOS />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/pos" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
-                <QuickPOS />
-              </ProtectedRoute>
-            } />
-            
-            {/* Inventory Management - Available to company admins and managers */}
-            <Route path="/products" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager']}>
-                <Products />
-              </ProtectedRoute>
-            } />
-            
-            {/* Customer Management - Available to company users and software company employees */}
-            <Route path="/customers" element={
-              <ProtectedRoute allowedRoles={['company', 'admin', 'manager', 'cashier', 'sales', 'support']}>
-                <Customers />
-              </ProtectedRoute>
-            } />
-            
-            {/* Employee Management - Available to company admins only */}
-            <Route path="/employees" element={
-              <ProtectedRoute allowedRoles={['company', 'admin']}>
-                <Employees />
-              </ProtectedRoute>
-            } />
-            
-            {/* Transaction History - Available to company users */}
-            <Route path="/transactions" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
-                <Transactions />
-              </ProtectedRoute>
-            } />
-            
-            {/* Reports - Available to company admins and managers */}
-            <Route path="/reports" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager']}>
-                <Reports />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/invoices" element={
-              <ProtectedRoute allowedRoles={['company','admin','manager']}>
-                <Invoices />
-              </ProtectedRoute>
-            } />
-            
-            {/* Settings - Available to all authenticated users */}
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-            
-            {/* Bill Test Page - Available to all authenticated users */}
-            <Route path="/bill-test" element={
-              <ProtectedRoute>
-                <BillTestPage />
-              </ProtectedRoute>
-            } />
-            
-            {/* Catch all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<CompanyLogin />} />
+              <Route path="/employee-login" element={<EmployeeLogin />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Navigate to="/dashboard" replace />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={
+                <AdminOnly>
+                  <AdminDashboard />
+                </AdminOnly>
+              } />
+              <Route path="/admin/settings" element={
+                <AdminOnly>
+                  <AdminSettings />
+                </AdminOnly>
+              } />
+              
+              <Route path="/admin/crm" element={
+                <SoftwareCompanyEmployeeOnly>
+                  <AdminCRM />
+                </SoftwareCompanyEmployeeOnly>
+              } />
+              
+              <Route path="/admin/company/:companyId" element={
+                <AdminOnly>
+                  <CompanyDetails />
+                </AdminOnly>
+              } />
+              
+              <Route path="/admin/subscriptions" element={
+                <AdminOnly>
+                  <SubscriptionAdminDashboard />
+                </AdminOnly>
+              } />
+              
+              {/* Admin Company Employee routes */}
+              <Route path="/admin/company-dashboard" element={
+                <SoftwareCompanyEmployeeOnly>
+                  <AdminCompanyDashboard />
+                </SoftwareCompanyEmployeeOnly>
+              } />
+              <Route path="/admin/support" element={
+                <SoftwareCompanyEmployeeOnly>
+                  <SupportCenter />
+                </SoftwareCompanyEmployeeOnly>
+              } />
+              
+              {/* Company routes */}
+              <Route path="/company/dashboard" element={
+                <CompanyOnly>
+                  <CompanyDashboard />
+                </CompanyOnly>
+              } />
+              
+              {/* POS Operations - Available to company users and employees */}
+              <Route path="/sales" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
+                  <Sales />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/quickpos" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
+                  <QuickPOS />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/pos" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
+                  <QuickPOS />
+                </ProtectedRoute>
+              } />
+              
+              {/* Inventory Management - Available to company admins and managers */}
+              <Route path="/products" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager']}>
+                  <Products />
+                </ProtectedRoute>
+              } />
+              
+              {/* Customer Management - Available to company users and software company employees */}
+              <Route path="/customers" element={
+                <ProtectedRoute allowedRoles={['company', 'admin', 'manager', 'cashier', 'sales', 'support']}>
+                  <Customers />
+                </ProtectedRoute>
+              } />
+              
+              {/* Employee Management - Available to company admins only */}
+              <Route path="/employees" element={
+                <ProtectedRoute allowedRoles={['company', 'admin']}>
+                  <Employees />
+                </ProtectedRoute>
+              } />
+              
+              {/* Transaction History - Available to company users */}
+              <Route path="/transactions" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager','cashier']}>
+                  <Transactions />
+                </ProtectedRoute>
+              } />
+              
+              {/* Reports - Available to company admins and managers */}
+              <Route path="/reports" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager']}>
+                  <Reports />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/invoices" element={
+                <ProtectedRoute allowedRoles={['company','admin','manager']}>
+                  <Invoices />
+                </ProtectedRoute>
+              } />
+              
+              {/* Settings - Available to all authenticated users */}
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              
+              {/* Bill Test Page - Available to all authenticated users */}
+              <Route path="/bill-test" element={
+                <ProtectedRoute>
+                  <BillTestPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </div>
