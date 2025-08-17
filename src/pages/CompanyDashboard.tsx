@@ -41,11 +41,23 @@ export default function CompanyDashboard() {
       }
       
       try {
+        console.log('Fetching data for company:', company.id);
+        
         const [sub, plans, supportTickets] = await Promise.all([
           getSubscriptionByCompany(company.id),
           getSubscriptionPlans(),
           getTicketsByCompany(company.id),
         ]);
+        
+        console.log('Data fetched:', {
+          subscription: sub,
+          plans: plans,
+          supportTickets: supportTickets,
+          plansType: typeof plans,
+          plansIsArray: Array.isArray(plans),
+          ticketsType: typeof supportTickets,
+          ticketsIsArray: Array.isArray(supportTickets)
+        });
         
         if (sub) {
           setSubscription(sub);

@@ -389,6 +389,23 @@ const subscriptionService = {
     }
     localDB.setItem(`company_subscription_${newSubscription.companyId}`, newSubscription);
     return newSubscription;
+  },
+
+  add: async (plan: any) => {
+    const newPlan = { ...plan, id: plan.id || `plan_${Date.now()}`, createdAt: new Date(), updatedAt: new Date() };
+    if (isOnline() && getElectronApi()) {
+      try {
+        const columns = Object.keys(newPlan).join(', ');
+        const placeholders = Object.keys(newPlan).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(newPlan);
+        await cloudDB.query(`INSERT INTO subscription_plans (${columns}) VALUES (${placeholders})`, values);
+      } catch (error) {
+        console.warn('Could not create subscription plan in cloud, saving locally.', error);
+      }
+    }
+    const allPlans = localDB.getItem('subscription_plans') || [];
+    localDB.setItem('subscription_plans', [...allPlans, newPlan]);
+    return newPlan;
   }
 };
 
