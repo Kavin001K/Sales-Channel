@@ -1,307 +1,242 @@
-import { Product, Transaction, Customer, Employee } from './types';
-import { 
-  productService, 
-  customerService, 
-  employeeService, 
-  transactionService,
-  settingsService,
-  companyService,
-  subscriptionPlanService,
-  supportTicketService,
-  authService
-} from './database';
+import { dataSyncService } from './data-sync';
+import { Product, Customer, Transaction, Employee } from './types';
+import { useAuth } from '@/hooks/useAuth';
 
-// User authentication
-export const createUser = (userData: any): Promise<any> => authService.createUser(userData);
-export const authenticateUser = (email: string, password: string): Promise<any> => authService.authenticateUser(email, password);
-export const getUserById = (id: string): Promise<any> => authService.getUserById(id);
-export const updateUser = (id: string, updates: any): Promise<any> => authService.updateUser(id, updates);
-export const getAllUsers = (companyId?: string): Promise<any[]> => authService.getAllUsers(companyId);
+// Enhanced storage service that ensures all data is saved to server
+export class EnhancedStorageService {
+  private static instance: EnhancedStorageService;
 
-// Products storage
-export const getProducts = (companyId?: string): Promise<Product[]> => productService.getAll(companyId);
-export const addProduct = (product: Product): Promise<Product> => productService.add(product);
-export const updateProduct = (id: string, updatedProduct: Partial<Product>): Promise<Product> => productService.update(id, updatedProduct);
-export const deleteProduct = (id: string): Promise<void> => productService.delete(id);
+  private constructor() {}
 
-// Transactions storage
-export const getTransactions = (companyId?: string): Promise<Transaction[]> => {
-  console.log('getTransactions called with companyId:', companyId);
-  return transactionService.getAll(companyId);
-};
-export const saveTransaction = (transaction: Transaction): Promise<Transaction> => {
-  console.log('saveTransaction called with transaction:', transaction);
-  
-  // Additional validation before saving
-  if (!transaction.companyId) {
-    return Promise.reject(new Error('Company ID is required for transaction'));
-  }
-  if (!transaction.items || transaction.items.length === 0) {
-    return Promise.reject(new Error('Transaction must have at least one item'));
-  }
-  if (!transaction.total || transaction.total <= 0) {
-    return Promise.reject(new Error('Transaction total must be greater than 0'));
-  }
-  
-  return transactionService.add(transaction);
-};
-export const updateTransaction = (id: string, updates: Partial<Transaction>): Promise<Transaction> => transactionService.update(id, updates);
-
-// Customers storage
-export const getCustomers = (companyId?: string): Promise<Customer[]> => {
-  console.log('getCustomers called with companyId:', companyId);
-  return customerService.getAll(companyId);
-};
-export const addCustomer = (customer: Customer): Promise<Customer> => {
-  console.log('addCustomer called with customer:', customer);
-  return customerService.add(customer);
-};
-export const updateCustomer = (id: string, updates: Partial<Customer>): Promise<Customer> => {
-  console.log('updateCustomer called with id:', id, 'updates:', updates);
-  return customerService.update(id, updates);
-};
-export const deleteCustomer = (id: string): Promise<void> => customerService.delete(id);
-export const saveCustomer = (customer: Customer): Promise<Customer> => {
-    console.log('saveCustomer called with customer:', customer);
-    if (customer.id && customer.id.startsWith('local_')) {
-        return customerService.add(customer);
+  static getInstance(): EnhancedStorageService {
+    if (!EnhancedStorageService.instance) {
+      EnhancedStorageService.instance = new EnhancedStorageService();
     }
-    return customerService.update(customer.id, customer);
-};
+    return EnhancedStorageService.instance;
+  }
 
-// Employees storage
-export const getEmployees = (companyId?: string): Promise<Employee[]> => employeeService.getAll(companyId);
-export const addEmployee = (employee: Employee): Promise<Employee> => employeeService.add(employee);
-export const updateEmployee = (id: string, updates: Partial<Employee>): Promise<Employee> => employeeService.update(id, updates);
-export const deleteEmployee = (id: string): Promise<void> => employeeService.delete(id);
+  // Product Operations
+  async getProducts(companyId: string): Promise<Product[]> {
+    try {
+      return await dataSyncService.syncProducts(companyId);
+    } catch (error) {
+      console.error('Error getting products:', error);
+      return [];
+    }
+  }
 
-// Companies storage
-export const getCompanies = (): Promise<any[]> => companyService.getAll();
-export const addCompany = (company: any): Promise<any> => companyService.add(company);
-export const updateCompany = (id: string, updates: any): Promise<any> => companyService.update(id, updates);
-export const deleteCompany = (id: string): Promise<void> => companyService.delete(id);
+  async saveProduct(product: Product): Promise<Product> {
+    try {
+      return await dataSyncService.saveProduct(product);
+    } catch (error) {
+      console.error('Error saving product:', error);
+      throw error;
+    }
+  }
 
-// Subscription management
-export const getSubscriptionPlans = (): Promise<any[]> => subscriptionPlanService.getPlans();
-export const getCompanySubscription = (companyId: string): Promise<any> => subscriptionPlanService.getCompanySubscription(companyId);
-export const createSubscription = (subscription: any): Promise<any> => subscriptionPlanService.createSubscription(subscription);
+  async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+    try {
+      return await dataSyncService.updateProduct(id, updates);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  }
 
-// Support tickets
-export const getSupportTickets = (companyId?: string): Promise<any[]> => supportTicketService.getTickets(companyId);
-export const createSupportTicket = (ticket: any): Promise<any> => supportTicketService.createTicket(ticket);
-export const sendSupportMessage = (message: any): Promise<any> => supportTicketService.addMessage(message);
-export const getConversationMessages = (conversationId: string): Promise<any[]> => supportTicketService.getMessagesForConversation(conversationId);
+  async deleteProduct(id: string): Promise<void> {
+    try {
+      await dataSyncService.deleteProduct(id);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  }
 
-// Settings
-export const getSettings = (): Promise<any> => settingsService.getAll();
-export const updateSettings = (settings: any): Promise<any> => settingsService.update(settings);
+  // Customer Operations
+  async getCustomers(companyId: string): Promise<Customer[]> {
+    try {
+      return await dataSyncService.syncCustomers(companyId);
+    } catch (error) {
+      console.error('Error getting customers:', error);
+      return [];
+    }
+  }
 
-// Employee ID settings helpers
-export interface EmployeeIdSettings { prefix: string; digits: number; next: number; }
-export const getEmployeeIdSettings = async (): Promise<EmployeeIdSettings> => {
-  const settings = await getSettings();
-  const prefix = settings.employee_id_prefix || 'EMP';
-  const digits = parseInt(settings.employee_id_digits, 10) || 3;
-  const next = parseInt(settings.employee_id_next, 10) || 1;
-  return { prefix, digits, next };
-};
+  async saveCustomer(customer: Customer): Promise<Customer> {
+    try {
+      return await dataSyncService.saveCustomer(customer);
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      throw error;
+    }
+  }
 
-export const setEmployeeIdSettings = async (updates: Partial<EmployeeIdSettings>): Promise<EmployeeIdSettings> => {
-  const current = await getEmployeeIdSettings();
-  const merged: EmployeeIdSettings = { ...current, ...updates } as EmployeeIdSettings;
-  await updateSettings({
-    employee_id_prefix: merged.prefix,
-    employee_id_digits: String(merged.digits),
-    employee_id_next: String(merged.next),
-  });
-  return merged;
-};
+  async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer> {
+    try {
+      return await dataSyncService.updateCustomer(id, updates);
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    }
+  }
 
-export const generateNextEmployeeId = async (): Promise<string> => {
-  const { prefix, digits, next } = await getEmployeeIdSettings();
-  const id = `${prefix}${String(next).padStart(digits, '0')}`;
-  await updateSettings({ employee_id_next: String(next + 1) });
-  return id;
-};
+  async deleteCustomer(id: string): Promise<void> {
+    try {
+      await dataSyncService.deleteCustomer(id);
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      throw error;
+    }
+  }
 
+  // Transaction Operations
+  async getTransactions(companyId: string): Promise<Transaction[]> {
+    try {
+      return await dataSyncService.syncTransactions(companyId);
+    } catch (error) {
+      console.error('Error getting transactions:', error);
+      return [];
+    }
+  }
 
-// Company and Print Settings Utilities
-export interface CompanySettings {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  taxId: string;
-  logo?: string;
+  async saveTransaction(transaction: Transaction): Promise<Transaction> {
+    try {
+      return await dataSyncService.saveTransaction(transaction);
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      throw error;
+    }
+  }
+
+  async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction> {
+    try {
+      return await dataSyncService.updateTransaction(id, updates);
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      throw error;
+    }
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    try {
+      await dataSyncService.deleteTransaction(id);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      throw error;
+    }
+  }
+
+  // Employee Operations
+  async getEmployees(companyId: string): Promise<Employee[]> {
+    try {
+      return await dataSyncService.syncEmployees(companyId);
+    } catch (error) {
+      console.error('Error getting employees:', error);
+      return [];
+    }
+  }
+
+  async saveEmployee(employee: Employee): Promise<void> {
+    try {
+      await dataSyncService.saveEmployee(employee);
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      throw error;
+    }
+  }
+
+  // Stock Management
+  async updateProductStock(productId: string, quantity: number, operation: 'add' | 'subtract'): Promise<void> {
+    try {
+      await dataSyncService.updateProductStock(productId, quantity, operation);
+    } catch (error) {
+      console.error('Error updating product stock:', error);
+      throw error;
+    }
+  }
+
+  // Customer Statistics
+  async updateCustomerStats(customerId: string, amount: number, operation: 'add' | 'subtract'): Promise<void> {
+    try {
+      await dataSyncService.updateCustomerStats(customerId, amount, operation);
+    } catch (error) {
+      console.error('Error updating customer stats:', error);
+      throw error;
+    }
+  }
+
+  // Batch Operations
+  async syncAllData(companyId: string) {
+    try {
+      return await dataSyncService.syncAllData(companyId);
+    } catch (error) {
+      console.error('Error syncing all data:', error);
+      throw error;
+    }
+  }
+
+  // Health Check
+  async healthCheck(): Promise<boolean> {
+    return await dataSyncService.healthCheck();
+  }
 }
 
-export interface PrintTemplateSettings {
-  header: string;
-  footer: string;
-  showLogo: boolean;
-  showTaxBreakdown: boolean;
-  showCustomerInfo: boolean;
-  paperSize: 'a4' | 'thermal';
-  fontSize: number;
-  includeBarcode: boolean;
-}
+// Export singleton instance
+export const enhancedStorageService = EnhancedStorageService.getInstance();
 
-export const getCompanySettings = async (): Promise<CompanySettings> => {
-  const settings = await getSettings();
-  return {
-    name: settings.company_name || "Ace-Bill",
-    address: settings.company_address || "123 Business Street, City, State 12345",
-    phone: settings.company_phone || "+1 (555) 123-4567",
-    email: settings.company_email || "contact@acebill.com",
-    website: settings.company_website || "www.acebill.com",
-    taxId: settings.company_taxId || "TAX123456789"
-  };
+// Legacy functions for backward compatibility
+export const getProducts = async (companyId: string): Promise<Product[]> => {
+  return await enhancedStorageService.getProducts(companyId);
 };
 
-export const getPrintSettings = async (): Promise<PrintTemplateSettings> => {
-    const settings = await getSettings();
-    return {
-        header: settings.print_header || "Thank you for your business!",
-        footer: settings.print_footer || "Please keep this receipt for your records.",
-        showLogo: settings.print_showLogo === 'true',
-        showTaxBreakdown: settings.print_showTaxBreakdown === 'true',
-        showCustomerInfo: settings.print_showCustomerInfo === 'true',
-        paperSize: settings.print_paperSize || 'thermal',
-        fontSize: parseInt(settings.print_fontSize, 10) || 12,
-        includeBarcode: settings.print_includeBarcode === 'true'
-    };
-};
-
-export const initializeSampleData = async () => {
-    const products = await getProducts();
-    if (products.length === 0) {
-        const sampleProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [
-             {
-        name: 'Coffee - Americano',
-        price: 3.50,
-        cost: 1.20,
-        sku: 'COFFEE-AME',
-        barcode: '1234567890123',
-        category: 'Beverages',
-        stock: 100,
-        minStock: 20,
-        description: 'Classic americano coffee',
-        supplier: 'Coffee Co.',
-        taxRate: 0.08,
-        isActive: true,
-      },
-      {
-        name: 'Croissant',
-        price: 2.75,
-        cost: 0.90,
-        sku: 'BAKED-CROIS',
-        barcode: '1234567890124',
-        category: 'Bakery',
-        stock: 25,
-        minStock: 10,
-        description: 'Fresh baked croissant',
-        supplier: 'Bakery Inc.',
-        taxRate: 0.08,
-        isActive: true,
-      },
-      {
-        name: 'Sandwich - Club',
-        price: 8.50,
-        cost: 3.20,
-        sku: 'SAND-CLUB',
-        barcode: '1234567890125',
-        category: 'Food',
-        stock: 15,
-        minStock: 5,
-        description: 'Classic club sandwich',
-        supplier: 'Fresh Foods',
-        taxRate: 0.08,
-        isActive: true,
-      }
-        ];
-        for (const p of sampleProducts) {
-            await addProduct(p as Product);
-        }
-    }
-     const employees = await getEmployees();
-    if (employees.length === 0) {
-        const sampleEmployees: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>[] = [
-      {
-        name: 'John Admin',
-        email: 'john@pos.com',
-        phone: '+1-555-0100',
-        role: 'admin',
-        permissions: {
-          canProcessSales: true,
-          canManageProducts: true,
-          canManageCustomers: true,
-          canViewReports: true,
-          canManageEmployees: true,
-          canProcessRefunds: true,
-          canApplyDiscounts: true,
-          canVoidTransactions: true
-        },
-        hourlyRate: 25.00,
-        isActive: true,
-        pin: '2005',
-      },
-      {
-        name: 'Sarah Cashier',
-        email: 'sarah@pos.com',
-        phone: '+1-555-0101',
-        role: 'cashier',
-        permissions: {
-          canProcessSales: true,
-          canManageProducts: false,
-          canManageCustomers: true,
-          canViewReports: false,
-          canManageEmployees: false,
-          canProcessRefunds: false,
-          canApplyDiscounts: true,
-          canVoidTransactions: false
-        },
-        hourlyRate: 15.00,
-        isActive: true,
-        pin: '1234',
-      }
-        ];
-         for (const e of sampleEmployees) {
-            await addEmployee(e as Employee);
-        }
-    }
-
-    const customers = await getCustomers();
-    if (customers.length === 0) {
-        const sampleCustomers: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>[] = [
-            {
-        name: 'Sarah Johnson',
-        email: 'sarah@email.com',
-        phone: '+1-555-0200',
-        address: {
-          street: '123 Main St',
-          city: 'Anytown',
-          state: 'ST',
-          zipCode: '12345'
-        },
-        loyaltyPoints: 150,
-        totalSpent: 245.50,
-        visits: 12,
-        lastVisit: new Date(),
-        notes: 'Regular customer, prefers decaf',
-        isActive: true,
-      }
-        ];
-        for (const c of sampleCustomers) {
-            await addCustomer(c as Customer);
-        }
-    }
-};
-
-// Save or update a product (for Excel import compatibility)
 export const saveProduct = async (product: Product): Promise<Product> => {
-  if (product.id) {
-    return updateProduct(product.id, product);
-  }
-  return addProduct(product);
+  return await enhancedStorageService.saveProduct(product);
+};
+
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
+  return await enhancedStorageService.updateProduct(id, updates);
+};
+
+export const deleteProduct = async (id: string): Promise<void> => {
+  return await enhancedStorageService.deleteProduct(id);
+};
+
+export const getCustomers = async (companyId: string): Promise<Customer[]> => {
+  return await enhancedStorageService.getCustomers(companyId);
+};
+
+export const saveCustomer = async (customer: Customer): Promise<Customer> => {
+  return await enhancedStorageService.saveCustomer(customer);
+};
+
+export const updateCustomer = async (id: string, updates: Partial<Customer>): Promise<Customer> => {
+  return await enhancedStorageService.updateCustomer(id, updates);
+};
+
+export const deleteCustomer = async (id: string): Promise<void> => {
+  return await enhancedStorageService.deleteCustomer(id);
+};
+
+export const getTransactions = async (companyId: string): Promise<Transaction[]> => {
+  return await enhancedStorageService.getTransactions(companyId);
+};
+
+export const saveTransaction = async (transaction: Transaction): Promise<Transaction> => {
+  return await enhancedStorageService.saveTransaction(transaction);
+};
+
+export const updateTransaction = async (id: string, updates: Partial<Transaction>): Promise<Transaction> => {
+  return await enhancedStorageService.updateTransaction(id, updates);
+};
+
+export const deleteTransaction = async (id: string): Promise<void> => {
+  return await enhancedStorageService.deleteTransaction(id);
+};
+
+export const getEmployees = async (companyId: string): Promise<Employee[]> => {
+  return await enhancedStorageService.getEmployees(companyId);
+};
+
+export const saveEmployee = async (employee: Employee): Promise<void> => {
+  return await enhancedStorageService.saveEmployee(employee);
 };
