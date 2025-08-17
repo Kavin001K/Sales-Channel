@@ -390,7 +390,7 @@ export default function Products() {
               </CardHeader>
               <CardContent>
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold">
-                  ₹{products.reduce((sum, p) => sum + (p.price * p.stock), 0).toFixed(2)}
+                  ₹{Array.isArray(products) ? products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2) : '0.00'}
                 </div>
               </CardContent>
             </Card>

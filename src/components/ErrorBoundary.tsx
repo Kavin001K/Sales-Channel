@@ -24,8 +24,11 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     // Log the error to console for debugging
-    if (error.message.includes('filter is not a function')) {
-      console.error('Filter error detected. This usually means an array was expected but received:', error);
+    if (error.message.includes('filter is not a function') ||
+        error.message.includes('reduce is not a function') ||
+        error.message.includes('map is not a function') ||
+        error.message.includes('find is not a function')) {
+      console.error('Array method error detected. This usually means an array was expected but received:', error);
       console.error('Error stack:', error.stack);
       console.error('Component stack:', errorInfo.componentStack);
     }

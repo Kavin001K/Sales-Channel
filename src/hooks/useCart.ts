@@ -62,11 +62,11 @@ export const useCart = () => {
   }, []);
 
   const getTotal = useCallback(() => {
-    return items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+    return Array.isArray(items) ? items.reduce((total, item) => total + ((item.product.price || 0) * (item.quantity || 0)), 0) : 0;
   }, [items]);
 
   const getItemCount = useCallback(() => {
-    return items.reduce((count, item) => count + item.quantity, 0);
+    return Array.isArray(items) ? items.reduce((count, item) => count + (item.quantity || 0), 0) : 0;
   }, [items]);
 
   return {

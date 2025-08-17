@@ -76,127 +76,156 @@ export default function Reports() {
 
   // Sales Overview
   const salesOverview = useMemo(() => {
-    if (filteredTransactions.length === 0) {
+    if (!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) {
       return { totalSales: 0, totalTransactions: 0, averageTransaction: 0, totalProfit: 0 };
     }
 
-    const totalSales = filteredTransactions.reduce((sum, t) => sum + t.total, 0);
-    const totalTransactions = filteredTransactions.length;
-    const averageTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
-    
-    const totalCost = filteredTransactions.reduce((sum, transaction) => {
-      return sum + (transaction.items.reduce((itemSum, item) => {
-        const product = products.find(p => p.id === item.productId);
-        return itemSum + ((product?.cost || 0) * item.quantity);
-      }, 0) || 0);
-    }, 0);
-    
-    const totalProfit = totalSales - totalCost;
+    try {
+      const totalSales = filteredTransactions.reduce((sum, t) => sum + (t.total || 0), 0);
+      const totalTransactions = filteredTransactions.length;
+      const averageTransaction = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+      
+      const totalCost = filteredTransactions.reduce((sum, transaction) => {
+        if (!Array.isArray(transaction.items)) return sum;
+        return sum + (transaction.items.reduce((itemSum, item) => {
+          const product = Array.isArray(products) ? products.find(p => p.id === item.productId) : null;
+          return itemSum + ((product?.cost || 0) * (item.quantity || 0));
+        }, 0) || 0);
+      }, 0);
+      
+      const totalProfit = totalSales - totalCost;
 
-    return { totalSales, totalTransactions, averageTransaction, totalProfit };
+      return { totalSales, totalTransactions, averageTransaction, totalProfit };
+    } catch (error) {
+      console.error('Error calculating sales overview:', error);
+      return { totalSales: 0, totalTransactions: 0, averageTransaction: 0, totalProfit: 0 };
+    }
   }, [filteredTransactions, products]);
 
   // Item-wise Sales
   const itemWiseSales = useMemo(() => {
+    if (!Array.isArray(filteredTransactions)) return [];
+    
     const itemMap = new Map<string, { product: Product; quantity: number; revenue: number; profit: number }>();
     
-    filteredTransactions.forEach(transaction => {
-      transaction.items.forEach(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (!product) return;
-
-        const key = product.id;
-        const existing = itemMap.get(key);
-        const revenue = item.price * item.quantity;
-        const cost = (product.cost || 0) * item.quantity;
-        const profit = revenue - cost;
+    try {
+      filteredTransactions.forEach(transaction => {
+        if (!Array.isArray(transaction.items)) return;
         
-        if (existing) {
-          existing.quantity += item.quantity;
-          existing.revenue += revenue;
-          existing.profit += profit;
-        } else {
-          itemMap.set(key, {
-            product,
-            quantity: item.quantity,
-            revenue,
-            profit
-          });
-        }
+        transaction.items.forEach(item => {
+          const product = Array.isArray(products) ? products.find(p => p.id === item.productId) : null;
+          if (!product) return;
+
+          const key = product.id;
+          const existing = itemMap.get(key);
+          const revenue = (item.price || 0) * (item.quantity || 0);
+          const cost = (product.cost || 0) * (item.quantity || 0);
+          const profit = revenue - cost;
+          
+          if (existing) {
+            existing.quantity += (item.quantity || 0);
+            existing.revenue += revenue;
+            existing.profit += profit;
+          } else {
+            itemMap.set(key, {
+              product,
+              quantity: item.quantity || 0,
+              revenue,
+              profit
+            });
+          }
+        });
       });
-    });
-    
-    return Array.from(itemMap.values()).sort((a, b) => b.revenue - a.revenue);
+      
+      return Array.from(itemMap.values()).sort((a, b) => b.revenue - a.revenue);
+    } catch (error) {
+      console.error('Error calculating item-wise sales:', error);
+      return [];
+    }
   }, [filteredTransactions, products]);
 
   // Employee-wise Sales
   const employeeWiseSales = useMemo(() => {
+    if (!Array.isArray(filteredTransactions)) return [];
+    
     const employeeMap = new Map<string, { name: string; transactions: number; revenue: number }>();
     
-    filteredTransactions.forEach(transaction => {
-      const employeeName = transaction.employeeName || 'System';
-      const existing = employeeMap.get(employeeName);
+    try {
+      filteredTransactions.forEach(transaction => {
+        const employeeName = transaction.employeeName || 'System';
+        const existing = employeeMap.get(employeeName);
+        
+        if (existing) {
+          existing.transactions += 1;
+          existing.revenue += (transaction.total || 0);
+        } else {
+          employeeMap.set(employeeName, {
+            name: employeeName,
+            transactions: 1,
+            revenue: transaction.total || 0
+          });
+        }
+      });
       
-      if (existing) {
-        existing.transactions += 1;
-        existing.revenue += transaction.total;
-      } else {
-        employeeMap.set(employeeName, {
-          name: employeeName,
-          transactions: 1,
-          revenue: transaction.total
-        });
-      }
-    });
-    
-    return Array.from(employeeMap.values()).sort((a, b) => b.revenue - a.revenue);
+      return Array.from(employeeMap.values()).sort((a, b) => b.revenue - a.revenue);
+    } catch (error) {
+      console.error('Error calculating employee-wise sales:', error);
+      return [];
+    }
   }, [filteredTransactions]);
 
   // Daily Sales (for charts)
   const dailySales = useMemo(() => {
-    if (dateFilter === 'today') {
-      // Hourly breakdown for today
-      const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
-        time: `${hour}:00`,
-        sales: 0,
-        transactions: 0
-      }));
-      
-      filteredTransactions.forEach(transaction => {
-        const hour = getHours(new Date(transaction.timestamp));
-        hourlyData[hour].sales += transaction.total;
-        hourlyData[hour].transactions += 1;
-      });
-      
-      return hourlyData.filter(data => data.sales > 0 || data.transactions > 0);
-    } else {
-      // Daily breakdown
-      const now = new Date();
-      const startDate = dateFilter === 'week' ? startOfWeek(now) : 
-                       dateFilter === 'month' ? startOfMonth(now) : 
-                       new Date(now.getFullYear(), 0, 1);
-      const endDate = now;
-      
-      const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-      const dailyData = dateRange.map(date => ({
-        date: format(date, 'MMM dd'),
-        sales: 0,
-        transactions: 0
-      }));
-      
-      filteredTransactions.forEach(transaction => {
-        const transactionDate = new Date(transaction.timestamp);
-        const dayIndex = dateRange.findIndex(date => 
-          format(date, 'yyyy-MM-dd') === format(transactionDate, 'yyyy-MM-dd')
-        );
+    if (!Array.isArray(filteredTransactions)) return [];
+    
+    try {
+      if (dateFilter === 'today') {
+        // Hourly breakdown for today
+        const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+          time: `${hour}:00`,
+          sales: 0,
+          transactions: 0
+        }));
         
-        if (dayIndex !== -1) {
-          dailyData[dayIndex].sales += transaction.total;
-          dailyData[dayIndex].transactions += 1;
-        }
-      });
-      
-      return dailyData;
+        filteredTransactions.forEach(transaction => {
+          const hour = getHours(new Date(transaction.timestamp));
+          hourlyData[hour].sales += (transaction.total || 0);
+          hourlyData[hour].transactions += 1;
+        });
+        
+        return hourlyData.filter(data => data.sales > 0 || data.transactions > 0);
+      } else {
+        // Daily breakdown
+        const now = new Date();
+        const startDate = dateFilter === 'week' ? startOfWeek(now) : 
+                         dateFilter === 'month' ? startOfMonth(now) : 
+                         new Date(now.getFullYear(), 0, 1);
+        const endDate = now;
+        
+        const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+        const dailyData = dateRange.map(date => ({
+          date: format(date, 'MMM dd'),
+          sales: 0,
+          transactions: 0
+        }));
+        
+        filteredTransactions.forEach(transaction => {
+          const transactionDate = new Date(transaction.timestamp);
+          const dayIndex = dateRange.findIndex(date => 
+            format(date, 'yyyy-MM-dd') === format(transactionDate, 'yyyy-MM-dd')
+          );
+          
+          if (dayIndex !== -1) {
+            dailyData[dayIndex].sales += (transaction.total || 0);
+            dailyData[dayIndex].transactions += 1;
+          }
+        });
+        
+        return dailyData.filter(data => data.sales > 0 || data.transactions > 0);
+      }
+    } catch (error) {
+      console.error('Error calculating daily sales:', error);
+      return [];
     }
   }, [filteredTransactions, dateFilter]);
 

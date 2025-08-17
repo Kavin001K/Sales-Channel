@@ -4,10 +4,15 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Global error handler to catch filter errors
+// Global error handler to catch filter and reduce errors
 window.addEventListener('error', (event) => {
-  if (event.error && event.error.message && event.error.message.includes('filter is not a function')) {
-    console.error('Global error handler caught filter error:', event.error);
+  if (event.error && event.error.message && (
+    event.error.message.includes('filter is not a function') ||
+    event.error.message.includes('reduce is not a function') ||
+    event.error.message.includes('map is not a function') ||
+    event.error.message.includes('find is not a function')
+  )) {
+    console.error('Global error handler caught array method error:', event.error);
     console.error('Error stack:', event.error.stack);
     console.error('Error location:', event.filename, event.lineno, event.colno);
     
@@ -44,8 +49,13 @@ window.addEventListener('error', (event) => {
 
 // Global unhandled promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason && event.reason.message && event.reason.message.includes('filter is not a function')) {
-    console.error('Global unhandled promise rejection caught filter error:', event.reason);
+  if (event.reason && event.reason.message && (
+    event.reason.message.includes('filter is not a function') ||
+    event.reason.message.includes('reduce is not a function') ||
+    event.reason.message.includes('map is not a function') ||
+    event.reason.message.includes('find is not a function')
+  )) {
+    console.error('Global unhandled promise rejection caught array method error:', event.reason);
     event.preventDefault();
   }
 });

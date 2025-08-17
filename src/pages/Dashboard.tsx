@@ -66,8 +66,8 @@ export default function Dashboard() {
         return transactionDate.getTime() === today.getTime();
       });
 
-      const todaySales = todayTransactions.reduce((sum, t) => sum + t.total, 0);
-      const uniqueCustomers = new Set(todayTransactions.map(t => t.customerId).filter(Boolean)).size;
+      const todaySales = Array.isArray(todayTransactions) ? todayTransactions.reduce((sum, t) => sum + (t.total || 0), 0) : 0;
+      const uniqueCustomers = new Set(Array.isArray(todayTransactions) ? todayTransactions.map(t => t.customerId).filter(Boolean) : []).size;
 
       setTodayStats({
         sales: todaySales,
