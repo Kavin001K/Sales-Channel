@@ -15,7 +15,7 @@ import { Plus, Edit, Trash2, Search, Package, AlertTriangle, Upload, Download, S
 import * as XLSX from 'xlsx';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { ExcelImport } from '@/components/import/ExcelImport';
 
 export default function Products() {

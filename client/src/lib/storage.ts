@@ -420,3 +420,7 @@ export const getConversationMessages = async () => {
   // Mock implementation
   return [];
 };
+
+// Add missing exports for compatibility
+export const addCustomer = saveCustomer;
+export const addProduct = saveProduct;

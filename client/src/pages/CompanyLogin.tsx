@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,7 +23,7 @@ export default function CompanyLogin() {
   const [lockoutTime, setLockoutTime] = useState<Date | null>(null);
   
   const { loginCompany, loginAdmin } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const location = useLocation();
 
   // Security: Check for lockout
@@ -109,7 +109,7 @@ export default function CompanyLogin() {
       
       if (success) {
         resetRateLimit();
-        navigate('/employee-login');
+        setLocation('/employee-login');
       } else {
         handleRateLimit();
         setError('Invalid email or password');
@@ -149,7 +149,7 @@ export default function CompanyLogin() {
       
       if (role) {
         resetRateLimit();
-        navigate('/admin');
+        setLocation('/admin');
       } else {
         handleRateLimit();
         setError('Invalid username or password');

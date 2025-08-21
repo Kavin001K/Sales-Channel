@@ -30,8 +30,8 @@ import {
   Calendar,
   Clock
 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
@@ -76,7 +76,7 @@ export default function QuickPOS() {
   const [subQty, setSubQty] = useState('');
   
   const cart = useCart();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const searchRef = useRef<HTMLInputElement>(null);
   const exitRequestedRef = useRef(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);

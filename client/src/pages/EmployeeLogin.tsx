@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,7 +19,7 @@ export default function EmployeeLogin() {
   const [lockoutTime, setLockoutTime] = useState<Date | null>(null);
   
   const { company, employee, loginEmployee, logout } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Security: Check for lockout
   useEffect(() => {

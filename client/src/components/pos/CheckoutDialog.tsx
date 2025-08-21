@@ -16,7 +16,7 @@ import { CreditCard, DollarSign, User, Phone, Printer } from 'lucide-react';
 import { getCustomers, saveCustomer } from '@/lib/storage';
 import { useSettings } from '@/hooks/useSettings';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { printDriver } from '@/lib/printDrivers';
 
 interface CheckoutDialogProps {
@@ -43,7 +43,7 @@ export const CheckoutDialog = ({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const { companySettings, printSettings, refreshSettings } = useSettings();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Auto-fetch customer details when phone number is entered
   useEffect(() => {

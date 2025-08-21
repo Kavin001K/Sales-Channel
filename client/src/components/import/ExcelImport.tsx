@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { Product, Customer } from '@/lib/types';
 import { saveProduct, saveCustomer } from '@/lib/storage';
 

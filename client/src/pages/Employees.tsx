@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit, Trash2, Search, UserCheck, Shield, Clock, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export default function Employees() {
   const [employees, setEmployees] = useState<Employee[]>([]);

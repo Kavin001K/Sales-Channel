@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Redirect, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
@@ -14,7 +14,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true 
 }) => {
   const { company, employee, adminAuth, loading } = useAuth();
-  const location = useLocation();
+  const [location] = useLocation();
 
   // Security: Show loading spinner while checking authentication
   if (loading) {
@@ -40,17 +40,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!isAuthenticated) {
     // Security: Redirect to appropriate login page
-    const isAdminRoute = location.pathname.startsWith('/admin');
+    const isAdminRoute = location.startsWith('/admin');
     const redirectPath = isAdminRoute ? '/login' : '/login';
     
     console.warn('Unauthorized access attempt:', {
-      path: location.pathname,
+      path: location,
       company: !!company,
       employee: !!employee,
       adminAuth: adminAuth.isAuthenticated
     });
     
-    return <Navigate to={redirectPath} state={{ from: location }} replace />;
+    return <Redirect to={redirectPath} />;
   }
 
   // Security: Role-based access control
@@ -67,7 +67,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!userRole || !allowedRoles.includes(userRole)) {
       console.warn('Insufficient permissions:', {
-        path: location.pathname,
+        path: location,
         userRole,
         allowedRoles,
         company: !!company,
@@ -75,13 +75,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         adminAuth: adminAuth.isAuthenticated
       });
       
-      return <Navigate to="/unauthorized" replace />;
+      return <Redirect to="/unauthorized" />;
     }
   }
 
   // Security: Log successful access
   console.log('Authorized access granted:', {
-    path: location.pathname,
+    path: location,
     company: company?.name,
     employee: employee?.name,
     adminUser: adminAuth.adminUser?.username
@@ -125,4 +125,6 @@ export const SoftwareCompanyEmployeeOnly: React.FC<{ children: React.ReactNode }
   <ProtectedRoute allowedRoles={['super_admin', 'admin', 'sales', 'support', 'technical', 'marketing', 'finance', 'hr']}>
     {children}
   </ProtectedRoute>
-); 
+);
+
+export default ProtectedRoute; 

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { getSupportTickets, createSupportTicket, sendSupportMessage, getConversationMessages } from '@/lib/storage';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface TicketLite {
   id: string;

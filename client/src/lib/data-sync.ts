@@ -1,7 +1,7 @@
 // Data Synchronization Service
 // Ensures all data is properly saved to server and fetched for future use
 
-import { postgresDatabaseService } from './postgres-database';
+// Note: Direct database connections removed - using API calls instead
 import { LocalStore, isOnline } from './local-store';
 import { Product, Customer, Transaction, Employee, Company } from './types';
 
@@ -23,17 +23,10 @@ export class DataSyncService {
   // Product Synchronization
   async syncProducts(companyId: string): Promise<Product[]> {
     try {
-      if (isOnline()) {
-        const products = await postgresDatabaseService.getProducts(companyId);
-        // Cache locally
-        products.forEach(p => LocalStore.saveProduct(p));
-        return products;
-      }
-      // Offline fallback
+      // TODO: Replace with API call to server
       return LocalStore.getProducts(companyId);
     } catch (error) {
       console.error('Error syncing products:', error);
-      // Fallback to local
       return LocalStore.getProducts(companyId);
     }
   }
@@ -42,16 +35,11 @@ export class DataSyncService {
     try {
       // Write locally first (offline-first)
       LocalStore.saveProduct(product);
-      let saved = product;
-      if (isOnline()) {
-        saved = await postgresDatabaseService.addProduct(product);
-        LocalStore.saveProduct(saved);
-      }
+      // TODO: Add API call to save to server
       this.triggerDataRefresh('products');
-      return saved;
+      return product;
     } catch (error) {
       console.error('Error saving product:', error);
-      // Keep local write
       return product;
     }
   }
@@ -64,28 +52,18 @@ export class DataSyncService {
         const current = LocalStore.getProducts(companyId).find(p => p.id === id);
         if (current) LocalStore.saveProduct({ ...current, ...updates, id } as Product);
       }
-      let updated = (updates as any) as Product;
-      if (isOnline()) {
-        updated = await postgresDatabaseService.updateProduct(id, updates);
-        if ((updated as any).companyId) LocalStore.saveProduct(updated);
-      }
+      // TODO: Add API call to update on server
       this.triggerDataRefresh('products');
-      return updated;
+      return (updates as any) as Product;
     } catch (error) {
       console.error('Error updating product:', error);
-      // Keep local optimistic update
       return (updates as any) as Product;
     }
   }
 
   async deleteProduct(id: string): Promise<void> {
     try {
-      // Attempt to remove locally for all companies (best effort)
-      // Caller should refresh list after this
-      // Online delete
-      if (isOnline()) {
-        await postgresDatabaseService.deleteProduct(id);
-      }
+      // TODO: Add API call to delete from server
       this.triggerDataRefresh('products');
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -96,11 +74,7 @@ export class DataSyncService {
   // Customer Synchronization
   async syncCustomers(companyId: string): Promise<Customer[]> {
     try {
-      if (isOnline()) {
-        const customers = await postgresDatabaseService.getCustomers(companyId);
-        customers.forEach(c => LocalStore.saveCustomer(c));
-        return customers;
-      }
+      // TODO: Replace with API call to server
       return LocalStore.getCustomers(companyId);
     } catch (error) {
       console.error('Error syncing customers:', error);
@@ -111,13 +85,9 @@ export class DataSyncService {
   async saveCustomer(customer: Customer): Promise<Customer> {
     try {
       LocalStore.saveCustomer(customer);
-      let saved = customer;
-      if (isOnline()) {
-        saved = await postgresDatabaseService.addCustomer(customer);
-        LocalStore.saveCustomer(saved);
-      }
+      // TODO: Add API call to save to server
       this.triggerDataRefresh('customers');
-      return saved;
+      return customer;
     } catch (error) {
       console.error('Error saving customer:', error);
       return customer;
@@ -131,13 +101,9 @@ export class DataSyncService {
         const current = LocalStore.getCustomers(companyId).find(c => c.id === id);
         if (current) LocalStore.saveCustomer({ ...current, ...updates, id } as Customer);
       }
-      let updated = (updates as any) as Customer;
-      if (isOnline()) {
-        updated = await postgresDatabaseService.updateCustomer(id, updates);
-        if ((updated as any).companyId) LocalStore.saveCustomer(updated);
-      }
+      // TODO: Add API call to update on server
       this.triggerDataRefresh('customers');
-      return updated;
+      return (updates as any) as Customer;
     } catch (error) {
       console.error('Error updating customer:', error);
       return (updates as any) as Customer;
@@ -146,11 +112,7 @@ export class DataSyncService {
 
   async deleteCustomer(id: string): Promise<void> {
     try {
-      console.log('Deleting customer from server:', id);
-      await postgresDatabaseService.deleteCustomer(id);
-      console.log('Customer deleted successfully:', id);
-      
-      // Trigger data refresh event
+      // TODO: Add API call to delete from server
       this.triggerDataRefresh('customers');
     } catch (error) {
       console.error('Error deleting customer:', error);
@@ -161,11 +123,7 @@ export class DataSyncService {
   // Transaction Synchronization
   async syncTransactions(companyId: string): Promise<Transaction[]> {
     try {
-      if (isOnline()) {
-        const transactions = await postgresDatabaseService.getTransactions(companyId);
-        transactions.forEach(t => LocalStore.saveTransaction(t));
-        return transactions;
-      }
+      // TODO: Replace with API call to server
       return LocalStore.getTransactions(companyId);
     } catch (error) {
       console.error('Error syncing transactions:', error);
@@ -176,15 +134,11 @@ export class DataSyncService {
   async saveTransaction(transaction: Transaction): Promise<Transaction> {
     try {
       LocalStore.saveTransaction(transaction);
-      let saved = transaction;
-      if (isOnline()) {
-        saved = await postgresDatabaseService.addTransaction(transaction);
-        LocalStore.saveTransaction(saved);
-      }
+      // TODO: Add API call to save to server
       this.triggerDataRefresh('transactions');
       this.triggerDataRefresh('products');
       this.triggerDataRefresh('customers');
-      return saved;
+      return transaction;
     } catch (error) {
       console.error('Error saving transaction:', error);
       return transaction;
@@ -193,14 +147,9 @@ export class DataSyncService {
 
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction> {
     try {
-      console.log('Updating transaction on server:', id);
-      const updatedTransaction = await postgresDatabaseService.updateTransaction(id, updates);
-      console.log('Transaction updated successfully:', updatedTransaction);
-      
-      // Trigger data refresh event
+      // TODO: Add API call to update on server
       this.triggerDataRefresh('transactions');
-      
-      return updatedTransaction;
+      return (updates as any) as Transaction;
     } catch (error) {
       console.error('Error updating transaction:', error);
       throw error;
@@ -209,11 +158,7 @@ export class DataSyncService {
 
   async deleteTransaction(id: string): Promise<void> {
     try {
-      console.log('Deleting transaction from server:', id);
-      await postgresDatabaseService.deleteTransaction(id);
-      console.log('Transaction deleted successfully:', id);
-      
-      // Trigger data refresh events
+      // TODO: Add API call to delete from server
       this.triggerDataRefresh('transactions');
       this.triggerDataRefresh('products'); // Stock levels restored
       this.triggerDataRefresh('customers'); // Customer stats updated
@@ -226,10 +171,8 @@ export class DataSyncService {
   // Employee Synchronization
   async syncEmployees(companyId: string): Promise<Employee[]> {
     try {
-      console.log('Syncing employees for company:', companyId);
-      const employees = await postgresDatabaseService.getEmployees(companyId);
-      console.log('Employees synced successfully:', employees.length, 'employees');
-      return employees;
+      // TODO: Replace with API call to server
+      return [];
     } catch (error) {
       console.error('Error syncing employees:', error);
       throw error;
@@ -238,11 +181,7 @@ export class DataSyncService {
 
   async saveEmployee(employee: Employee): Promise<void> {
     try {
-      console.log('Saving employee to server:', employee.name);
-      await postgresDatabaseService.addEmployee(employee);
-      console.log('Employee saved successfully:', employee);
-      
-      // Trigger data refresh event
+      // TODO: Add API call to save to server
       this.triggerDataRefresh('employees');
     } catch (error) {
       console.error('Error saving employee:', error);
@@ -253,11 +192,7 @@ export class DataSyncService {
   // Stock Management Synchronization
   async updateProductStock(productId: string, quantity: number, operation: 'add' | 'subtract'): Promise<void> {
     try {
-      console.log('Updating product stock on server:', { productId, quantity, operation });
-      await postgresDatabaseService.updateProductStock(productId, quantity, operation);
-      console.log('Product stock updated successfully');
-      
-      // Trigger data refresh event
+      // TODO: Add API call to update stock on server
       this.triggerDataRefresh('products');
     } catch (error) {
       console.error('Error updating product stock:', error);
@@ -268,11 +203,7 @@ export class DataSyncService {
   // Customer Statistics Synchronization
   async updateCustomerStats(customerId: string, amount: number, operation: 'add' | 'subtract'): Promise<void> {
     try {
-      console.log('Updating customer stats on server:', { customerId, amount, operation });
-      await postgresDatabaseService.updateCustomerStats(customerId, amount, operation);
-      console.log('Customer stats updated successfully');
-      
-      // Trigger data refresh event
+      // TODO: Add API call to update stats on server
       this.triggerDataRefresh('customers');
     } catch (error) {
       console.error('Error updating customer stats:', error);

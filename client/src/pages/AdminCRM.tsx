@@ -38,7 +38,7 @@ import {
   Building2,
   FileText
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { Lead, Opportunity, Task, Activity as ActivityType, SoftwareCompanyEmployee } from '@/lib/types';
 
 export default function AdminCRM() {

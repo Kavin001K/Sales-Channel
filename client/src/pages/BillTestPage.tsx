@@ -4,7 +4,7 @@ import { Transaction } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { printDriver } from '@/lib/printDrivers';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export default function BillTestPage() {
   // Sample transaction data for testing

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ import {
   Database,
   Server
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface Company {
   id: string;
@@ -78,7 +78,7 @@ interface SystemStats {
 }
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [systemStats, setSystemStats] = useState<SystemStats>({

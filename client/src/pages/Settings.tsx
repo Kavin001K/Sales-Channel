@@ -12,7 +12,7 @@ import { Building2, Receipt, Printer, Bell, Info, FileText, Download } from "luc
 import * as XLSX from 'xlsx';
 import { getEmployeeIdSettings, setEmployeeIdSettings } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 interface CompanySettings {
   name: string;
@@ -75,7 +75,7 @@ interface InvoiceTemplateSettings {
 const Settings = () => {
   const { toast } = useToast();
   const { adminAuth, employee } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
     name: "Ace-Bill",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ import {
   AlertTriangle,
   Receipt
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface Company {
   id: string;
@@ -101,7 +101,7 @@ interface Employee {
 
 export default function CompanyDetails() {
   const { companyId } = useParams();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const location = useLocation() as any;
   const [company, setCompany] = useState<Company | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
