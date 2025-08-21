@@ -47,24 +47,27 @@ export const CheckoutDialog = ({
 
   // Auto-fetch customer details when phone number is entered
   useEffect(() => {
-    if (customerPhone.length >= 10 && /^\d+$/.test(customerPhone)) {
-      const customers = getCustomers();
-      const foundCustomer = customers.find(c => c.phone === customerPhone);
-      if (foundCustomer) {
-        setCustomer(foundCustomer);
-        setCustomerName(foundCustomer.name);
+    const fetchCustomer = async () => {
+      if (customerPhone.length >= 10 && /^\d+$/.test(customerPhone)) {
+        const customers = await getCustomers();
+        const foundCustomer = customers.find(c => c.phone === customerPhone);
+        if (foundCustomer) {
+          setCustomer(foundCustomer);
+          setCustomerName(foundCustomer.name);
+        } else {
+          setCustomer(null);
+          setCustomerName('');
+        }
       } else {
         setCustomer(null);
         setCustomerName('');
       }
-    } else {
-      setCustomer(null);
-      setCustomerName('');
-    }
+    };
+    fetchCustomer();
   }, [customerPhone]);
 
   const printInvoice = async (transaction: Transaction) => {
-    await printDriver.print(transaction, { paperSize: printSettings.paperSize });
+    await printDriver.print(transaction, printSettings);
   };
 
   const handleComplete = async () => {
@@ -84,6 +87,7 @@ export const CheckoutDialog = ({
       if (!customer) {
         const newCustomer: Customer = {
           id: Date.now().toString(),
+          companyId: 'default', // TODO: Get actual company ID from auth context
           name: customerName,
           phone: customerPhone,
           loyaltyPoints: 0,
@@ -105,7 +109,7 @@ export const CheckoutDialog = ({
           lastVisit: new Date(),
           updatedAt: new Date()
         };
-        updateCustomer(customer.id, updatedCustomer);
+        await saveCustomer(updatedCustomer);
       }
     }
     
@@ -115,9 +119,17 @@ export const CheckoutDialog = ({
     const cashAmountPaid = paymentMethod === 'cash' ? parseFloat(cashAmount) : 0;
     const change = paymentMethod === 'cash' ? cashAmountPaid - total : 0;
     
+    const transactionItems = items.map(item => ({
+      productId: item.product.id,
+      name: item.product.name,
+      quantity: item.quantity,
+      price: item.product.price,
+      total: item.product.price * item.quantity
+    }));
+
     const transaction: Transaction = {
       id: Date.now().toString(),
-      items,
+      items: transactionItems,
       subtotal: total,
       tax: 0,
       discount: 0,
@@ -159,7 +171,7 @@ export const CheckoutDialog = ({
     
     // Redirect to QuickPOS for next billing after a short delay
     setTimeout(() => {
-      navigate('/quickpos');
+      setLocation('/quickpos');
     }, 1500); // 1.5 second delay to allow printing to complete
   };
 
@@ -310,7 +322,7 @@ export const CheckoutDialog = ({
                 <Button
                   variant="secondary"
                   onClick={async () => {
-                    await printDriver.print(lastTransaction, { paperSize: printSettings.paperSize });
+                    await printDriver.print(lastTransaction, printSettings);
                   }}
                   className="flex-1"
                 >
@@ -321,7 +333,7 @@ export const CheckoutDialog = ({
             
             {/* Debug: Test Settings */}
             <div className="mt-4 flex justify-end">
-              <Button variant="outline" onClick={() => navigate('/create-invoice')}>
+              <Button variant="outline" onClick={() => setLocation('/create-invoice')}>
                 Generate Invoice
               </Button>
             </div>

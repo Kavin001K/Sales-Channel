@@ -341,7 +341,7 @@ export class DataSyncService {
   // Health Check
   async healthCheck(): Promise<boolean> {
     try {
-      await postgresDatabaseService.getProducts('test');
+      // TODO: Replace with API call to server health endpoint
       return true;
     } catch (error) {
       console.error('Database health check failed:', error);

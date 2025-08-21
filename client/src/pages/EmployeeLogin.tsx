@@ -43,16 +43,16 @@ export default function EmployeeLogin() {
   // Security: Redirect if no company is logged in
   useEffect(() => {
     if (!company) {
-      navigate('/login');
+      setLocation('/login');
     }
-  }, [company, navigate]);
+  }, [company, setLocation]);
 
   // Security: Redirect if already logged in as employee
   useEffect(() => {
     if (employee) {
-      navigate('/dashboard');
+      setLocation('/dashboard');
     }
-  }, [employee, navigate]);
+  }, [employee, setLocation]);
 
   // Security: Input validation
   const validateEmployeeId = (employeeId: string): boolean => {
@@ -113,7 +113,7 @@ export default function EmployeeLogin() {
       
       if (success) {
         resetRateLimit();
-        navigate('/dashboard');
+        setLocation('/dashboard');
       } else {
         handleRateLimit();
         setError('Invalid employee ID or password');
@@ -128,7 +128,7 @@ export default function EmployeeLogin() {
 
   const handleBackToCompanyLogin = () => {
     logout();
-    navigate('/login');
+    setLocation('/login');
   };
 
   const getRemainingLockoutTime = (): string => {
