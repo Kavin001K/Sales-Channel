@@ -1,6 +1,3 @@
-/* Import responsive billing styles */
-@import url('./styles/billing-responsive.css');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,76 +101,5 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    /* Mobile performance optimizations */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* Mobile touch optimizations */
-  button, a, [role="button"] {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Improved scrolling performance */
-  * {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Mobile-specific optimizations */
-@media (max-width: 768px) {
-  .mobile-optimized {
-    /* Reduce animations on mobile for better performance */
-    transition-duration: 0.15s !important;
-  }
-  
-  /* Optimize form inputs for mobile */
-  input, textarea, select {
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-  
-  /* Better spacing for touch interfaces */
-  .touch-friendly {
-    min-height: 44px;
-    padding: 12px;
-  }
-}
-
-/* Tablet optimizations */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .tablet-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-}
-
-/* Performance optimizations for all devices */
-.performance-optimized {
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* Billing page responsive improvements */
-.billing-container {
-  @apply w-full max-w-none;
-}
-
-@media (max-width: 640px) {
-  .billing-container {
-    @apply px-2 py-4;
-  }
-  
-  .billing-grid {
-    @apply grid-cols-1 gap-3;
-  }
-  
-  .billing-form {
-    @apply space-y-3;
-  }
-  
-  .billing-input {
-    @apply text-base; /* Prevent zoom on mobile */
   }
 }
