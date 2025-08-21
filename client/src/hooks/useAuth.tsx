@@ -9,7 +9,6 @@ import {
   AdminLoginCredentials,
   AdminAuthState
 } from '../lib/types';
-import { customerService, employeeService, authService } from '../lib/database';
 
 interface AuthContextType extends AuthState {
   loginCompany: (credentials: LoginCredentials) => Promise<boolean>;
@@ -252,48 +251,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // Demo company credentials - In production, this should be in a secure database
-      const demoCompanies = [
-        {
-          id: 'defaultcompany',
-          name: 'Default Company',
-          email: 'admin@defaultcompany.com',
-          address: '123 Business Street',
-          city: 'Chennai',
-          state: 'Tamil Nadu',
-          zipCode: '600001',
-          country: 'India',
-          phone: '+91-9876543210',
-          taxId: 'TAX123456789',
-          logoUrl: undefined,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
+      // Call the API endpoint for authentication
+      const response = await fetch('/api/auth/company/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: sanitizedEmail,
+          password: sanitizedPassword,
+        }),
+      });
 
-      const company = demoCompanies.find(c => c.email === sanitizedEmail);
-
-      if (company && sanitizedPassword === 'admin123') { // In production, use proper password hashing
-        // Security: Record successful login
-        recordLoginAttempt(`company_${sanitizedEmail}`, true);
-        
-        const newState: AuthState = {
-          isAuthenticated: false, // Not fully authenticated until employee logs in
-          company,
-          employee: null,
-          loading: false
-        };
-        
-        setAuthState(newState);
-        saveAuthState(newState);
-        return true;
-      } else {
-        // Security: Record failed login attempt
+      if (!response.ok) {
         recordLoginAttempt(`company_${sanitizedEmail}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
+
+      const data = await response.json();
+      if (!data.success || !data.company) {
+        recordLoginAttempt(`company_${sanitizedEmail}`, false);
+        setAuthState(prev => ({ ...prev, loading: false }));
+        return false;
+      }
+
+      const company = data.company;
+
+      // Security: Record successful login
+      recordLoginAttempt(`company_${sanitizedEmail}`, true);
+      
+      const newState: AuthState = {
+        isAuthenticated: false, // Not fully authenticated until employee logs in
+        company,
+        employee: null,
+        loading: false
+      };
+      
+      setAuthState(newState);
+      saveAuthState(newState);
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       setAuthState(prev => ({ ...prev, loading: false }));
@@ -330,74 +327,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      // Demo employee credentials - In production, this should be in a secure database
-      const demoEmployees = [
-        {
-          id: 'emp001',
-          companyId: authState.company.id,
-          employeeId: 'EMP001',
-          name: 'John Doe',
-          email: 'john@company.com',
-          phone: '+91-9876543210',
-          position: 'cashier',
-          salary: 25000,
-          hireDate: new Date('2023-01-01'),
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+      // Call the API endpoint for employee authentication
+      const response = await fetch('/api/auth/employee/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: 'emp002',
+        body: JSON.stringify({
+          employeeId: sanitizedEmployeeId,
+          password: sanitizedPassword,
           companyId: authState.company.id,
-          employeeId: 'EMP002',
-          name: 'Jane Smith',
-          email: 'jane@company.com',
-          phone: '+91-9876543211',
-          position: 'manager',
-          salary: 35000,
-          hireDate: new Date('2023-01-01'),
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'emp003',
-          companyId: authState.company.id,
-          employeeId: 'EMP003',
-          name: 'Mike Johnson',
-          email: 'mike@company.com',
-          phone: '+91-9876543212',
-          position: 'admin',
-          salary: 45000,
-          hireDate: new Date('2023-01-01'),
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
+        }),
+      });
 
-      const employee = demoEmployees.find(e => e.employeeId === sanitizedEmployeeId);
-
-      if (employee && sanitizedPassword === 'emp123') { // In production, use proper password hashing
-        // Security: Record successful login
-        recordLoginAttempt(`employee_${sanitizedEmployeeId}`, true);
-        
-        const newState: AuthState = {
-          isAuthenticated: true, // Now fully authenticated
-          company: authState.company,
-          employee,
-          loading: false
-        };
-        
-        setAuthState(newState);
-        saveAuthState(newState);
-        return true;
-      } else {
-        // Security: Record failed login attempt
+      if (!response.ok) {
         recordLoginAttempt(`employee_${sanitizedEmployeeId}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
+
+      const data = await response.json();
+      if (!data.success || !data.employee) {
+        recordLoginAttempt(`employee_${sanitizedEmployeeId}`, false);
+        setAuthState(prev => ({ ...prev, loading: false }));
+        return false;
+      }
+
+      const employee = data.employee;
+
+      // Security: Record successful login
+      recordLoginAttempt(`employee_${sanitizedEmployeeId}`, true);
+      
+      const newState: AuthState = {
+        isAuthenticated: true, // Now fully authenticated
+        company: authState.company,
+        employee,
+        loading: false
+      };
+      
+      setAuthState(newState);
+      saveAuthState(newState);
+      return true;
     } catch (error) {
       console.error('Employee login error:', error);
       setAuthState(prev => ({ ...prev, loading: false }));

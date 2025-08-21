@@ -599,46 +599,63 @@ export default function QuickPOS() {
         </div>
       )}
 
-      {/* Header - Streamlined with Logo, Search, and Session Info */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between shadow-lg">
-        {/* Logo */}
-        <div className="flex items-center">
-          <div className="bg-white bg-opacity-20 rounded-lg p-2 mr-3">
-            <Package className="h-6 w-6 text-white" />
+      {/* Header - Mobile-Responsive */}
+      <div className="billing-search-bar bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+        {/* Mobile: Vertical Layout, Desktop: Horizontal */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          {/* Logo & Session Info */}
+          <div className="flex items-center justify-between mb-4 md:mb-0">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 rounded-lg p-2 mr-3">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-bold">ACE-POS</h1>
+            </div>
+            
+            {/* Mobile session info */}
+            <div className="flex items-center space-x-2 md:hidden">
+              <div className="text-xs bg-white bg-opacity-20 rounded px-2 py-1">
+                <span>{employee?.name || 'Cashier'}</span>
+              </div>
+              <div className="text-xs bg-white bg-opacity-20 rounded px-2 py-1">
+                <span>{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">ACE-POS</h1>
-        </div>
 
-        {/* Universal Search Bar */}
-        <div className="flex-1 max-w-2xl mx-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              ref={searchRef}
-              type="text"
-              placeholder="Search by Item Name, Code, or Tag..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg bg-white text-gray-800 border-0 rounded-lg shadow-sm focus:ring-2 focus:ring-white focus:ring-opacity-50"
-            />
+          {/* Universal Search Bar */}
+          <div className="flex-1 md:max-w-2xl md:mx-8 mb-4 md:mb-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                ref={searchRef}
+                type="text"
+                placeholder="Search items, codes, tags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="billing-input pl-10 pr-4 py-3 text-base md:text-lg bg-white text-gray-800 border-0 rounded-lg shadow-sm focus:ring-2 focus:ring-white focus:ring-opacity-50 w-full"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Session Info */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <User className="h-4 w-4" />
-            <span className="font-medium">{employee?.name || 'Cashier'}</span>
+          {/* Desktop Session Info */}
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
+              <User className="h-4 w-4" />
+              <span className="font-medium">{employee?.name || 'Cashier'}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
+              <Calendar className="h-4 w-4" />
+              <span>{currentTime.toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
+              <Clock className="h-4 w-4" />
+              <span>{currentTime.toLocaleTimeString()}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <Calendar className="h-4 w-4" />
-            <span>{currentTime.toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <Clock className="h-4 w-4" />
-            <span>{currentTime.toLocaleTimeString()}</span>
-          </div>
-          <div className="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-1">
+          
+          {/* Tax Toggle - Full width on mobile */}
+          <div className="flex items-center justify-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-1">
             <Label htmlFor="tax-included" className="text-sm font-medium cursor-pointer">Tax Inc.</Label>
             <Switch
               id="tax-included"
@@ -669,16 +686,16 @@ export default function QuickPOS() {
         </div>
       </div>
 
-      {/* Category Tabs - Horizontal */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
-        <div className="flex space-x-3 overflow-x-auto">
+      {/* Category Tabs - Mobile Optimized */}
+      <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 shadow-sm">
+        <div className="billing-category-filter">
           {categories.map((category) => (
             <Button
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(category)}
-              className={`whitespace-nowrap font-medium transition-all duration-200 ${
+              className={`billing-button whitespace-nowrap font-medium transition-all duration-200 ${
                 selectedCategory === category 
                   ? 'bg-blue-600 text-white shadow-md' 
                   : 'hover:bg-blue-50 hover:text-blue-600 border-blue-200'
@@ -690,25 +707,26 @@ export default function QuickPOS() {
         </div>
       </div>
 
-      {/* Main Content - Two Panel Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Product Selection (70%) */}
-        <div className="flex-1 bg-white p-4 overflow-y-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {/* Main Content - Responsive Layout */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Products Panel - Full width on mobile, 70% on desktop */}
+        <div className="flex-1 bg-white billing-scroll-container">
+          <div className="billing-product-grid p-4">
             {filteredProducts.map((product) => (
               <Card
                 key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-400 hover:scale-105"
+                className="billing-product-card cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-400 billing-animation-optimized touch-friendly"
                 onClick={() => handleProductSelect(product)}
+                data-testid={`product-card-${product.id}`}
               >
                 <CardContent className="p-3 text-center">
-                  <div className="h-20 bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Package className="h-10 w-10 text-blue-500" />
+                  <div className="h-16 md:h-20 bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                    <Package className="h-8 w-8 md:h-10 md:w-10 text-blue-500" />
                   </div>
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2 text-gray-800">{product.name}</h3>
+                  <h3 className="product-name font-semibold text-sm mb-1 line-clamp-2 text-gray-800">{product.name}</h3>
                   <p className="text-xs text-gray-500 mb-2">{product.sku || product.barcode}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-green-600">₹{product.price.toFixed(2)}</span>
+                    <span className="product-price text-lg font-bold text-green-600">₹{product.price.toFixed(2)}</span>
                     <Badge variant={product.stock > 0 ? "default" : "destructive"} className="text-xs">
                       {product.stock > 0 ? `${product.stock}` : 'Out'}
                     </Badge>
@@ -719,43 +737,46 @@ export default function QuickPOS() {
           </div>
           
           {filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="billing-loading text-center py-12 text-gray-500">
               <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No products found</p>
             </div>
           )}
         </div>
 
-        {/* Right Panel - Live Bill/Cart (30%) */}
-        <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col">
-          {/* Customer Info */}
-          <div className="bg-white p-4 border-b border-gray-200">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+        {/* Cart Panel - Mobile: Fixed bottom drawer, Desktop: Right sidebar */}
+        <div className="billing-cart-sidebar lg:w-96 bg-gray-50 border-l border-gray-200 flex flex-col"
+             data-testid="cart-sidebar">
+          {/* Customer Info - Mobile Optimized */}
+          <div className="billing-customer-form bg-white p-4 border-b border-gray-200">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-gray-800">
               Customer Information
               {isCustomerLoading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               )}
               {currentCustomer && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
                   Existing Customer
                 </Badge>
               )}
             </h3>
-            <div className="space-y-3">
+            <div className="billing-customer-form">
               <Input
                 placeholder="Customer Name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="text-sm"
+                className="billing-input text-sm"
                 disabled={isCustomerLoading}
+                data-testid="input-customer-name"
               />
               <div className="relative">
                 <Input
                   placeholder="Mobile Number"
                   value={customerPhone}
                   onChange={(e) => handleCustomerPhoneChange(e.target.value)}
-                  className="text-sm"
+                  className="billing-input text-sm"
                   disabled={isCustomerLoading}
+                  data-testid="input-customer-phone"
                 />
                 {currentCustomer && (
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -838,8 +859,8 @@ export default function QuickPOS() {
             )}
           </div>
 
-          {/* Totals and Payment */}
-          <div className="bg-white p-4 border-t border-gray-200">
+          {/* Totals and Payment - Mobile Optimized */}
+          <div className="billing-payment-form bg-white border-t border-gray-200">
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal:</span>
@@ -852,20 +873,20 @@ export default function QuickPOS() {
               <Separator />
               <div className="flex justify-between text-xl font-bold text-green-600">
                 <span>TOTAL:</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span data-testid="text-total">₹{total.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* Payment Method */}
+            {/* Payment Method - Mobile Optimized */}
             <div className="mb-4">
               <Label className="text-sm font-medium mb-3 block text-gray-700">Payment Method</Label>
               <RadioGroup value={paymentMethod} onValueChange={(value: 'cash' | 'card' | 'wallet') => setPaymentMethod(value)}>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
+                <div className="payment-buttons grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2 p-3 rounded-lg border-2 hover:border-blue-300 transition-colors touch-friendly billing-animation-optimized">
                     <RadioGroupItem value="cash" id="cash" />
                     <Label htmlFor="cash" className="text-sm font-medium cursor-pointer">Cash</Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
+                  <div className="flex items-center space-x-2 p-3 rounded-lg border-2 hover:border-blue-300 transition-colors touch-friendly billing-animation-optimized">
                     <RadioGroupItem value="card" id="card" />
                     <Label htmlFor="card" className="text-sm font-medium cursor-pointer">Card</Label>
                   </div>
@@ -873,11 +894,12 @@ export default function QuickPOS() {
               </RadioGroup>
             </div>
 
-            {/* Pay Button */}
+            {/* Pay Button - Mobile Optimized */}
             <Button
               onClick={handlePaymentClick}
               disabled={cart.items.length === 0 || isProcessing}
-              className="w-full py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="billing-button payment-button w-full py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              data-testid="button-pay"
             >
               {isProcessing ? (
                 <div className="flex items-center space-x-2">
@@ -888,8 +910,6 @@ export default function QuickPOS() {
                 `PAY ₹${total.toFixed(2)}`
               )}
             </Button>
-
-
           </div>
         </div>
       </div>

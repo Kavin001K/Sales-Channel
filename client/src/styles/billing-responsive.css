@@ -1,0 +1,252 @@
+/* Mobile-first billing system optimizations */
+
+/* Touch-friendly buttons */
+.billing-button {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Mobile product grid optimization */
+.billing-product-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .billing-product-grid {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+  
+  .billing-product-card {
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .billing-product-card .product-name {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+  
+  .billing-product-card .product-price {
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .billing-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 16px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .billing-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 24px;
+  }
+}
+
+/* Cart sidebar responsive */
+.billing-cart-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-left: 1px solid #e5e7eb;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .billing-cart-sidebar {
+    max-width: 100%;
+  }
+  
+  .billing-cart-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .billing-cart-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+}
+
+@media (min-width: 769px) {
+  .billing-cart-sidebar {
+    position: relative;
+    transform: translateX(0);
+    border-left: 1px solid #e5e7eb;
+  }
+}
+
+/* Payment form optimization */
+.billing-payment-form {
+  padding: 20px;
+}
+
+@media (max-width: 640px) {
+  .billing-payment-form {
+    padding: 16px;
+  }
+  
+  .billing-payment-form .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .billing-payment-form input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 14px;
+    border-radius: 8px;
+  }
+  
+  .billing-payment-form .payment-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .billing-payment-form .payment-button {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+  }
+}
+
+/* Customer info form mobile optimization */
+.billing-customer-form {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .billing-customer-form {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .billing-customer-form input {
+    font-size: 16px;
+    padding: 14px;
+  }
+}
+
+@media (min-width: 641px) {
+  .billing-customer-form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Search and filter bar mobile optimization */
+.billing-search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+@media (max-width: 640px) {
+  .billing-search-bar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .billing-search-bar input {
+    font-size: 16px;
+    width: 100%;
+  }
+  
+  .billing-category-filter {
+    overflow-x: auto;
+    display: flex;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+  
+  .billing-category-filter button {
+    flex-shrink: 0;
+    min-width: 80px;
+    font-size: 14px;
+  }
+}
+
+/* Loading states optimization */
+.billing-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+@media (max-width: 640px) {
+  .billing-loading {
+    padding: 20px;
+  }
+}
+
+/* Performance optimizations */
+.billing-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.billing-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.billing-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.billing-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+/* Animation performance */
+.billing-animation-optimized {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Focus states for accessibility */
+.billing-button:focus,
+.billing-input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Error states */
+.billing-error {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Success states */
+.billing-success {
+  color: #16a34a;
+  font-size: 14px;
+  margin-top: 4px;
+}

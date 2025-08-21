@@ -51,8 +51,8 @@ const allNavigationItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const [location] = useLocation();
+  const currentPath = location;
   const { company, employee, adminAuth, logout, logoutEmployee, logoutAdmin } = useAuth();
 
   // Determine user role
@@ -159,8 +159,8 @@ export function AppSidebar() {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                  <SidebarMenuButton asChild className={getNavCls({ isActive: isActive(item.url) })}>
+                    <Link to={item.url} className="flex items-center gap-3 p-3 rounded-lg transition-colors mobile-optimized touch-friendly">
                       <item.icon className="w-5 h-5" />
                       {state !== "collapsed" && (
                         <div className="flex flex-col">
@@ -168,7 +168,7 @@ export function AppSidebar() {
                           <span className="text-xs text-sidebar-foreground/70">{item.description}</span>
                         </div>
                       )}
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
