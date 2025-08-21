@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Customer } from '@/lib/types';
 import { getCustomers, addCustomer, updateCustomer, deleteCustomer } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Edit, Trash2, Search, Users, Star, DollarSign, Upload, Eye, MessageSquare } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Users, Star, DollarSign, Upload, Eye, MessageSquare, Download, SlidersHorizontal } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +29,22 @@ export default function Customers() {
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [messageSubject, setMessageSubject] = useState('');
   const [messageBody, setMessageBody] = useState('');
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportUseCurrentView, setExportUseCurrentView] = useState(true);
+  const [exportFromDate, setExportFromDate] = useState<string>('');
+  const [exportToDate, setExportToDate] = useState<string>('');
+  const [savedViews, setSavedViews] = useState<Array<{ name: string; searchQuery: string; columns: Record<string, boolean> }>>([]);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    name: true,
+    email: true,
+    phone: true,
+    address: true,
+    totalSpent: true,
+    visits: true,
+    status: true,
+    actions: true,
+  });
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
   // Expand formData to include all new fields
   const [formData, setFormData] = useState({
     name: '',
@@ -52,6 +71,19 @@ export default function Customers() {
   useEffect(() => {
     loadCustomers();
   }, []);
+
+  useEffect(() => {
+    try {
+      const storedViews = localStorage.getItem('customersSavedViews');
+      if (storedViews) setSavedViews(JSON.parse(storedViews));
+      const storedCols = localStorage.getItem('customersVisibleColumns');
+      if (storedCols) setVisibleColumns(JSON.parse(storedCols));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('customersVisibleColumns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   // Listen for customer updates from other components
   useEffect(() => {
@@ -260,6 +292,81 @@ export default function Customers() {
     averageSpent: customers.length > 0 ? customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length : 0
   };
 
+  const filteredStats = useMemo(() => {
+    const totalCustomers = filteredCustomers.length;
+    const totalSpent = filteredCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
+    const averageSpent = totalCustomers > 0 ? totalSpent / totalCustomers : 0;
+    return { totalCustomers, totalSpent, averageSpent };
+  }, [filteredCustomers]);
+
+  const exportCustomersToExcel = () => {
+    try {
+      const rows = filteredCustomers.map(c => ({
+        ID: c.id,
+        Name: c.name,
+        Email: c.email || '',
+        Phone: c.phone || '',
+        Street: c.address?.street || '',
+        City: c.address?.city || '',
+        State: c.address?.state || '',
+        ZipCode: c.address?.zipCode || '',
+        TotalSpent: c.totalSpent ?? 0,
+        Visits: (c as any).visits ?? (c as any).visitCount ?? 0,
+        LoyaltyPoints: c.loyaltyPoints ?? 0,
+        Notes: c.notes || ''
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers');
+      XLSX.writeFile(workbook, 'customers.xlsx');
+    } catch (error) {
+      console.error('Export customers failed:', error);
+      toast.error('Failed to export customers');
+    }
+  };
+
+  const exportWithWizard = () => {
+    try {
+      const source = exportUseCurrentView ? filteredCustomers : customers;
+      const rows = source.map(c => {
+        const row: Record<string, any> = {};
+        if (visibleColumns.name) row.Name = c.name;
+        if (visibleColumns.email) row.Email = c.email || '';
+        if (visibleColumns.phone) row.Phone = c.phone || '';
+        if (visibleColumns.address) row.Address = `${c.address?.street || ''} ${c.address?.city || ''} ${c.address?.state || ''} ${c.address?.zipCode || ''}`.trim();
+        if (visibleColumns.totalSpent) row.TotalSpent = c.totalSpent ?? 0;
+        if (visibleColumns.visits) row.Visits = (c as any).visits ?? (c as any).visitCount ?? 0;
+        if (visibleColumns.status) row.Status = c.isActive ? 'Active' : 'Inactive';
+        return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+      const fileName = exportFormat === 'csv' ? 'customers-export.csv' : 'customers-export.xlsx';
+      XLSX.writeFile(wb, fileName, { bookType: exportFormat });
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error('Customer export wizard failed:', error);
+      toast.error('Failed to export customers');
+    }
+  };
+
+  const saveCurrentView = (name: string) => {
+    const v = { name, searchQuery, columns: visibleColumns };
+    const updated = [...savedViews.filter(x => x.name !== name), v];
+    setSavedViews(updated);
+    try { localStorage.setItem('customersSavedViews', JSON.stringify(updated)); } catch {}
+    toast.success(`Saved view "${name}"`);
+  };
+
+  const applySavedView = (name: string) => {
+    const v = savedViews.find(x => x.name === name);
+    if (!v) return;
+    setSearchQuery(v.searchQuery);
+    setVisibleColumns(v.columns);
+    toast.success(`Applied view "${name}"`);
+  };
+
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header Section - Responsive */}
@@ -270,11 +377,53 @@ export default function Customers() {
         </div>
         
         <div className="flex gap-2">
-          <Button 
-            onClick={createTestCustomer}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Create Test Customer
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {Object.keys(visibleColumns).map(key => (
+                <DropdownMenuCheckboxItem key={key} checked={visibleColumns[key]} onCheckedChange={(v) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(v) }))}>
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">Views</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {savedViews.length === 0 && <div className="px-3 py-2 text-sm text-muted-foreground">No saved views</div>}
+              {savedViews.map(v => (
+                <DropdownMenuCheckboxItem key={v.name} checked={false} onSelect={(e) => { e.preventDefault(); applySavedView(v.name); }}>
+                  {v.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <div className="px-3 py-2">
+                <div className="flex gap-2">
+                  <Input placeholder="View name" className="h-8" onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const name = (e.target as HTMLInputElement).value.trim();
+                      if (name) { saveCurrentView(name); (e.target as HTMLInputElement).value = ''; }
+                    }
+                  }} />
+                  <Button size="sm" onClick={() => {
+                    const el = document.querySelector<HTMLInputElement>('input[placeholder=\"View name\"]');
+                    const name = el?.value.trim() || '';
+                    if (name) { saveCurrentView(name); if (el) el.value = ''; }
+                  }}>Save</Button>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button onClick={() => setIsExportDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Download className="w-4 h-4 mr-2" /> Export
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -554,6 +703,13 @@ export default function Customers() {
           </Card>
         ))}
       </div>
+      <div className="mt-3 sm:mt-4 border rounded bg-gray-50 px-4 py-3 text-sm flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+        <div>Showing <span className="font-semibold">{filteredCustomers.length}</span> customers</div>
+        <div className="flex flex-wrap gap-4">
+          <div>Total Spent: <span className="font-semibold">${filteredCustomers.reduce((s, c) => s + c.totalSpent, 0).toFixed(2)}</span></div>
+          <div>Average Spent: <span className="font-semibold">${(filteredCustomers.length ? filteredCustomers.reduce((s, c) => s + c.totalSpent, 0) / filteredCustomers.length : 0).toFixed(2)}</span></div>
+        </div>
+      </div>
         </TabsContent>
       </Tabs>
 
@@ -578,6 +734,48 @@ export default function Customers() {
               {viewCustomer.notes && <div className="italic">“{viewCustomer.notes}”</div>}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Wizard */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Export Customers</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox id="custCurrentView" checked={exportUseCurrentView} onCheckedChange={(v) => setExportUseCurrentView(Boolean(v))} />
+              <label htmlFor="custCurrentView" className="text-sm">Export current view (respects search)</label>
+            </div>
+            <div>
+              <div className="font-medium mb-2">Columns</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(visibleColumns).filter(k => k !== 'actions').map((key) => (
+                  <label key={key} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={visibleColumns[key]} onCheckedChange={(v) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(v) }))} />
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Format</Label>
+                <select className="w-full border rounded h-9 px-2" value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'xlsx' | 'csv')}>
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="csv">CSV (.csv)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>Cancel</Button>
+              <Button onClick={exportWithWizard}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

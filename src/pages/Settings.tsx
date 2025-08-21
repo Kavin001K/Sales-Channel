@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Receipt, Printer, Bell, Info, FileText } from "lucide-react";
+import { Building2, Receipt, Printer, Bell, Info, FileText, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { getEmployeeIdSettings, setEmployeeIdSettings } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -263,6 +264,28 @@ const Settings = () => {
     setCompanySettings((prev) => ({ ...prev, logo: undefined }));
   };
 
+  const handleBackupAllSettings = () => {
+    try {
+      const data = {
+        company: companySettings,
+        print: printSettings,
+        notifications: notificationSettings,
+        general: generalSettings,
+        invoice: invoiceSettings,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'settings-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Backup created', description: 'All settings exported as settings-backup.json' });
+    } catch (e) {
+      toast({ title: 'Backup failed', description: 'Could not export settings', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center space-x-2">
@@ -281,6 +304,12 @@ const Settings = () => {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={handleBackupAllSettings}>
+            <Download className="h-4 w-4 mr-2" /> Backup Settings
+          </Button>
+        </div>
 
         <TabsContent value="company" className="space-y-6">
           <Card>

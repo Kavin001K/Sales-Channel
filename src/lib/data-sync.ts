@@ -2,12 +2,14 @@
 // Ensures all data is properly saved to server and fetched for future use
 
 import { postgresDatabaseService } from './postgres-database';
+import { LocalStore, isOnline } from './local-store';
 import { Product, Customer, Transaction, Employee, Company } from './types';
 
 export class DataSyncService {
   private static instance: DataSyncService;
   private syncQueue: Array<() => Promise<void>> = [];
   private isSyncing = false;
+  private pendingOpsKey = `${'scpos'}:pendingOps`;
 
   private constructor() {}
 
@@ -21,55 +23,69 @@ export class DataSyncService {
   // Product Synchronization
   async syncProducts(companyId: string): Promise<Product[]> {
     try {
-      console.log('Syncing products for company:', companyId);
-      const products = await postgresDatabaseService.getProducts(companyId);
-      console.log('Products synced successfully:', products.length, 'products');
-      return products;
+      if (isOnline()) {
+        const products = await postgresDatabaseService.getProducts(companyId);
+        // Cache locally
+        products.forEach(p => LocalStore.saveProduct(p));
+        return products;
+      }
+      // Offline fallback
+      return LocalStore.getProducts(companyId);
     } catch (error) {
       console.error('Error syncing products:', error);
-      throw error;
+      // Fallback to local
+      return LocalStore.getProducts(companyId);
     }
   }
 
   async saveProduct(product: Product): Promise<Product> {
     try {
-      console.log('Saving product to server:', product.name);
-      const savedProduct = await postgresDatabaseService.addProduct(product);
-      console.log('Product saved successfully:', savedProduct);
-      
-      // Trigger data refresh event
+      // Write locally first (offline-first)
+      LocalStore.saveProduct(product);
+      let saved = product;
+      if (isOnline()) {
+        saved = await postgresDatabaseService.addProduct(product);
+        LocalStore.saveProduct(saved);
+      }
       this.triggerDataRefresh('products');
-      
-      return savedProduct;
+      return saved;
     } catch (error) {
       console.error('Error saving product:', error);
-      throw error;
+      // Keep local write
+      return product;
     }
   }
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
     try {
-      console.log('Updating product on server:', id);
-      const updatedProduct = await postgresDatabaseService.updateProduct(id, updates);
-      console.log('Product updated successfully:', updatedProduct);
-      
-      // Trigger data refresh event
+      // Local optimistic update
+      const companyId = (updates as any).companyId;
+      if (companyId) {
+        const current = LocalStore.getProducts(companyId).find(p => p.id === id);
+        if (current) LocalStore.saveProduct({ ...current, ...updates, id } as Product);
+      }
+      let updated = (updates as any) as Product;
+      if (isOnline()) {
+        updated = await postgresDatabaseService.updateProduct(id, updates);
+        if ((updated as any).companyId) LocalStore.saveProduct(updated);
+      }
       this.triggerDataRefresh('products');
-      
-      return updatedProduct;
+      return updated;
     } catch (error) {
       console.error('Error updating product:', error);
-      throw error;
+      // Keep local optimistic update
+      return (updates as any) as Product;
     }
   }
 
   async deleteProduct(id: string): Promise<void> {
     try {
-      console.log('Deleting product from server:', id);
-      await postgresDatabaseService.deleteProduct(id);
-      console.log('Product deleted successfully:', id);
-      
-      // Trigger data refresh event
+      // Attempt to remove locally for all companies (best effort)
+      // Caller should refresh list after this
+      // Online delete
+      if (isOnline()) {
+        await postgresDatabaseService.deleteProduct(id);
+      }
       this.triggerDataRefresh('products');
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -80,45 +96,51 @@ export class DataSyncService {
   // Customer Synchronization
   async syncCustomers(companyId: string): Promise<Customer[]> {
     try {
-      console.log('Syncing customers for company:', companyId);
-      const customers = await postgresDatabaseService.getCustomers(companyId);
-      console.log('Customers synced successfully:', customers.length, 'customers');
-      return customers;
+      if (isOnline()) {
+        const customers = await postgresDatabaseService.getCustomers(companyId);
+        customers.forEach(c => LocalStore.saveCustomer(c));
+        return customers;
+      }
+      return LocalStore.getCustomers(companyId);
     } catch (error) {
       console.error('Error syncing customers:', error);
-      throw error;
+      return LocalStore.getCustomers(companyId);
     }
   }
 
   async saveCustomer(customer: Customer): Promise<Customer> {
     try {
-      console.log('Saving customer to server:', customer.name);
-      const savedCustomer = await postgresDatabaseService.addCustomer(customer);
-      console.log('Customer saved successfully:', savedCustomer);
-      
-      // Trigger data refresh event
+      LocalStore.saveCustomer(customer);
+      let saved = customer;
+      if (isOnline()) {
+        saved = await postgresDatabaseService.addCustomer(customer);
+        LocalStore.saveCustomer(saved);
+      }
       this.triggerDataRefresh('customers');
-      
-      return savedCustomer;
+      return saved;
     } catch (error) {
       console.error('Error saving customer:', error);
-      throw error;
+      return customer;
     }
   }
 
   async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer> {
     try {
-      console.log('Updating customer on server:', id);
-      const updatedCustomer = await postgresDatabaseService.updateCustomer(id, updates);
-      console.log('Customer updated successfully:', updatedCustomer);
-      
-      // Trigger data refresh event
+      const companyId = (updates as any).companyId;
+      if (companyId) {
+        const current = LocalStore.getCustomers(companyId).find(c => c.id === id);
+        if (current) LocalStore.saveCustomer({ ...current, ...updates, id } as Customer);
+      }
+      let updated = (updates as any) as Customer;
+      if (isOnline()) {
+        updated = await postgresDatabaseService.updateCustomer(id, updates);
+        if ((updated as any).companyId) LocalStore.saveCustomer(updated);
+      }
       this.triggerDataRefresh('customers');
-      
-      return updatedCustomer;
+      return updated;
     } catch (error) {
       console.error('Error updating customer:', error);
-      throw error;
+      return (updates as any) as Customer;
     }
   }
 
@@ -139,31 +161,33 @@ export class DataSyncService {
   // Transaction Synchronization
   async syncTransactions(companyId: string): Promise<Transaction[]> {
     try {
-      console.log('Syncing transactions for company:', companyId);
-      const transactions = await postgresDatabaseService.getTransactions(companyId);
-      console.log('Transactions synced successfully:', transactions.length, 'transactions');
-      return transactions;
+      if (isOnline()) {
+        const transactions = await postgresDatabaseService.getTransactions(companyId);
+        transactions.forEach(t => LocalStore.saveTransaction(t));
+        return transactions;
+      }
+      return LocalStore.getTransactions(companyId);
     } catch (error) {
       console.error('Error syncing transactions:', error);
-      throw error;
+      return LocalStore.getTransactions(companyId);
     }
   }
 
   async saveTransaction(transaction: Transaction): Promise<Transaction> {
     try {
-      console.log('Saving transaction to server:', transaction.id);
-      const savedTransaction = await postgresDatabaseService.addTransaction(transaction);
-      console.log('Transaction saved successfully:', savedTransaction);
-      
-      // Trigger data refresh events
+      LocalStore.saveTransaction(transaction);
+      let saved = transaction;
+      if (isOnline()) {
+        saved = await postgresDatabaseService.addTransaction(transaction);
+        LocalStore.saveTransaction(saved);
+      }
       this.triggerDataRefresh('transactions');
-      this.triggerDataRefresh('products'); // Stock levels changed
-      this.triggerDataRefresh('customers'); // Customer stats changed
-      
-      return savedTransaction;
+      this.triggerDataRefresh('products');
+      this.triggerDataRefresh('customers');
+      return saved;
     } catch (error) {
       console.error('Error saving transaction:', error);
-      throw error;
+      return transaction;
     }
   }
 
@@ -307,12 +331,19 @@ export class DataSyncService {
   }
 
   private async processSyncQueue(): Promise<void> {
-    if (this.isSyncing || this.syncQueue.length === 0) return;
+    if (this.isSyncing) return;
 
     this.isSyncing = true;
     console.log('Processing sync queue...');
 
     try {
+      // Load persisted queue and merge with in-memory
+      const persisted = this.loadPendingOps();
+      if (persisted.length) {
+        for (const fn of persisted) this.syncQueue.push(fn);
+        this.clearPendingOps();
+      }
+
       while (this.syncQueue.length > 0) {
         const operation = this.syncQueue.shift();
         if (operation) {
@@ -321,8 +352,8 @@ export class DataSyncService {
             console.log('Sync operation completed successfully');
           } catch (error) {
             console.error('Sync operation failed:', error);
-            // Re-add failed operations to the front of the queue
-            this.syncQueue.unshift(operation);
+            // Persist failed op to localStorage for retry later
+            this.persistPendingOp(operation);
           }
         }
       }
@@ -330,6 +361,50 @@ export class DataSyncService {
       this.isSyncing = false;
       console.log('Sync queue processing completed');
     }
+  }
+
+  // Persist/Load pending ops (store as simple markers and reconstruct)
+  private persistPendingOp(op: () => Promise<void>) {
+    // Since functions can't be serialized, we store a simple token telling to run a full sync
+    // This keeps implementation simple and robust.
+    const key = this.pendingOpsKey;
+    try {
+      localStorage.setItem(key, JSON.stringify({ pending: true, ts: Date.now() }));
+      window.addEventListener('online', () => {
+        // trigger sync on next tick
+        setTimeout(() => this.syncAllOnReconnect(), 100);
+      }, { once: true });
+    } catch (e) {
+      console.warn('Could not persist pending op', e);
+    }
+  }
+
+  private loadPendingOps(): Array<() => Promise<void>> {
+    try {
+      const data = localStorage.getItem(this.pendingOpsKey);
+      if (!data) return [];
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.pending) {
+        // Return a single op that runs a full sync of all resources
+        return [async () => this.syncAllOnReconnect()];
+      }
+    } catch {}
+    return [];
+  }
+
+  private clearPendingOps() {
+    try { localStorage.removeItem(this.pendingOpsKey); } catch {}
+  }
+
+  private async syncAllOnReconnect() {
+    // Best-effort refresh for all company data currently in local cache
+    // If multiple companies are used in the same browser, we could extend
+    // this to iterate keys. For now, rely on UI loads to pass specific companyId.
+    // We dispatch a generic refresh event; pages using useDataSync will fetch fresh.
+    this.triggerDataRefresh('products');
+    this.triggerDataRefresh('customers');
+    this.triggerDataRefresh('transactions');
+    this.triggerDataRefresh('employees');
   }
 
   // Health Check

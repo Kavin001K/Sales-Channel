@@ -20,8 +20,14 @@ export interface ReceiptData {
   paymentMethod: string;
   paymentDetails?: {
     cashAmount?: number;
-    change?: number;
     cardAmount?: number;
+    walletAmount?: number;
+    parts?: Array<{
+      method: string;
+      amount: number;
+      txnId?: string;
+      lastDigits?: string;
+    }>;
   };
   isReprint?: boolean;
   reprintCount?: number;
@@ -81,14 +87,19 @@ class ThermalPrinterService {
     
     // Payment details
     if (data.paymentDetails) {
-      if (data.paymentDetails.cashAmount) {
-        receipt += `Cash Amount: ₹${data.paymentDetails.cashAmount.toFixed(2)}\n`;
-      }
-      if (data.paymentDetails.change) {
-        receipt += `Change: ₹${data.paymentDetails.change.toFixed(2)}\n`;
-      }
-      if (data.paymentDetails.cardAmount) {
-        receipt += `Card Amount: ₹${data.paymentDetails.cardAmount.toFixed(2)}\n`;
+      const pd = data.paymentDetails;
+      if (pd.parts && pd.parts.length > 0) {
+        receipt += this.generateSeparatorLine();
+        receipt += 'Split Breakdown:\n';
+        pd.parts.forEach((p, i) => {
+          const label = p.method.toUpperCase();
+          const line = `${i + 1}. ${label}` + (p.lastDigits ? ` ****${p.lastDigits}` : '') + (p.txnId ? ` (${p.txnId})` : '');
+          receipt += this.padRight(line, 38) + this.padLeft(`₹${p.amount.toFixed(2)}`, 10) + '\n';
+        });
+      } else {
+        if (pd.cashAmount) receipt += `Cash Amount: ₹${pd.cashAmount.toFixed(2)}\n`;
+        if (pd.cardAmount) receipt += `Card Amount: ₹${pd.cardAmount.toFixed(2)}\n`;
+        if (pd.walletAmount) receipt += `Wallet Amount: ₹${pd.walletAmount.toFixed(2)}\n`;
       }
     }
     
@@ -254,9 +265,19 @@ class ThermalPrinterService {
           <div style="margin: 10px 0; font-size: 11px;">
             <div><strong>Payment Method:</strong> ${data.paymentMethod.toUpperCase()}</div>
             ${data.paymentDetails ? `
-              ${data.paymentDetails.cashAmount ? `<div>Cash Amount: ₹${data.paymentDetails.cashAmount.toFixed(2)}</div>` : ''}
-              ${data.paymentDetails.change ? `<div>Change: ₹${data.paymentDetails.change.toFixed(2)}</div>` : ''}
-              ${data.paymentDetails.cardAmount ? `<div>Card Amount: ₹${data.paymentDetails.cardAmount.toFixed(2)}</div>` : ''}
+              ${data.paymentDetails.parts && data.paymentDetails.parts.length ? `
+                <div style="margin-top:6px;"><strong>Split Breakdown:</strong></div>
+                ${data.paymentDetails.parts.map((p, i) => `
+                  <div style="display:flex;justify-content:space-between;">
+                    <span>${i+1}. ${p.method.toUpperCase()}${p.lastDigits ? ` ****${p.lastDigits}` : ''}${p.txnId ? ` (${p.txnId})` : ''}</span>
+                    <span>₹${p.amount.toFixed(2)}</span>
+                  </div>
+                `).join('')}
+              ` : `
+                ${data.paymentDetails.cashAmount ? `<div>Cash Amount: ₹${data.paymentDetails.cashAmount.toFixed(2)}</div>` : ''}
+                ${data.paymentDetails.cardAmount ? `<div>Card Amount: ₹${data.paymentDetails.cardAmount.toFixed(2)}</div>` : ''}
+                ${data.paymentDetails.walletAmount ? `<div>Wallet Amount: ₹${data.paymentDetails.walletAmount.toFixed(2)}</div>` : ''}
+              `}
             ` : ''}
           </div>
           

@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { Product, Transaction, Customer, Employee, Company, LoginCredentials, EmployeeLoginCredentials } from './types';
 import { config } from './config';
 
@@ -105,7 +105,6 @@ class PostgresDatabaseService {
         
         // Transactions
         customer_id: 'customer_id',
-        employee_id: 'employee_id',
         items: 'items',
         subtotal: 'subtotal',
         tax: 'tax',
@@ -113,7 +112,6 @@ class PostgresDatabaseService {
         total: 'total',
         payment_method: 'payment_method',
         status: 'status',
-        notes: 'notes',
         
         // Companies
         logo_url: 'logo_url',
@@ -162,7 +160,7 @@ class PostgresDatabaseService {
       }
 
       const company = rows[0];
-      const isValidPassword = await bcrypt.compare(credentials.password, company.password_hash);
+      const isValidPassword = await bcryptjs.compare(credentials.password, company.password_hash);
       
       if (!isValidPassword) {
         return null;
@@ -202,7 +200,7 @@ class PostgresDatabaseService {
       }
 
       const employee = rows[0];
-      const isValidPassword = await bcrypt.compare(credentials.password, employee.password_hash);
+      const isValidPassword = await bcryptjs.compare(credentials.password, employee.password_hash);
       
       if (!isValidPassword) {
         return null;
@@ -530,7 +528,10 @@ class PostgresDatabaseService {
 
   async addEmployee(employee: Employee): Promise<void> {
     try {
-      const passwordHash = await bcrypt.hash('emp123', config.security.bcryptRounds); // Default password
+      // If a plain password/PIN is provided on the payload, hash and use it.
+      // Fallback to a sensible default for backwards compatibility.
+      const plainPassword = (employee as any).pin || (employee as any).password || 'emp123'
+      const passwordHash = await bcryptjs.hash(plainPassword, config.security.bcryptRounds);
       await this.executeQuery(`
         INSERT INTO employees (id, company_id, employee_id, password_hash, name, email, phone, position, salary, hire_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)

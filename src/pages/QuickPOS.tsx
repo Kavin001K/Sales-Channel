@@ -467,7 +467,7 @@ export default function QuickPOS() {
   }, [cart.items.length, customerName]);
 
   // Handle payment completion from dialog
-  const handlePaymentComplete = useCallback(async (paymentData: any) => {
+  const handlePaymentComplete = useCallback(async (paymentData: { parts: { method: 'cash' | 'card' | 'wallet'; amount: number; txnId?: string; lastDigits?: string }[] }) => {
     setIsProcessing(true);
     setIsPaymentDialogOpen(false);
 
@@ -515,6 +515,12 @@ export default function QuickPOS() {
         }
       }
 
+      // Build split payment details
+      const parts = paymentData.parts || [];
+      const cashAmount = parts.filter(p => p.method === 'cash').reduce((s, p) => s + (p.amount || 0), 0);
+      const cardAmount = parts.filter(p => p.method === 'card').reduce((s, p) => s + (p.amount || 0), 0);
+      const walletAmount = parts.filter(p => p.method === 'wallet').reduce((s, p) => s + (p.amount || 0), 0);
+
       // Create transaction
       const transaction: Transaction = {
         id: Date.now().toString(),
@@ -530,7 +536,7 @@ export default function QuickPOS() {
         tax,
         discount: 0,
         total,
-        paymentMethod: paymentData.paymentMethod,
+        paymentMethod: cashAmount > 0 && (cardAmount > 0 || walletAmount > 0) ? 'split' : (parts[0]?.method || 'cash'),
         status: 'completed',
         customerName,
         timestamp: new Date(),
@@ -540,9 +546,10 @@ export default function QuickPOS() {
         notes: '',
         receipt: '',
         paymentDetails: {
-          cashAmount: paymentData.paymentMethod === 'cash' ? paymentData.amount : 0,
-          change: paymentData.change || 0,
-          cardAmount: paymentData.paymentMethod === 'card' ? paymentData.amount : 0
+          cashAmount,
+          cardAmount,
+          walletAmount,
+          parts: parts.map(p => ({ method: p.method, amount: p.amount, txnId: p.txnId, lastDigits: p.lastDigits }))
         }
       };
 

@@ -11,7 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Edit, Trash2, Search, Package, AlertTriangle, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, AlertTriangle, Upload, Download, SlidersHorizontal } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
 
@@ -21,6 +24,19 @@ export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportUseCurrentView, setExportUseCurrentView] = useState(true);
+  const [savedViews, setSavedViews] = useState<Array<{ name: string; searchQuery: string; selectedCategory: string; columns: Record<string, boolean> }>>([]);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    name: true,
+    category: true,
+    price: true,
+    stock: true,
+    sku: true,
+    supplier: true,
+    status: true,
+    actions: true,
+  });
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -55,6 +71,19 @@ export default function Products() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    try {
+      const storedViews = localStorage.getItem('productsSavedViews');
+      if (storedViews) setSavedViews(JSON.parse(storedViews));
+      const storedCols = localStorage.getItem('productsVisibleColumns');
+      if (storedCols) setVisibleColumns(JSON.parse(storedCols));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('productsVisibleColumns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   const loadProducts = async () => {
     try {
@@ -217,6 +246,76 @@ export default function Products() {
 
   const lowStockProducts = Array.isArray(products) ? products.filter(p => p.stock <= p.minStock) : [];
 
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
+
+  const exportProductsToExcel = () => {
+    try {
+      const rows = (Array.isArray(products) ? products : []).map(p => ({
+        ID: p.id,
+        Name: p.name,
+        Category: p.category,
+        Price: p.price,
+        Cost: p.cost,
+        Stock: p.stock,
+        MinStock: p.minStock,
+        SKU: p.sku || '',
+        Barcode: p.barcode || '',
+        Supplier: p.supplier || '',
+        TaxRate: p.taxRate || 0
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+      const fileName = exportFormat === 'csv' ? 'products.csv' : 'products.xlsx';
+      XLSX.writeFile(workbook, fileName, { bookType: exportFormat });
+    } catch (error) {
+      console.error('Export products failed:', error);
+      toast.error('Failed to export products');
+    }
+  };
+
+  const exportWithWizard = () => {
+    try {
+      const source = exportUseCurrentView ? filteredProducts : (Array.isArray(products) ? products : []);
+      const rows = source.map(p => {
+        const row: Record<string, any> = {};
+        if (visibleColumns.name) row.Name = p.name;
+        if (visibleColumns.category) row.Category = p.category;
+        if (visibleColumns.price) row.Price = p.price;
+        if (visibleColumns.stock) row.Stock = p.stock;
+        if (visibleColumns.sku) row.SKU = p.sku || '';
+        if (visibleColumns.supplier) row.Supplier = p.supplier || '';
+        if (visibleColumns.status) row.Status = p.stock <= p.minStock ? 'Low Stock' : 'In Stock';
+        return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Products');
+      XLSX.writeFile(wb, 'products-export.xlsx');
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error('Product export wizard failed:', error);
+      toast.error('Failed to export products');
+    }
+  };
+
+  const saveCurrentView = (name: string) => {
+    const v = { name, searchQuery, selectedCategory, columns: visibleColumns };
+    const updated = [...savedViews.filter(x => x.name !== name), v];
+    setSavedViews(updated);
+    try { localStorage.setItem('productsSavedViews', JSON.stringify(updated)); } catch {}
+    toast.success(`Saved view "${name}"`);
+  };
+
+  const applySavedView = (name: string) => {
+    const v = savedViews.find(x => x.name === name);
+    if (!v) return;
+    setSearchQuery(v.searchQuery);
+    setSelectedCategory(v.selectedCategory);
+    setVisibleColumns(v.columns);
+    toast.success(`Applied view "${name}"`);
+  };
+
   const UOM_OPTIONS = [
     'UNT', 'TON', 'TBS', 'SQY', 'SQM', 'SQF', 'SET', 'ROL', 'QTL', 'PCS', 'PAC', 'NOS', 'MTR', 'MLT', 'KLR', 'KGS', 'GMS', 'DOZ', 'CTN', 'CMS', 'CCM', 'CBM', 'CAN', 'BUN', 'BTL', 'BOX', 'BKL', 'BDL', 'BAL', 'BAG'
   ];
@@ -230,6 +329,96 @@ export default function Products() {
           <p className="text-sm sm:text-base text-muted-foreground">Manage your inventory and product catalog</p>
         </div>
         
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {Object.keys(visibleColumns).map(key => (
+                <DropdownMenuCheckboxItem key={key} checked={visibleColumns[key]} onCheckedChange={(v) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(v) }))}>
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">Views</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {savedViews.length === 0 && <div className="px-3 py-2 text-sm text-muted-foreground">No saved views</div>}
+              {savedViews.map(v => (
+                <DropdownMenuCheckboxItem key={v.name} checked={false} onSelect={(e) => { e.preventDefault(); applySavedView(v.name); }}>
+                  {v.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <div className="px-3 py-2">
+                <div className="flex gap-2">
+                  <Input placeholder="View name" className="h-8" onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const name = (e.target as HTMLInputElement).value.trim();
+                      if (name) { saveCurrentView(name); (e.target as HTMLInputElement).value = ''; }
+                    }
+                  }} />
+                  <Button size="sm" onClick={() => {
+                    const el = document.querySelector<HTMLInputElement>('input[placeholder=\"View name\"]');
+                    const name = el?.value.trim() || '';
+                    if (name) { saveCurrentView(name); if (el) el.value = ''; }
+                  }}>Save</Button>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button onClick={() => setIsExportDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Export Products</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="prodCurrentView2" checked={exportUseCurrentView} onCheckedChange={(v) => setExportUseCurrentView(Boolean(v))} />
+                  <label htmlFor="prodCurrentView2" className="text-sm">Export current view (respects filters)</label>
+                </div>
+                <div>
+                  <div className="font-medium mb-2">Columns</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.keys(visibleColumns).filter(k => k !== 'actions').map((key) => (
+                      <label key={key} className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={visibleColumns[key]} onCheckedChange={(v) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(v) }))} />
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Format</Label>
+                    <select className="w-full border rounded h-9 px-2" value={exportFormat} onChange={(e) => setExportFormat(e.target.value as 'xlsx' | 'csv')}>
+                      <option value="xlsx">Excel (.xlsx)</option>
+                      <option value="csv">CSV (.csv)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={exportWithWizard}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { resetForm(); setEditingProduct(null); }} size="sm" className="w-full sm:w-auto">
@@ -338,6 +527,7 @@ export default function Products() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs defaultValue="products" className="w-full">

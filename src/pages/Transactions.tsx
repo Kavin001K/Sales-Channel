@@ -13,7 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar, Search, Filter, Receipt, Printer, Eye, Edit, Save, X } from 'lucide-react';
+import { Calendar, Search, Filter, Receipt, Printer, Eye, Edit, Save, X, Download, SlidersHorizontal } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 
@@ -29,6 +32,24 @@ export default function Transactions() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [reprintCount, setReprintCount] = useState(0);
   const [isReprintDialogOpen, setIsReprintDialogOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportUseCurrentView, setExportUseCurrentView] = useState(true);
+  const [exportFromDate, setExportFromDate] = useState<string>('');
+  const [exportToDate, setExportToDate] = useState<string>('');
+  const [savedViews, setSavedViews] = useState<Array<{ name: string; dateFilter: typeof dateFilter; paymentFilter: typeof paymentFilter; searchQuery: string; columns: Record<string, boolean>; }>>([]);
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    id: true,
+    dateTime: true,
+    customer: true,
+    items: true,
+    paymentMethod: true,
+    paymentDetails: true,
+    employee: true,
+    total: true,
+    status: true,
+    actions: true,
+  });
   
   const { company, employee } = useAuth();
   const { companySettings, printSettings } = useSettings();
@@ -134,6 +155,20 @@ export default function Transactions() {
 
     loadTransactions();
   }, [company]);
+
+  // Load saved views and column visibility preferences
+  useEffect(() => {
+    try {
+      const storedViews = localStorage.getItem('transactionsSavedViews');
+      if (storedViews) setSavedViews(JSON.parse(storedViews));
+      const storedCols = localStorage.getItem('transactionsVisibleColumns');
+      if (storedCols) setVisibleColumns(JSON.parse(storedCols));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('transactionsVisibleColumns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   // Add refresh function that can be called from other components
   const refreshTransactions = async () => {
@@ -316,6 +351,91 @@ export default function Transactions() {
   }, [transactions, searchQuery, dateFilter, paymentFilter]);
 
   const totalAmount = filteredTransactions.reduce((sum, transaction) => sum + transaction.total, 0);
+  const totalSubtotal = filteredTransactions.reduce((sum, t) => sum + (t.subtotal || 0), 0);
+  const totalTax = filteredTransactions.reduce((sum, t) => sum + (t.tax || 0), 0);
+
+  const runExport = (rows: any[], sheetName: string, fileName: string) => {
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    XLSX.writeFile(workbook, fileName);
+  };
+
+  const exportTransactionsToExcel = () => {
+    try {
+      const rows = filteredTransactions.map(t => ({
+        ID: t.id,
+        Date: new Date(t.timestamp).toLocaleString(),
+        Customer: t.customerName || 'Walk-in Customer',
+        Employee: t.employeeName || 'System',
+        Items: t.items?.length || 0,
+        Subtotal: t.subtotal,
+        Tax: t.tax,
+        Discount: t.discount || 0,
+        Total: t.total,
+        PaymentMethod: t.paymentMethod,
+        Status: t.status
+      }));
+      runExport(rows, 'Transactions', 'transactions.xlsx');
+    } catch (error) {
+      console.error('Export transactions failed:', error);
+      toast({ title: 'Export Failed', description: 'Could not export transactions', variant: 'destructive' });
+    }
+  };
+
+  const exportWithWizard = () => {
+    try {
+      const source = exportUseCurrentView ? filteredTransactions : transactions;
+      let ranged = source;
+      if (exportFromDate && exportToDate) {
+        const start = new Date(exportFromDate);
+        const end = new Date(exportToDate);
+        ranged = source.filter(t => {
+          const d = new Date(t.timestamp);
+          return d >= start && d <= end;
+        });
+      }
+      const rows = ranged.map(t => {
+        const base: Record<string, any> = {};
+        if (visibleColumns.id) base.ID = t.id;
+        if (visibleColumns.dateTime) base.Date = new Date(t.timestamp).toLocaleString();
+        if (visibleColumns.customer) base.Customer = t.customerName || 'Walk-in Customer';
+        if (visibleColumns.employee) base.Employee = t.employeeName || 'System';
+        if (visibleColumns.items) base.Items = t.items?.length || 0;
+        if (visibleColumns.paymentMethod) base.PaymentMethod = t.paymentMethod;
+        if (visibleColumns.paymentDetails) base.Paid = t.total;
+        if (visibleColumns.total) base.Total = t.total;
+        if (visibleColumns.status) base.Status = t.status;
+        base.Subtotal = t.subtotal;
+        base.Tax = t.tax;
+        base.Discount = t.discount || 0;
+        return base;
+      });
+      runExport(rows, 'Transactions', 'transactions-export.xlsx');
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error('Export wizard failed:', error);
+      toast({ title: 'Export Failed', description: 'Could not export with selected options', variant: 'destructive' });
+    }
+  };
+
+  const saveCurrentView = (name: string) => {
+    const newView = { name, dateFilter, paymentFilter, searchQuery, columns: visibleColumns };
+    const updated = [...savedViews.filter(v => v.name !== name), newView];
+    setSavedViews(updated);
+    try { localStorage.setItem('transactionsSavedViews', JSON.stringify(updated)); } catch {}
+    toast({ title: 'View Saved', description: `Saved view "${name}"` });
+  };
+
+  const applySavedView = (name: string) => {
+    const v = savedViews.find(x => x.name === name);
+    if (!v) return;
+    setSearchQuery(v.searchQuery);
+    setDateFilter(v.dateFilter);
+    setPaymentFilter(v.paymentFilter);
+    setVisibleColumns(v.columns);
+    toast({ title: 'View Applied', description: `Applied view "${name}"` });
+  };
 
   if (loading) {
     return (
@@ -340,11 +460,67 @@ export default function Transactions() {
           <p className="text-gray-600 mt-2 text-lg">View and manage all sales transactions</p>
         </div>
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {Object.keys(visibleColumns).map((key) => (
+                <DropdownMenuCheckboxItem
+                  key={key}
+                  checked={visibleColumns[key]}
+                  onCheckedChange={(val) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(val) }))}
+                >
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">Views</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {savedViews.length === 0 && (
+                <div className="px-3 py-2 text-sm text-muted-foreground">No saved views</div>
+              )}
+              {savedViews.map(v => (
+                <DropdownMenuCheckboxItem
+                  key={v.name}
+                  checked={false}
+                  onSelect={(e) => { e.preventDefault(); applySavedView(v.name); }}
+                >
+                  {v.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <div className="px-3 py-2">
+                <div className="flex gap-2">
+                  <Input placeholder="View name" className="h-8" onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const name = (e.target as HTMLInputElement).value.trim();
+                      if (name) { saveCurrentView(name); (e.target as HTMLInputElement).value = ''; }
+                    }
+                  }} />
+                  <Button size="sm" onClick={() => {
+                    const el = document.querySelector<HTMLInputElement>('input[placeholder=\"View name\"]');
+                    const name = el?.value.trim() || '';
+                    if (name) { saveCurrentView(name); if (el) el.value = ''; }
+                  }}>Save</Button>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button 
-            onClick={createTestTransaction}
+            onClick={() => setIsExportDialogOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Create Test Transaction
+            <Download className="w-4 h-4 mr-2" />
+            Export
           </Button>
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg">
             <div className="text-sm font-medium">Total Revenue</div>
@@ -426,107 +602,146 @@ export default function Transactions() {
               <Table className="border-collapse">
                 <TableHeader>
                   <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                    <TableHead className="font-bold text-gray-700 py-4">Transaction ID</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Date & Time</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Customer</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Items</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Payment Method</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Payment Details</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Employee</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4 text-right">Total</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
-                    <TableHead className="font-bold text-gray-700 py-4 text-center">Actions</TableHead>
+                    {visibleColumns.id && <TableHead className="font-bold text-gray-700 py-4">Transaction ID</TableHead>}
+                    {visibleColumns.dateTime && <TableHead className="font-bold text-gray-700 py-4">Date & Time</TableHead>}
+                    {visibleColumns.customer && <TableHead className="font-bold text-gray-700 py-4">Customer</TableHead>}
+                    {visibleColumns.items && <TableHead className="font-bold text-gray-700 py-4">Items</TableHead>}
+                    {visibleColumns.paymentMethod && <TableHead className="font-bold text-gray-700 py-4">Payment Method</TableHead>}
+                    {visibleColumns.paymentDetails && <TableHead className="font-bold text-gray-700 py-4">Payment Details</TableHead>}
+                    {visibleColumns.employee && <TableHead className="font-bold text-gray-700 py-4">Employee</TableHead>}
+                    {visibleColumns.total && <TableHead className="font-bold text-gray-700 py-4 text-right">Total</TableHead>}
+                    {visibleColumns.status && <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>}
+                    {visibleColumns.actions && <TableHead className="font-bold text-gray-700 py-4 text-center">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTransactions.map((transaction) => (
                     <TableRow key={transaction.id}>
-                      <TableCell className="font-mono text-sm">
-                        {transaction.id.slice(-8)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{format(new Date(transaction.timestamp), 'MMM dd, yyyy')}</div>
-                          <div className="text-muted-foreground">
-                            {format(new Date(transaction.timestamp), 'hh:mm a')}
+                      {visibleColumns.id && (
+                        <TableCell className="font-mono text-sm">
+                          {transaction.id.slice(-8)}
+                        </TableCell>
+                      )}
+                      {visibleColumns.dateTime && (
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>{format(new Date(transaction.timestamp), 'MMM dd, yyyy')}</div>
+                            <div className="text-muted-foreground">
+                              {format(new Date(transaction.timestamp), 'hh:mm a')}
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {transaction.customerName || 'Walk-in Customer'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {transaction.items.length} item{transaction.items.length !== 1 ? 's' : ''}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.paymentMethod === 'cash' ? 'default' : 'secondary'}>
-                          {transaction.paymentMethod?.toUpperCase() || 'UNKNOWN'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>Paid: ₹{transaction.total.toFixed(2)}</div>
-                          {transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount && (
-                            <div className="text-muted-foreground">
-                              Cash: ₹{transaction.paymentDetails.cashAmount.toFixed(2)}
-                            </div>
-                          )}
-                          {transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount && (
-                            <div className="text-muted-foreground">
-                              Card: ₹{transaction.paymentDetails.cardAmount.toFixed(2)}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {transaction.employeeName || 'System'}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        ₹{transaction.total.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          transaction.status === 'completed' ? 'default' :
-                          transaction.status === 'refunded' ? 'destructive' : 'secondary'
-                        }>
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewTransaction(transaction)}
-                            className="h-9 w-9 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReprint(transaction)}
-                            className="h-9 w-9 p-0 hover:bg-green-50 hover:text-green-600 transition-colors"
-                            title="Reprint Receipt"
-                          >
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditTransaction(transaction)}
-                            className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                            title="Edit Transaction"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                        </TableCell>
+                      )}
+                      {visibleColumns.customer && (
+                        <TableCell>
+                          {transaction.customerName || 'Walk-in Customer'}
+                        </TableCell>
+                      )}
+                      {visibleColumns.items && (
+                        <TableCell>
+                          <div className="text-sm">
+                            {transaction.items.length} item{transaction.items.length !== 1 ? 's' : ''}
+                          </div>
+                        </TableCell>
+                      )}
+                      {visibleColumns.paymentMethod && (
+                        <TableCell>
+                          <Badge variant={transaction.paymentMethod === 'cash' ? 'default' : 'secondary'}>
+                            {transaction.paymentMethod?.toUpperCase() || 'UNKNOWN'}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {visibleColumns.paymentDetails && (
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Paid: ₹{transaction.total.toFixed(2)}</div>
+                            {transaction.paymentMethod === 'cash' && transaction.paymentDetails?.cashAmount && (
+                              <div className="text-muted-foreground">
+                                Cash: ₹{transaction.paymentDetails.cashAmount.toFixed(2)}
+                              </div>
+                            )}
+                            {transaction.paymentMethod === 'card' && transaction.paymentDetails?.cardAmount && (
+                              <div className="text-muted-foreground">
+                                Card: ₹{transaction.paymentDetails.cardAmount.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                      {visibleColumns.employee && (
+                        <TableCell>
+                          {transaction.employeeName || 'System'}
+                        </TableCell>
+                      )}
+                      {visibleColumns.total && (
+                        <TableCell className="text-right font-semibold">
+                          ₹{transaction.total.toFixed(2)}
+                        </TableCell>
+                      )}
+                      {visibleColumns.status && (
+                        <TableCell>
+                          <Badge variant={
+                            transaction.status === 'completed' ? 'default' :
+                            transaction.status === 'refunded' ? 'destructive' : 'secondary'
+                          }>
+                            {transaction.status}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {visibleColumns.actions && (
+                        <TableCell className="text-center py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewTransaction(transaction)}
+                              className="h-9 w-9 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReprint(transaction)}
+                              className="h-9 w-9 p-0 hover:bg-green-50 hover:text-green-600 transition-colors"
+                              title="Reprint Receipt"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditTransaction(transaction)}
+                              className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                              title="Edit Transaction"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
+                  {/* Totals footer row */}
+                  <TableRow className="bg-gray-50">
+                    {visibleColumns.id && <TableCell className="font-semibold">Totals</TableCell>}
+                    {visibleColumns.dateTime && <TableCell />}
+                    {visibleColumns.customer && <TableCell />}
+                    {visibleColumns.items && (
+                      <TableCell className="font-semibold">{filteredTransactions.reduce((s, t) => s + (t.items?.length || 0), 0)} items</TableCell>
+                    )}
+                    {visibleColumns.paymentMethod && <TableCell />}
+                    {visibleColumns.paymentDetails && (
+                      <TableCell className="font-semibold">Subtotal ₹{totalSubtotal.toFixed(2)} | Tax ₹{totalTax.toFixed(2)}</TableCell>
+                    )}
+                    {visibleColumns.employee && <TableCell />}
+                    {visibleColumns.total && (
+                      <TableCell className="text-right font-bold">₹{totalAmount.toFixed(2)}</TableCell>
+                    )}
+                    {visibleColumns.status && <TableCell />}
+                    {visibleColumns.actions && <TableCell />}
+                  </TableRow>
                 </TableBody>
               </Table>
             </div>
@@ -779,6 +994,49 @@ export default function Transactions() {
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Reprint
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Wizard */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Export Transactions</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox id="currentView" checked={exportUseCurrentView} onCheckedChange={(v) => setExportUseCurrentView(Boolean(v))} />
+              <label htmlFor="currentView" className="text-sm">Export current view (respects filters)</label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Date from</Label>
+                <Input type="date" value={exportFromDate} onChange={(e) => setExportFromDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Date to</Label>
+                <Input type="date" value={exportToDate} onChange={(e) => setExportToDate(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <div className="font-medium mb-2">Columns</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(visibleColumns).filter(k => k !== 'actions').map((key) => (
+                  <label key={key} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={visibleColumns[key]} onCheckedChange={(v) => setVisibleColumns(prev => ({ ...prev, [key]: Boolean(v) }))} />
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>Cancel</Button>
+              <Button onClick={exportWithWizard}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
               </Button>
             </div>
           </div>

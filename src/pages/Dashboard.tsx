@@ -6,6 +6,7 @@ import { getTransactions, getProducts, getCustomers } from '@/lib/storage';
 import { Transaction, Product, InventoryAlert } from '@/lib/types';
 import { useAuth } from '@/hooks/useAuth';
 import { getInvoices, getInvoiceStats } from '@/lib/invoice-utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -151,24 +152,34 @@ export default function Dashboard() {
               day: 'numeric' 
             })}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleDarkMode}
-            className="flex items-center gap-2"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleLogout}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            {employee ? 'Logout Employee' : 'Logout'}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleDarkMode}
+                className="flex items-center gap-2"
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Toggle theme</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                {employee ? 'Logout Employee' : 'Logout'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Logout from the current session</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

@@ -43,6 +43,7 @@ import {
 import CompanyLogin from './pages/CompanyLogin';
 import EmployeeLogin from './pages/EmployeeLogin';
 import './App.css';
+import OfflineBadge from '@/components/OfflineBadge';
 
 function AppRoutes() {
   const location = useLocation();
@@ -218,6 +219,7 @@ function AppRoutes() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ErrorBoundary>
+          <OfflineBadge />
         </main>
       </div>
     </div>

@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Edit, Trash2, Search, UserCheck, Shield, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, UserCheck, Shield, Clock, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
 export default function Employees() {
@@ -279,6 +280,28 @@ export default function Employees() {
     employee.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const exportEmployees = (format: 'xlsx' | 'csv' = 'xlsx') => {
+    try {
+      const rows = filteredEmployees.map(e => ({
+        ID: e.id,
+        EmployeeID: (e as any).employeeId || e.id,
+        Name: e.name,
+        Email: e.email || '',
+        Phone: e.phone || '',
+        Role: e.role || '',
+        HourlyRate: e.hourlyRate || 0,
+        Active: e.isActive ? 'Yes' : 'No'
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Employees');
+      const file = format === 'csv' ? 'employees.csv' : 'employees.xlsx';
+      XLSX.writeFile(wb, file, { bookType: format });
+    } catch (error) {
+      toast.error('Failed to export employees');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -286,6 +309,13 @@ export default function Employees() {
           <h1 className="text-3xl font-bold">Employees</h1>
           <p className="text-muted-foreground">Manage your staff and their permissions</p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => exportEmployees('xlsx')}>
+            <Download className="w-4 h-4 mr-2" /> Export Employees
+          </Button>
+          <Button variant="outline" onClick={() => exportEmployees('csv')}>
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
