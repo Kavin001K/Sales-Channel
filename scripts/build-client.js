@@ -42,7 +42,16 @@ try {
     console.log('✅ Dependencies already installed');
   }
   
-  // Build the client
+  // Try to run TypeScript check first
+  console.log('🔍 Running TypeScript check...');
+  try {
+    execSync('npx tsc --noEmit --project client/tsconfig.app.json', { stdio: 'inherit' });
+    console.log('✅ TypeScript check passed');
+  } catch (tsError) {
+    console.warn('⚠️  TypeScript check failed, but continuing with build...');
+  }
+  
+  // Build the client using the simplified command
   console.log('🔨 Building client...');
   execSync('npm run build:client', { stdio: 'inherit' });
   
