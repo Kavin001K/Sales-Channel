@@ -6,6 +6,7 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 2. SPA routing isn't properly configured
 3. Build process fails or produces incorrect output
 4. **NEW**: Missing dependency errors during build process
+5. **NEW**: Path resolution errors with @ alias imports
 
 ## Root Causes Identified & Fixed
 
@@ -39,12 +40,21 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
   - Simplified build command to `npm run build:client`
 - **Status**: ✅ RESOLVED
 
+### 5. ✅ **Path Resolution Errors (RESOLVED)**
+- **Root Cause**: Conflicting TypeScript configurations and incorrect Vite alias resolution
+- **Solutions Applied**:
+  - Created dedicated `client/vite.config.ts` for client builds
+  - Simplified TypeScript path mappings to avoid conflicts
+  - Updated build script to use client-specific Vite config
+  - Removed conflicting path mappings from root tsconfig.json
+- **Status**: ✅ RESOLVED
+
 ## Files Modified
 
 ### Core Configuration
 - `netlify.toml` - Updated publish directory and simplified build command
-- `vite.config.ts` - Fixed path resolution and removed Replit-specific plugins
-- `package.json` - Updated build:client script to run from correct directory
+- `client/vite.config.ts` - **NEW**: Created dedicated client Vite configuration
+- `package.json` - Updated build:client script to use client Vite config
 
 ### Routing Configuration
 - `client/public/_redirects` - Created for SPA routing support
@@ -53,8 +63,8 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 - `scripts/build-client.js` - Converted to ES modules and enhanced error handling
 
 ### TypeScript Configuration
-- `client/tsconfig.app.json` - Updated path mappings for client directory
-- `tsconfig.json` - Enhanced path mappings for all directories
+- `client/tsconfig.app.json` - Simplified path mappings for client directory
+- `tsconfig.json` - Removed conflicting client path mappings
 
 ## Configuration Details
 
@@ -75,16 +85,34 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
   status = 200
 ```
 
-### Vite Configuration (`vite.config.ts`)
-- Root directory: `.` (relative to client directory)
-- Build output: `../dist/public/` (relative to client directory)
-- Optimized chunk splitting
-- Enhanced dependency optimization
+### Client Vite Configuration (`client/vite.config.ts`) - **NEW**
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+  root: ".",
+  build: {
+    outDir: path.resolve(__dirname, "..", "dist", "public"),
+    emptyOutDir: true,
+  },
+});
+```
 
 ### Build Scripts
 ```json
 {
-  "build:client": "cd client && vite build",
+  "build:client": "cd client && vite build --config vite.config.ts",
   "build:netlify": "node scripts/build-client.js"
 }
 ```
@@ -97,6 +125,7 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 - Removed Replit-specific plugins that could cause build issues
 
 ### 2. **Path Resolution**
+- **NEW**: Created dedicated `client/vite.config.ts` for client builds
 - Updated Vite config to work from client directory
 - Fixed TypeScript path mappings for all directories
 - Ensured build output goes to correct location
@@ -106,12 +135,17 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 - Updated build:client script to change to client directory first
 - Enhanced error handling and logging in build scripts
 
+### 4. **Configuration Conflicts Resolution** - **NEW**
+- Removed conflicting path mappings from root tsconfig.json
+- Simplified client TypeScript configuration
+- Ensured Vite and TypeScript configs work together
+
 ## Deployment Steps
 
 ### 1. **Commit and Push Changes**
 ```bash
 git add .
-git commit -m "Fix Netlify build errors: ES modules, path resolution, and build process"
+git commit -m "Fix Netlify build errors: path resolution, Vite config, and TypeScript conflicts"
 git push
 ```
 
@@ -133,6 +167,7 @@ git push
 ✅ **No 404 Errors**: Direct URL access works correctly
 ✅ **Optimized Build**: Enhanced performance with chunk splitting
 ✅ **No Missing Dependencies**: All required modules resolve correctly
+✅ **No Path Resolution Errors**: @ alias imports work correctly
 
 ## Troubleshooting
 
@@ -151,15 +186,16 @@ git push
 ## Additional Optimizations
 
 ### Build Performance
-- Manual chunk splitting for vendor and UI libraries
-- Dependency pre-bundling optimization
-- CSS processing optimization
+- Simplified Vite configuration for faster builds
+- Removed unnecessary complexity from build process
+- Enhanced error handling and logging
 
 ### Netlify Compatibility
 - Legacy peer dependency handling
 - CI environment optimization
 - Proper Node.js version specification
 - ES module compatibility
+- **NEW**: Dedicated client build configuration
 
 ## Next Steps
 
@@ -178,5 +214,6 @@ git push
 - [ ] No 404 errors on any route
 - [ ] Application loads and functions properly
 - [ ] No missing dependency errors during build
+- [ ] No path resolution errors with @ alias imports
 
-This fix addresses all the core issues causing the 404 error and build failures, ensuring proper SPA deployment on Netlify.
+This fix addresses all the core issues causing the 404 error and build failures, ensuring proper SPA deployment on Netlify with correct path resolution.

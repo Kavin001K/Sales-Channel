@@ -29,9 +29,9 @@ try {
     throw new Error('client directory not found');
   }
   
-  // Check if client/package.json exists (for dependencies)
-  if (!fs.existsSync('client/package.json')) {
-    console.log('ℹ️  No client package.json found, using root dependencies');
+  // Check if client/vite.config.ts exists
+  if (!fs.existsSync('client/vite.config.ts')) {
+    throw new Error('client/vite.config.ts not found');
   }
   
   // Install dependencies if node_modules doesn't exist
