@@ -67,11 +67,7 @@ function AppRoutes() {
             
             {/* Protected routes */}
             <Route path="/">
-              {() => (
-                <ProtectedRoute>
-                  <Redirect to="/dashboard" />
-                </ProtectedRoute>
-              )}
+              {() => <Redirect to="/dashboard" />}
             </Route>
             
             <Route path="/dashboard">

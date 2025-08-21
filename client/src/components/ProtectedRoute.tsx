@@ -39,6 +39,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const isAuthenticated = (company && employee) || adminAuth.isAuthenticated;
 
   if (!isAuthenticated) {
+    // Security: Don't redirect if already on login pages
+    if (location === '/login' || location === '/employee-login' || location === '/unauthorized') {
+      return <>{children}</>;
+    }
+    
     // Security: Redirect to appropriate login page
     const isAdminRoute = location.startsWith('/admin');
     const redirectPath = isAdminRoute ? '/login' : '/login';
