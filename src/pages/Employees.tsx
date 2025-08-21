@@ -87,27 +87,28 @@ export default function Employees() {
             canVoidTransactions: false
           }
         }));
-      } catch {
-    setFormData({
+      } catch (error) {
+        console.error('Error generating employee ID:', error);
+        setFormData({
           id: 'EMP001',
           pin: '',
-      name: '',
-      email: '',
-      phone: '',
-      role: 'cashier',
+          name: '',
+          email: '',
+          phone: '',
+          role: 'cashier',
           customRoleName: '',
-      hourlyRate: '',
-      permissions: {
-        canProcessSales: false,
-        canManageProducts: false,
-        canManageCustomers: false,
-        canViewReports: false,
-        canManageEmployees: false,
-        canProcessRefunds: false,
-        canApplyDiscounts: false,
-        canVoidTransactions: false
-      }
-    });
+          hourlyRate: '',
+          permissions: {
+            canProcessSales: false,
+            canManageProducts: false,
+            canManageCustomers: false,
+            canViewReports: false,
+            canManageEmployees: false,
+            canProcessRefunds: false,
+            canApplyDiscounts: false,
+            canVoidTransactions: false
+          }
+        });
       }
     };
     void init();
@@ -316,288 +317,289 @@ export default function Employees() {
           <Button variant="outline" onClick={() => exportEmployees('csv')}>
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Employee
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="employee-id">Employee ID</Label>
-                  <Input
-                    id="employee-id"
-                    value={formData.id}
-                    onChange={(e) => setFormData({...formData, id: e.target.value.toUpperCase()})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pin">4-digit PIN *</Label>
-                  <Input
-                    id="pin"
-                    type="password"
-                    value={formData.pin}
-                    onChange={(e) => setFormData({...formData, pin: e.target.value.replace(/[^0-9]/g, '')})}
-                    maxLength={4}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={handleRoleChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="cashier">Cashier</SelectItem>
-                      <SelectItem value="custom">Custom Role</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="hourlyRate">Hourly Rate</Label>
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    step="0.01"
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData({...formData, hourlyRate: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {formData.role === 'custom' && (
-                <div className="space-y-4">
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Employee
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="customRoleName">Custom Role Name *</Label>
+                    <Label htmlFor="employee-id">Employee ID</Label>
                     <Input
-                      id="customRoleName"
-                      value={formData.customRoleName}
-                      onChange={(e) => setFormData({...formData, customRoleName: e.target.value})}
+                      id="employee-id"
+                      value={formData.id}
+                      onChange={(e) => setFormData({...formData, id: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                       required
                     />
                   </div>
-                  
-                  {/* Custom Role Management */}
-                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold">Custom Role Management</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCustomRoleDialogOpen(true)}
-                      >
-                        Manage Custom Roles
-                      </Button>
+                  <div>
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pin">4-digit PIN *</Label>
+                    <Input
+                      id="pin"
+                      type="password"
+                      value={formData.pin}
+                      onChange={(e) => setFormData({...formData, pin: e.target.value.replace(/[^0-9]/g, '')})}
+                      maxLength={4}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={formData.role} onValueChange={handleRoleChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="cashier">Cashier</SelectItem>
+                        <SelectItem value="custom">Custom Role</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="hourlyRate">Hourly Rate</Label>
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      step="0.01"
+                      value={formData.hourlyRate}
+                      onChange={(e) => setFormData({...formData, hourlyRate: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                {formData.role === 'custom' && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="customRoleName">Custom Role Name *</Label>
+                      <Input
+                        id="customRoleName"
+                        value={formData.customRoleName}
+                        onChange={(e) => setFormData({...formData, customRoleName: e.target.value})}
+                        required
+                      />
                     </div>
                     
-                    {customRoles.length > 0 && (
-                      <div className="space-y-2">
-                        <Label>Saved Custom Roles:</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {customRoles.map((role) => (
-                            <Badge
-                              key={role.name}
-                              variant={formData.customRoleName === role.name ? "default" : "secondary"}
-                              className="cursor-pointer"
-                              onClick={() => handleCustomRoleSelect(role.name)}
-                            >
-                              {role.name}
-                            </Badge>
-                          ))}
-                        </div>
+                    {/* Custom Role Management */}
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold">Custom Role Management</h3>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsCustomRoleDialogOpen(true)}
+                        >
+                          Manage Custom Roles
+                        </Button>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-base font-medium">Permissions</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canProcessSales"
-                      checked={formData.permissions.canProcessSales}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canProcessSales: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canProcessSales">Process Sales</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canManageProducts"
-                      checked={formData.permissions.canManageProducts}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canManageProducts: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canManageProducts">Manage Products</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canManageCustomers"
-                      checked={formData.permissions.canManageCustomers}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canManageCustomers: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canManageCustomers">Manage Customers</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canViewReports"
-                      checked={formData.permissions.canViewReports}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canViewReports: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canViewReports">View Reports</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canManageEmployees"
-                      checked={formData.permissions.canManageEmployees}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canManageEmployees: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canManageEmployees">Manage Employees</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canProcessRefunds"
-                      checked={formData.permissions.canProcessRefunds}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canProcessRefunds: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canProcessRefunds">Process Refunds</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="canApplyDiscounts"
-                      checked={formData.permissions.canApplyDiscounts}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: {...formData.permissions, canApplyDiscounts: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canApplyDiscounts">Apply Discounts</Label>
-              </div>
-                  <div className="flex items-center space-x-2">
-                      <Checkbox
-                      id="canVoidTransactions"
-                      checked={formData.permissions.canVoidTransactions}
-                      onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                        permissions: {...formData.permissions, canVoidTransactions: !!checked}
-                      })}
-                    />
-                    <Label htmlFor="canVoidTransactions">Void Transactions</Label>
+                      
+                      {customRoles.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Saved Custom Roles:</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {customRoles.map((role) => (
+                              <Badge
+                                key={role.name}
+                                variant={formData.customRoleName === role.name ? "default" : "secondary"}
+                                className="cursor-pointer"
+                                onClick={() => handleCustomRoleSelect(role.name)}
+                              >
+                                {role.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                </div>
-              </div>
+                  </div>
+                )}
 
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => {
-                  setIsAddDialogOpen(false);
-                  setEditingEmployee(null);
-                  resetForm();
-                }}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingEmployee ? 'Update Employee' : 'Add Employee'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div>
+                  <Label className="text-base font-medium">Permissions</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canProcessSales"
+                        checked={formData.permissions.canProcessSales}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canProcessSales: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canProcessSales">Process Sales</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canManageProducts"
+                        checked={formData.permissions.canManageProducts}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canManageProducts: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canManageProducts">Manage Products</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canManageCustomers"
+                        checked={formData.permissions.canManageCustomers}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canManageCustomers: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canManageCustomers">Manage Customers</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canViewReports"
+                        checked={formData.permissions.canViewReports}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canViewReports: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canViewReports">View Reports</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canManageEmployees"
+                        checked={formData.permissions.canManageEmployees}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canManageEmployees: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canManageEmployees">Manage Employees</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canProcessRefunds"
+                        checked={formData.permissions.canProcessRefunds}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canProcessRefunds: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canProcessRefunds">Process Refunds</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canApplyDiscounts"
+                        checked={formData.permissions.canApplyDiscounts}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canApplyDiscounts: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canApplyDiscounts">Apply Discounts</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="canVoidTransactions"
+                        checked={formData.permissions.canVoidTransactions}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          permissions: {...formData.permissions, canVoidTransactions: !!checked}
+                        })}
+                      />
+                      <Label htmlFor="canVoidTransactions">Void Transactions</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => {
+                    setIsAddDialogOpen(false);
+                    setEditingEmployee(null);
+                    resetForm();
+                  }}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editingEmployee ? 'Update Employee' : 'Add Employee'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}
-        <Card>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="w-5 h-5" />
             Search Employees
           </CardTitle>
-          </CardHeader>
-          <CardContent>
+        </CardHeader>
+        <CardContent>
           <Input
             placeholder="Search by name, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
 
       {/* Employees List */}
-        <Card>
+      <Card>
         <CardHeader>
           <CardTitle>All Employees</CardTitle>
           <p className="text-sm text-muted-foreground">
             {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} found
           </p>
-          </CardHeader>
-          <CardContent>
+        </CardHeader>
+        <CardContent>
           {filteredEmployees.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No employees found</p>
-      </div>
+            </div>
           ) : (
             <div className="grid gap-4">
               {filteredEmployees.map((employee) => (
@@ -606,59 +608,59 @@ export default function Employees() {
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                         <UserCheck className="w-6 h-6 text-primary" />
-      </div>
+                      </div>
                       <div>
                         <h3 className="font-semibold">{employee.name}</h3>
-                  <p className="text-sm text-muted-foreground">{employee.email}</p>
+                        <p className="text-sm text-muted-foreground">{employee.email}</p>
                         <div className="flex items-center gap-2 mt-1">
-                <Badge variant={getRoleBadgeVariant(employee.role)}>
+                          <Badge variant={getRoleBadgeVariant(employee.role)}>
                             {employee.role}
-                </Badge>
-              {employee.hourlyRate && (
+                          </Badge>
+                          {employee.hourlyRate && (
                             <Badge variant="outline">
                               ₹{employee.hourlyRate}/hr
                             </Badge>
                           )}
                           <Badge variant={employee.isActive ? 'default' : 'secondary'}>
                             {employee.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                          </Badge>
                         </div>
-                </div>
-              </div>
+                      </div>
+                    </div>
                     <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(employee)}
-                >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(employee)}
+                      >
                         <Edit className="w-4 h-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Employee</AlertDialogTitle>
-                      <AlertDialogDescription>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                            <AlertDialogDescription>
                               Are you sure you want to delete {employee.name}? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(employee.id)}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(employee.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-          </Card>
-        ))}
-      </div>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
