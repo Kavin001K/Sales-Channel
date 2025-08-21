@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Product, Transaction, Customer } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
-import { getProducts, initializeSampleData, saveTransaction, getCustomers, saveCustomer, updateCustomer } from '@/lib/storage';
+import { useDataSync } from '@/hooks/useDataSync';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,16 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Sales() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { company, employee } = useAuth();
+  const { 
+    products, 
+    customers, 
+    saveTransaction, 
+    saveCustomer, 
+    updateCustomer,
+    isLoading: isDataLoading 
+  } = useDataSync();
+  
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [barcodeQuery, setBarcodeQuery] = useState('');
@@ -25,7 +34,6 @@ export default function Sales() {
   const [qtyInputs, setQtyInputs] = useState<{ [productId: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [productId: string]: string }>({});
   const inputRefs = useRef<{ [productId: string]: HTMLInputElement | null }>({});
-  const { company, employee } = useAuth();
 
   // Customer management state
   const [customerName, setCustomerName] = useState('');
@@ -70,24 +78,12 @@ export default function Sales() {
     }
   }, [isMoUDialogOpen, handleEsc]);
 
+  // Initialize filtered products when products change
   useEffect(() => {
-    // Initialize sample data and load products
-    const loadData = async () => {
-      try {
-        await initializeSampleData();
-        const loadedProducts = await getProducts();
-        const productsArray = Array.isArray(loadedProducts) ? loadedProducts : [];
-        setProducts(productsArray);
-        setFilteredProducts(productsArray);
-      } catch (error) {
-        console.error('Error loading products:', error);
-        setProducts([]);
-        setFilteredProducts([]);
-      }
-    };
-    
-    loadData();
-  }, []);
+    if (Array.isArray(products)) {
+      setFilteredProducts(products);
+    }
+  }, [products]);
 
   // Enhanced search with barcode support
   useEffect(() => {
@@ -162,15 +158,14 @@ export default function Sales() {
     if (phone.length >= 10 && /^\d+$/.test(phone)) {
       setIsCustomerLoading(true);
       try {
-        // Search for existing customer by phone
-        const customers = await getCustomers(company?.id || '');
+        // Search for existing customer by phone using the customers from data sync
         const existingCustomer = customers.find(c => c.phone === phone);
         
         if (existingCustomer) {
           // Customer found - populate fields
           setCurrentCustomer(existingCustomer);
           setCustomerName(existingCustomer.name || '');
-          setCustomerGST(existingCustomer.gst || '');
+          setCustomerGST(existingCustomer.gstin || '');
           toast.success(`Customer found: ${existingCustomer.name}`);
         } else {
           // No customer found - clear current customer
@@ -186,19 +181,19 @@ export default function Sales() {
         setIsCustomerLoading(false);
       }
     } else {
-      // Clear customer if phone is invalid
+      // Clear customer data if phone is invalid
       setCurrentCustomer(null);
       setCustomerName('');
       setCustomerGST('');
     }
-  }, [company?.id]);
+  }, [customers]);
 
   // Auto-create or update customer when transaction is completed
   const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
     if (!phone || !name || !company?.id) return;
 
     try {
-      const customers = await getCustomers(company.id);
+      // Use customers from data sync hook instead of calling getCustomers
       const existingCustomer = customers.find(c => c.phone === phone);
       
       if (existingCustomer) {
@@ -206,7 +201,7 @@ export default function Sales() {
         const updatedCustomer = {
           ...existingCustomer,
           name: name,
-          gst: gst,
+          gstin: gst, // Use gstin instead of gst to match the database schema
           visitCount: (existingCustomer.visitCount || 0) + 1,
           lastVisit: new Date()
         };
@@ -221,9 +216,13 @@ export default function Sales() {
           companyId: company.id,
           name: name,
           phone: phone,
-          gst: gst,
+          gstin: gst, // Use gstin instead of gst to match the database schema
           email: '',
           address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'India',
           isActive: true,
           visitCount: 1,
           loyaltyPoints: 0,
@@ -241,7 +240,7 @@ export default function Sales() {
       console.error('Error saving customer:', error);
       toast.error('Error saving customer details');
     }
-  }, [company?.id]);
+  }, [company?.id, customers, updateCustomer, saveCustomer]);
 
   const handleTransactionComplete = async (transaction: Transaction) => {
     try {
@@ -272,16 +271,8 @@ export default function Sales() {
       
       toast.success('Transaction completed successfully!');
       
-      // Update product stock
-      const updatedProducts = products.map(product => {
-        const cartItem = transaction.items.find(item => item.product.id === product.id);
-        if (cartItem) {
-          return { ...product, stock: product.stock - cartItem.quantity };
-        }
-        return product;
-      });
-      setProducts(updatedProducts);
-      setFilteredProducts(updatedProducts);
+      // Note: Product stock updates are handled automatically by the data sync system
+      // when the transaction is saved to the server
       
       // Clear customer form
       setCustomerName('');

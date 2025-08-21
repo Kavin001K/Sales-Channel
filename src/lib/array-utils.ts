@@ -3,7 +3,7 @@
 /**
  * Safely filters an array, returning an empty array if the input is not an array
  */
-export const safeFilter = <T>(array: any, predicate: (item: T, index: number, array: T[]) => boolean): T[] => {
+export const safeFilter = <T>(array: unknown, predicate: (item: T, index: number, array: T[]) => boolean): T[] => {
   if (!Array.isArray(array)) {
     console.warn('safeFilter: Input is not an array:', array);
     return [];
@@ -19,7 +19,7 @@ export const safeFilter = <T>(array: any, predicate: (item: T, index: number, ar
 /**
  * Safely maps over an array, returning an empty array if the input is not an array
  */
-export const safeMap = <T, U>(array: any, mapper: (item: T, index: number, array: T[]) => U): U[] => {
+export const safeMap = <T, U>(array: unknown, mapper: (item: T, index: number, array: T[]) => U): U[] => {
   if (!Array.isArray(array)) {
     console.warn('safeMap: Input is not an array:', array);
     return [];
@@ -35,7 +35,7 @@ export const safeMap = <T, U>(array: any, mapper: (item: T, index: number, array
 /**
  * Safely finds an item in an array, returning undefined if the input is not an array
  */
-export const safeFind = <T>(array: any, predicate: (item: T, index: number, array: T[]) => boolean): T | undefined => {
+export const safeFind = <T>(array: unknown, predicate: (item: T, index: number, array: T[]) => boolean): T | undefined => {
   if (!Array.isArray(array)) {
     console.warn('safeFind: Input is not an array:', array);
     return undefined;
@@ -52,7 +52,7 @@ export const safeFind = <T>(array: any, predicate: (item: T, index: number, arra
  * Safely reduces an array, returning the initial value if the input is not an array
  */
 export const safeReduce = <T, U>(
-  array: any, 
+  array: unknown, 
   reducer: (accumulator: U, currentValue: T, currentIndex: number, array: T[]) => U, 
   initialValue: U
 ): U => {
@@ -71,9 +71,9 @@ export const safeReduce = <T, U>(
 /**
  * Ensures a value is an array, returning an empty array if it's not
  */
-export const ensureArray = <T>(value: any): T[] => {
+export const ensureArray = <T>(value: unknown): T[] => {
   if (Array.isArray(value)) {
-    return value;
+    return value as T[];
   }
   console.warn('ensureArray: Value is not an array:', value);
   return [];
@@ -82,7 +82,7 @@ export const ensureArray = <T>(value: any): T[] => {
 /**
  * Safely gets the length of an array, returning 0 if the input is not an array
  */
-export const safeLength = (array: any): number => {
+export const safeLength = (array: unknown): number => {
   if (!Array.isArray(array)) {
     return 0;
   }

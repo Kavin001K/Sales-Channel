@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Product, Transaction, CartItem } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
-import { getProducts, initializeSampleData, saveTransaction, updateProduct, getCustomers, saveCustomer, updateCustomer } from '@/lib/storage';
+import { useDataSync } from '@/hooks/useDataSync';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,7 +38,17 @@ import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
 import PaymentDialog from '@/components/PaymentDialog';
 
 export default function QuickPOS() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { company, employee } = useAuth();
+  const { 
+    products, 
+    customers, 
+    saveTransaction, 
+    saveCustomer, 
+    updateCustomer,
+    updateProduct,
+    isLoading: isDataLoading 
+  } = useDataSync();
+  
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -71,7 +81,7 @@ export default function QuickPOS() {
   const exitRequestedRef = useRef(false);
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
   const { companySettings, printSettings } = useSettings();
-  const { logout, company, employee } = useAuth();
+  const { logout } = useAuth();
 
   // Category management
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -82,6 +92,13 @@ export default function QuickPOS() {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Initialize filtered products when products change
+  useEffect(() => {
+    if (Array.isArray(products)) {
+      setFilteredProducts(products);
+    }
+  }, [products]);
 
   // Fullscreen helper that falls back to a user prompt
   const ensureFullscreen = useCallback(async () => {
@@ -155,28 +172,23 @@ export default function QuickPOS() {
     setIsQtyDialogOpen(false);
   }, [qtyDialogProduct, qtyDialogQty, mainQty, subQty, cart]);
 
-  // Customer management functions
+  // Customer search by phone
   const handleCustomerPhoneChange = useCallback(async (phone: string) => {
     setCustomerPhone(phone);
     
-    // Only search if phone number is valid (at least 10 digits)
     if (phone.length >= 10 && /^\d+$/.test(phone)) {
       setIsCustomerLoading(true);
       try {
-        // Search for existing customer by phone
-        const customers = await getCustomers(company?.id || '');
+        // Search for existing customer by phone using customers from data sync
         const existingCustomer = customers.find(c => c.phone === phone);
         
         if (existingCustomer) {
-          // Customer found - populate fields
           setCurrentCustomer(existingCustomer);
           setCustomerName(existingCustomer.name || '');
           setCustomerGST(existingCustomer.gst || '');
           toast.success(`Customer found: ${existingCustomer.name}`);
         } else {
-          // No customer found - clear current customer
           setCurrentCustomer(null);
-          // Clear the name if no customer found
           setCustomerName('');
           setCustomerGST('');
         }
@@ -187,19 +199,18 @@ export default function QuickPOS() {
         setIsCustomerLoading(false);
       }
     } else {
-      // Clear customer if phone is invalid
       setCurrentCustomer(null);
       setCustomerName('');
       setCustomerGST('');
     }
-  }, [company?.id]);
+  }, [customers]);
 
   // Auto-create or update customer when transaction is completed
   const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
     if (!phone || !name || !company?.id) return;
 
     try {
-      const customers = await getCustomers(company.id);
+      // Use customers from data sync hook instead of calling getCustomers
       const existingCustomer = customers.find(c => c.phone === phone);
       
       if (existingCustomer) {
@@ -207,7 +218,7 @@ export default function QuickPOS() {
         const updatedCustomer = {
           ...existingCustomer,
           name: name,
-          gst: gst,
+          gst: gst, // Use gst to match the Customer interface
           visitCount: (existingCustomer.visitCount || 0) + 1,
           lastVisit: new Date()
         };
@@ -222,9 +233,13 @@ export default function QuickPOS() {
           companyId: company.id,
           name: name,
           phone: phone,
-          gst: gst,
+          gst: gst, // Use gst to match the Customer interface
           email: '',
           address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'India',
           isActive: true,
           visitCount: 1,
           loyaltyPoints: 0,
@@ -242,11 +257,10 @@ export default function QuickPOS() {
       console.error('Error saving customer:', error);
       toast.error('Error saving customer details');
     }
-  }, [company?.id]);
+  }, [company?.id, customers, saveCustomer, updateCustomer]);
 
   // Initialize data and fullscreen
   useEffect(() => {
-    initializeSampleData();
     ensureFullscreen();
     
     const handleFullscreenChange = () => {
@@ -261,12 +275,7 @@ export default function QuickPOS() {
 
   // Load products
   useEffect(() => {
-    const loadProducts = async () => {
-      const productsData = await getProducts();
-      setProducts(productsData);
-      setFilteredProducts(productsData);
-    };
-    loadProducts();
+    // No need to call initializeSampleData here as it's handled by useDataSync
   }, []);
 
   // Filter products based on search and category
@@ -419,7 +428,7 @@ export default function QuickPOS() {
         hasCustomer: !!transaction.customerName
       });
     }
-  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave, currentCustomer]);
+  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave, currentCustomer, saveTransaction]);
 
 
 
@@ -464,9 +473,7 @@ export default function QuickPOS() {
 
     try {
       // Create or update customer
-      let customer = await getCustomers().then(customers => 
-        customers.find(c => c.phone === customerPhone)
-      );
+      let customer = customers.find(c => c.phone === customerPhone);
 
       if (!customer && customerPhone) {
         customer = await saveCustomer({
@@ -547,7 +554,7 @@ export default function QuickPOS() {
     } finally {
       setIsProcessing(false);
     }
-  }, [cart, customerName, customerPhone, customerGST, total, products, company, employee, handleTransactionComplete]);
+  }, [cart, customerName, customerPhone, customerGST, total, products, company, employee, handleTransactionComplete, saveCustomer, updateCustomer, customers]);
 
   // Handle logout
   const handleLogout = useCallback(() => {

@@ -28,7 +28,6 @@ import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
 import SupportCenter from "./pages/SupportCenter";
 import BillTestPage from "./pages/BillTestPage";
 import Invoices from "./pages/Invoices";
-import { initializeSampleData } from '@/lib/storage';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
@@ -50,8 +49,8 @@ function AppRoutes() {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   
   useEffect(() => {
-    // Initialize sample data on app start
-    initializeSampleData();
+    // Note: Sample data initialization is now handled by the data sync system
+    // when components load and authenticate
     
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);

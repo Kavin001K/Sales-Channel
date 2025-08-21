@@ -19,17 +19,18 @@ import {
 import { toast } from 'sonner';
 import { getCustomers, updateCustomer, saveCustomer } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
+import { Customer } from '@/lib/types';
 
 interface CustomerSearchProps {
-  onCustomerSelect?: (customer: any) => void;
+  onCustomerSelect?: (customer: Customer) => void;
 }
 
 export default function CustomerSearch({ onCustomerSelect }: CustomerSearchProps) {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const { company } = useAuth();
 
   // Load customers
@@ -71,7 +72,7 @@ export default function CustomerSearch({ onCustomerSelect }: CustomerSearchProps
   }, [customers, searchQuery]);
 
   // Handle customer selection
-  const handleCustomerSelect = (customer: any) => {
+  const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
     if (onCustomerSelect) {
       onCustomerSelect(customer);
@@ -98,7 +99,7 @@ export default function CustomerSearch({ onCustomerSelect }: CustomerSearchProps
   };
 
   // Handle customer edit
-  const handleCustomerEdit = async (customer: any) => {
+  const handleCustomerEdit = async (customer: Customer) => {
     // For now, just show a toast - you can implement a proper edit dialog later
     toast.info(`Edit functionality for ${customer.name} - Coming soon!`);
   };

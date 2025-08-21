@@ -46,7 +46,7 @@ class PostgresDatabaseService {
     }
   }
 
-  private async executeQuery<T>(query: string, params: any[] = []): Promise<T[]> {
+  private async executeQuery<T>(query: string, params: (string | number | boolean | null)[] = []): Promise<T[]> {
     try {
       const client = await this.getClient();
       const result = await client.query(query, params);
@@ -58,7 +58,7 @@ class PostgresDatabaseService {
   }
 
   // Safe update method to prevent SQL injection
-  private async safeUpdate(table: string, id: string, updates: Record<string, any>): Promise<void> {
+  private async safeUpdate(table: string, id: string, updates: Record<string, string | number | boolean | null>): Promise<void> {
     try {
       // Validate table name to prevent SQL injection
       const allowedTables = ['products', 'customers', 'employees', 'transactions', 'companies'];
@@ -122,7 +122,7 @@ class PostgresDatabaseService {
       };
 
       // Filter updates to only include valid columns
-      const validUpdates: Record<string, any> = {};
+      const validUpdates: Record<string, string | number | boolean | null> = {};
       for (const [key, value] of Object.entries(updates)) {
         if (validColumns[key]) {
           validUpdates[validColumns[key]] = value;

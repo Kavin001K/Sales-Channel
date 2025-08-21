@@ -7,7 +7,7 @@ const originalFind = Array.prototype.find;
 const originalReduce = Array.prototype.reduce;
 
 // Helper function to safely check if something is an array
-const safeIsArray = (value: any): boolean => {
+const safeIsArray = (value: unknown): value is unknown[] => {
   try {
     return Array.isArray(value) && value !== null && value !== undefined;
   } catch {
@@ -16,7 +16,7 @@ const safeIsArray = (value: any): boolean => {
 };
 
 // Helper function to safely get array length
-const safeLength = (arr: any): number => {
+const safeLength = (arr: unknown[]): number => {
   try {
     return safeIsArray(arr) ? arr.length : 0;
   } catch {
@@ -25,7 +25,7 @@ const safeLength = (arr: any): number => {
 };
 
 // Override Array.prototype.filter to be more defensive
-Array.prototype.filter = function(callback: any, thisArg?: any) {
+Array.prototype.filter = function<T>(callback: (value: T, index: number, array: T[]) => boolean, thisArg?: unknown): T[] {
   try {
     // Check if this is actually an array
     if (!safeIsArray(this)) {
@@ -52,7 +52,7 @@ Array.prototype.filter = function(callback: any, thisArg?: any) {
 };
 
 // Override Array.prototype.map to be more defensive
-Array.prototype.map = function(callback: any, thisArg?: any) {
+Array.prototype.map = function<T, U>(callback: (value: T, index: number, array: T[]) => U, thisArg?: unknown): U[] {
   try {
     if (!safeIsArray(this)) {
       console.warn('Array.prototype.map called on non-array:', this);
@@ -75,7 +75,7 @@ Array.prototype.map = function(callback: any, thisArg?: any) {
 };
 
 // Override Array.prototype.find to be more defensive
-Array.prototype.find = function(callback: any, thisArg?: any) {
+Array.prototype.find = function<T>(callback: (value: T, index: number, obj: T[]) => boolean, thisArg?: unknown): T | undefined {
   try {
     if (!safeIsArray(this)) {
       console.warn('Array.prototype.find called on non-array:', this);
@@ -98,16 +98,16 @@ Array.prototype.find = function(callback: any, thisArg?: any) {
 };
 
 // Override Array.prototype.reduce to be more defensive
-Array.prototype.reduce = function(callback: any, initialValue?: any) {
+Array.prototype.reduce = function<T>(callback: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T, initialValue?: T): T {
   try {
     if (!safeIsArray(this)) {
       console.warn('Array.prototype.reduce called on non-array:', this);
-      return initialValue;
+      return initialValue as T;
     }
     
     if (typeof callback !== 'function') {
       console.warn('Array.prototype.reduce called with non-function callback:', callback);
-      return initialValue;
+      return initialValue as T;
     }
     
     const length = safeLength(this);
@@ -118,13 +118,13 @@ Array.prototype.reduce = function(callback: any, initialValue?: any) {
     return originalReduce.call(this, callback, initialValue);
   } catch (error) {
     console.error('Error in Array.prototype.reduce:', error);
-    return initialValue;
+    return initialValue as T;
   }
 };
 
 // Safe filter polyfill (fallback for older browsers)
 if (typeof Array.prototype.filter !== 'function') {
-  Array.prototype.filter = function(callback: any, thisArg?: any) {
+  Array.prototype.filter = function<T>(callback: (value: T, index: number, array: T[]) => boolean, thisArg?: unknown): T[] {
     if (this == null) {
       throw new TypeError('Array.prototype.filter called on null or undefined');
     }
@@ -154,7 +154,7 @@ if (typeof Array.prototype.filter !== 'function') {
 
 // Safe map polyfill (fallback for older browsers)
 if (typeof Array.prototype.map !== 'function') {
-  Array.prototype.map = function(callback: any, thisArg?: any) {
+  Array.prototype.map = function<T, U>(callback: (value: T, index: number, array: T[]) => U, thisArg?: unknown): U[] {
     if (this == null) {
       throw new TypeError('Array.prototype.map called on null or undefined');
     }
@@ -181,7 +181,7 @@ if (typeof Array.prototype.map !== 'function') {
 
 // Safe find polyfill (fallback for older browsers)
 if (typeof Array.prototype.find !== 'function') {
-  Array.prototype.find = function(callback: any, thisArg?: any) {
+  Array.prototype.find = function<T>(callback: (value: T, index: number, obj: T[]) => boolean, thisArg?: unknown): T | undefined {
     if (this == null) {
       throw new TypeError('Array.prototype.find called on null or undefined');
     }
@@ -210,7 +210,7 @@ if (typeof Array.prototype.find !== 'function') {
 
 // Safe reduce polyfill (fallback for older browsers)
 if (typeof Array.prototype.reduce !== 'function') {
-  Array.prototype.reduce = function(callback: any, initialValue?: any) {
+  Array.prototype.reduce = function<T>(callback: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T, initialValue?: T): T {
     if (this == null) {
       throw new TypeError('Array.prototype.reduce called on null or undefined');
     }
@@ -246,7 +246,7 @@ if (typeof Array.prototype.reduce !== 'function') {
 
 // Enhanced Array.isArray check
 const originalIsArray = Array.isArray;
-Array.isArray = function(arg: any): arg is any[] {
+Array.isArray = function(arg: unknown): arg is unknown[] {
   try {
     if (originalIsArray) {
       return originalIsArray(arg);
@@ -259,7 +259,7 @@ Array.isArray = function(arg: any): arg is any[] {
 
 // Add a safe filter method to all objects that might be arrays
 Object.defineProperty(Object.prototype, 'safeFilter', {
-  value: function(callback: any, thisArg?: any) {
+  value: function<T>(callback: (value: T, index: number, array: T[]) => boolean, thisArg?: unknown): T[] {
     if (safeIsArray(this)) {
       return this.filter(callback, thisArg);
     }

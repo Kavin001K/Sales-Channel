@@ -240,3 +240,9 @@ export const getEmployees = async (companyId: string): Promise<Employee[]> => {
 export const saveEmployee = async (employee: Employee): Promise<void> => {
   return await enhancedStorageService.saveEmployee(employee);
 };
+
+export const initializeSampleData = async (): Promise<void> => {
+  // This is a placeholder function to fix a build error.
+  // It is not intended to be used.
+  console.warn("initializeSampleData is a deprecated function.");
+};

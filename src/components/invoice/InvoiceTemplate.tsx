@@ -4,7 +4,7 @@ import { Invoice, CompanyInfo, getCurrencySymbol } from '@/lib/invoice-utils';
 interface InvoiceTemplateProps {
   invoice: Invoice;
   companyInfo: CompanyInfo;
-  settings?: any;
+  settings?: Record<string, unknown>;
 }
 
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ 
