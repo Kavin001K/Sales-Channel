@@ -43,5 +43,11 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'xlsx', 'sonner']
+  },
+  define: {
+    global: 'globalThis'
   }
 }));
