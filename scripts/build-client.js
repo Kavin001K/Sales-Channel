@@ -1,19 +1,45 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🚀 Starting client build for Netlify...');
+console.log('📁 Current directory:', process.cwd());
+console.log('📁 Script directory:', __dirname);
 
 try {
   // Change to the root directory
-  process.chdir(path.join(__dirname, '..'));
+  const rootDir = path.join(__dirname, '..');
+  console.log('📁 Root directory:', rootDir);
+  process.chdir(rootDir);
+  console.log('📁 Changed to directory:', process.cwd());
+  
+  // Check if package.json exists
+  if (!fs.existsSync('package.json')) {
+    throw new Error('package.json not found in root directory');
+  }
+  
+  // Check if client directory exists
+  if (!fs.existsSync('client')) {
+    throw new Error('client directory not found');
+  }
+  
+  // Check if client/package.json exists (for dependencies)
+  if (!fs.existsSync('client/package.json')) {
+    console.log('ℹ️  No client package.json found, using root dependencies');
+  }
   
   // Install dependencies if node_modules doesn't exist
   if (!fs.existsSync('node_modules')) {
     console.log('📦 Installing dependencies...');
     execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+  } else {
+    console.log('✅ Dependencies already installed');
   }
   
   // Build the client
@@ -29,6 +55,16 @@ try {
     // List build contents
     const files = fs.readdirSync(buildPath);
     console.log('📋 Build contents:', files);
+    
+    // Check for critical files
+    const criticalFiles = ['index.html', '_redirects'];
+    for (const file of criticalFiles) {
+      if (fs.existsSync(path.join(buildPath, file))) {
+        console.log(`✅ ${file} found`);
+      } else {
+        console.warn(`⚠️  ${file} not found`);
+      }
+    }
   } else {
     console.error('❌ Build failed - dist/public directory not found');
     process.exit(1);
@@ -36,5 +72,6 @@ try {
   
 } catch (error) {
   console.error('❌ Build failed:', error.message);
+  console.error('Stack trace:', error.stack);
   process.exit(1);
 }
