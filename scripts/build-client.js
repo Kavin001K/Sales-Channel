@@ -34,12 +34,19 @@ try {
     throw new Error('client/vite.config.ts not found');
   }
   
-  // Install dependencies if node_modules doesn't exist
-  if (!fs.existsSync('node_modules')) {
-    console.log('📦 Installing dependencies...');
-    execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
-  } else {
-    console.log('✅ Dependencies already installed');
+  // Always install dependencies to ensure they're available
+  console.log('📦 Installing dependencies...');
+  execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
+  console.log('✅ Dependencies installed successfully');
+  
+  // Verify that vite is available
+  console.log('🔍 Checking if vite is available...');
+  try {
+    execSync('npx vite --version', { stdio: 'pipe' });
+    console.log('✅ Vite is available');
+  } catch (viteError) {
+    console.error('❌ Vite is not available, trying to install it specifically...');
+    execSync('npm install vite@^5.4.14 --save', { stdio: 'inherit' });
   }
   
   // Try to run TypeScript check first

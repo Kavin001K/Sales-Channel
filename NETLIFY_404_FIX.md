@@ -8,6 +8,7 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 4. **NEW**: Missing dependency errors during build process
 5. **NEW**: Path resolution errors with @ alias imports
 6. **NEW**: General build failures with non-zero exit codes
+7. **NEW**: Vite command not found during build process
 
 ## Root Causes Identified & Fixed
 
@@ -59,18 +60,27 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
   - Added production environment variables
 - **Status**: ✅ RESOLVED
 
+### 7. ✅ **Vite Command Not Found (RESOLVED)**
+- **Root Cause**: Vite and @vitejs/plugin-react were in devDependencies, not available during Netlify builds
+- **Solutions Applied**:
+  - Moved `vite` and `@vitejs/plugin-react` to main dependencies
+  - Added explicit dependency installation in Netlify build command
+  - Created `build:client:npx` script using npx for better reliability
+  - Enhanced build script with Vite availability checks
+- **Status**: ✅ RESOLVED
+
 ## Files Modified
 
 ### Core Configuration
-- `netlify.toml` - Updated publish directory, simplified build command, added production environment
+- `netlify.toml` - Updated publish directory, added dependency installation, and npx build command
 - `client/vite.config.ts` - Enhanced with better error handling and production settings
-- `package.json` - Updated build:client script to use root directory approach
+- `package.json` - Moved Vite dependencies to main dependencies, added npx build script
 
 ### Routing Configuration
 - `client/public/_redirects` - Created for SPA routing support
 
 ### Build Scripts
-- `scripts/build-client.js` - Enhanced with TypeScript pre-check and better error handling
+- `scripts/build-client.js` - Enhanced with Vite availability checks and better error handling
 
 ### TypeScript Configuration
 - `client/tsconfig.app.json` - Simplified path mappings for client directory
@@ -82,7 +92,7 @@ You're experiencing a 404 "Page not found" error on Netlify, which typically occ
 ```toml
 [build]
   publish = "dist/public"
-  command = "npm run build:client"
+  command = "npm install --legacy-peer-deps && npm run build:client:npx"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -135,7 +145,19 @@ export default defineConfig({
 ```json
 {
   "build:client": "vite build --config client/vite.config.ts",
+  "build:client:npx": "npx vite build --config client/vite.config.ts",
   "build:netlify": "node scripts/build-client.js"
+}
+```
+
+### Dependencies (Updated)
+```json
+{
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.2",
+    "vite": "^5.4.14",
+    // ... other dependencies
+  }
 }
 ```
 
@@ -153,7 +175,7 @@ export default defineConfig({
 - Ensured build output goes to correct location
 
 ### 3. **Build Process Simplification**
-- Simplified Netlify build command to `npm run build:client`
+- Simplified Netlify build command to use npx for better reliability
 - Updated build:client script to use root directory approach
 - Enhanced error handling and logging in build scripts
 
@@ -162,18 +184,24 @@ export default defineConfig({
 - Simplified client TypeScript configuration
 - Ensured Vite and TypeScript configs work together
 
-### 5. **Enhanced Build Robustness** - **NEW**
+### 5. **Enhanced Build Robustness**
 - Added TypeScript pre-check in build script
 - Enhanced Vite configuration with better error handling
 - Added production environment variables
 - Improved build process reliability
+
+### 6. **Dependency Management** - **NEW**
+- Moved Vite and React plugin to main dependencies
+- Added explicit dependency installation in Netlify build
+- Created npx-based build script for better reliability
+- Enhanced build script with Vite availability checks
 
 ## Deployment Steps
 
 ### 1. **Commit and Push Changes**
 ```bash
 git add .
-git commit -m "Fix Netlify build errors: enhanced configuration, error handling, and production settings"
+git commit -m "Fix Netlify build errors: Vite dependencies, npx build, and enhanced configuration"
 git push
 ```
 
@@ -197,6 +225,7 @@ git push
 ✅ **No Missing Dependencies**: All required modules resolve correctly
 ✅ **No Path Resolution Errors**: @ alias imports work correctly
 ✅ **Robust Build Process**: Enhanced error handling and TypeScript checking
+✅ **Vite Available**: Build process can successfully run Vite commands
 
 ## Troubleshooting
 
@@ -218,6 +247,7 @@ git push
 - Enhanced Vite configuration for production builds
 - Improved error handling and warning suppression
 - TypeScript pre-check for better build reliability
+- Npx-based build commands for better dependency resolution
 
 ### Netlify Compatibility
 - Legacy peer dependency handling
@@ -226,6 +256,7 @@ git push
 - ES module compatibility
 - Production environment variables
 - Dedicated client build configuration
+- **NEW**: Explicit dependency installation and npx usage
 
 ## Next Steps
 
@@ -247,5 +278,7 @@ git push
 - [ ] No path resolution errors with @ alias imports
 - [ ] TypeScript pre-check passes successfully
 - [ ] Production build completes without warnings
+- [ ] Vite commands are available during build
+- [ ] All dependencies are properly installed
 
-This fix addresses all the core issues causing the 404 error and build failures, ensuring proper SPA deployment on Netlify with robust build processes and correct path resolution.
+This fix addresses all the core issues causing the 404 error and build failures, ensuring proper SPA deployment on Netlify with robust build processes, correct path resolution, and reliable dependency management.
