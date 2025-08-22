@@ -27,6 +27,7 @@ export default defineConfig({
           ui: ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar'],
         },
       },
+      external: ["react-router-dom", "sonner"],
     },
   },
   optimizeDeps: {

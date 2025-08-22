@@ -420,3 +420,13 @@ export const getConversationMessages = async () => {
   // Mock implementation
   return [];
 };
+
+export const addProduct = (product: Product): void => {
+  console.log('Adding product:', product);
+  // Implementation for adding a product
+};
+
+export const addCustomer = (customer: Customer): void => {
+  console.log('Adding customer:', customer);
+  // Implementation for adding a customer
+};
