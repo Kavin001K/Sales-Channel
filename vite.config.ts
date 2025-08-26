@@ -1,22 +1,39 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
+import { fileURLToPath } from "url";
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
   server: {
-    host: "::",
-    port: 8080,
+    port: 8080
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "src"),
+      "@shared": path.resolve(__dirname, "..", "shared"),
+      "@assets": path.resolve(__dirname, "..", "attached_assets"),
     },
   },
-}));
+  root: ".",
+  build: {
+    outDir: path.resolve(__dirname, "..", "dist/public"),
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar'],
+        },
+      },
+      external: ["react-router-dom", "sonner"],
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'wouter'],
+  },
+});
