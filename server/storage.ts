@@ -62,13 +62,21 @@ export class MemStorage implements IStorage {
     this.customers = new Map();
     this.transactions = new Map();
     this.currentId = 1;
-    
-    // Initialize with demo data
+
+    // Initialize with comprehensive demo data
     this.initializeDemoData();
   }
 
   private async initializeDemoData() {
-    // Create a demo company
+    // Initialize demo company first
+    this.initializeDemoCompany();
+
+    // Then load comprehensive sample data
+    this.loadComprehensiveSampleData();
+  }
+
+  private initializeDemoCompany() {
+    // Create a demo company (using 'demo-company-1' to match seed data)
     const demoCompany: Company = {
       id: 'demo-company-1',
       name: 'Demo Store',
@@ -386,6 +394,22 @@ export class MemStorage implements IStorage {
     };
     this.transactions.set(transaction.id, transaction);
     return transaction;
+  }
+
+  // Comprehensive sample data loading
+  private async loadComprehensiveSampleData() {
+    try {
+      console.log('🌱 Loading comprehensive sample data...');
+
+      // Import and run the seeding function
+      const { seedComprehensiveData } = await import('./seed-comprehensive-data-memory');
+      await seedComprehensiveData();
+
+      console.log('✅ Comprehensive sample data loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading comprehensive sample data:', error);
+      console.log('⚠️ Falling back to basic demo data');
+    }
   }
 }
 

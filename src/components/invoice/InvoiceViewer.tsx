@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Invoice, getCompanyInfo, getInvoiceSettings } from '@/lib/invoice-utils';
-import { downloadInvoicePDF, printInvoicePDF } from '@/lib/pdf-generator';
+import { downloadInvoicePDF, printInvoicePDF } from '@/lib/pdf-generator-lazy';
 import { useNavigate } from 'react-router-dom';
 import InvoiceTemplate from './InvoiceTemplate';
 import { Download, Printer, X, Eye, Mail, ExternalLink } from 'lucide-react';

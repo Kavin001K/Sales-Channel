@@ -255,9 +255,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Demo company credentials - In production, this should be in a secure database
       const demoCompanies = [
         {
-          id: 'defaultcompany',
-          name: 'Default Company',
-          email: 'admin@defaultcompany.com',
+          id: 'demo-company-1',
+          name: 'Demo Store',
+          email: 'demo@store.com',
           address: '123 Business Street',
           city: 'Chennai',
           state: 'Tamil Nadu',

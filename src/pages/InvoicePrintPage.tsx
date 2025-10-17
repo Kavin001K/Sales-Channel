@@ -58,8 +58,8 @@ export default function InvoicePrintPage() {
     if (!invoice) return;
 
     try {
-      // Use the PDF generator from our new system
-      const { downloadInvoicePDF } = await import('@/lib/pdf-generator');
+      // Use the lazy-loaded PDF generator
+      const { downloadInvoicePDF } = await import('@/lib/pdf-generator-lazy');
       await downloadInvoicePDF(invoice);
     } catch (error) {
       console.error('Failed to download PDF:', error);

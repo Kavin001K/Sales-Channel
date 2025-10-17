@@ -18,6 +18,8 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "..", "shared"),
       "@assets": path.resolve(__dirname, "..", "attached_assets"),
     },
+    // Prevent Node.js modules from being bundled for the browser
+    browserField: true,
   },
   root: ".",
   build: {
@@ -26,25 +28,44 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar'],
+          // Core dependencies
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+
+          // UI components
+          ui: [
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-avatar',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            'sonner'
+          ],
+
+          // Charts
+          charts: ['recharts'],
+
+          // PDF generation (lazy loaded, but chunked separately)
+          pdf: ['@react-pdf/renderer'],
+
+          // Animations
+          animations: ['framer-motion'],
+
+          // Forms
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+
+          // Table
+          table: ['@tanstack/react-table'],
         },
       },
-      external: ["react-router-dom", "sonner"],
+      external: [],
     },
+    chunkSizeWarningLimit: 1000, // Increase limit to 1MB for larger chunks
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'wouter'],
+    include: ['react', 'react-dom', 'react-router-dom'],
     exclude: ['pg'],
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@shared": path.resolve(__dirname, "..", "shared"),
-      "@assets": path.resolve(__dirname, "..", "attached_assets"),
-    },
-    // Prevent Node.js modules from being bundled for the browser
-    browserField: true,
   },
   define: {
     'process.env': {},
