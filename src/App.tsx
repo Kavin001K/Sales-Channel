@@ -28,6 +28,7 @@ import AdminCompanyDashboard from "./pages/AdminCompanyDashboard";
 import SupportCenter from "./pages/SupportCenter";
 import BillTestPage from "./pages/BillTestPage";
 import Invoices from "./pages/Invoices";
+import InvoicePrintPage from "./pages/InvoicePrintPage";
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
@@ -214,7 +215,14 @@ function AppRoutes() {
                   <BillTestPage />
                 </ProtectedRoute>
               } />
-              
+
+              {/* Print Invoice - Available to all authenticated users */}
+              <Route path="/print/invoice/:id" element={
+                <ProtectedRoute>
+                  <InvoicePrintPage />
+                </ProtectedRoute>
+              } />
+
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
