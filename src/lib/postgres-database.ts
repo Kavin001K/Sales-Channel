@@ -1,3 +1,8 @@
+// Browser guard - this module should never run in the browser
+if (typeof window !== 'undefined') {
+  throw new Error('postgres-database should not be imported in browser code. Use API calls instead.');
+}
+
 import { Client } from 'pg';
 import bcryptjs from 'bcryptjs';
 import { Product, Transaction, Customer, Employee, Company, LoginCredentials, EmployeeLoginCredentials } from './types';

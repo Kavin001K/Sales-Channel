@@ -1,7 +1,8 @@
 // Data Synchronization Service
 // Ensures all data is properly saved to server and fetched for future use
 
-import { postgresDatabaseService } from './postgres-database';
+// NOTE: In browser, we make API calls instead of direct database access
+import { apiClient } from './api-client';
 import { LocalStore, isOnline } from './local-store';
 import { Product, Customer, Transaction, Employee, Company } from './types';
 
@@ -24,7 +25,7 @@ export class DataSyncService {
   async syncProducts(companyId: string): Promise<Product[]> {
     try {
       if (isOnline()) {
-        const products = await postgresDatabaseService.getProducts(companyId);
+        const products = await apiClient.getProducts(companyId);
         // Cache locally
         products.forEach(p => LocalStore.saveProduct(p));
         return products;
@@ -44,7 +45,7 @@ export class DataSyncService {
       LocalStore.saveProduct(product);
       let saved = product;
       if (isOnline()) {
-        saved = await postgresDatabaseService.addProduct(product);
+        saved = await apiClient.addProduct(product);
         LocalStore.saveProduct(saved);
       }
       this.triggerDataRefresh('products');
@@ -66,7 +67,7 @@ export class DataSyncService {
       }
       let updated = (updates as any) as Product;
       if (isOnline()) {
-        updated = await postgresDatabaseService.updateProduct(id, updates);
+        updated = await apiClient.updateProduct(id, updates);
         if ((updated as any).companyId) LocalStore.saveProduct(updated);
       }
       this.triggerDataRefresh('products');
@@ -84,7 +85,7 @@ export class DataSyncService {
       // Caller should refresh list after this
       // Online delete
       if (isOnline()) {
-        await postgresDatabaseService.deleteProduct(id);
+        await apiClient.deleteProduct(id);
       }
       this.triggerDataRefresh('products');
     } catch (error) {
@@ -97,7 +98,7 @@ export class DataSyncService {
   async syncCustomers(companyId: string): Promise<Customer[]> {
     try {
       if (isOnline()) {
-        const customers = await postgresDatabaseService.getCustomers(companyId);
+        const customers = await apiClient.getCustomers(companyId);
         customers.forEach(c => LocalStore.saveCustomer(c));
         return customers;
       }
@@ -113,7 +114,7 @@ export class DataSyncService {
       LocalStore.saveCustomer(customer);
       let saved = customer;
       if (isOnline()) {
-        saved = await postgresDatabaseService.addCustomer(customer);
+        saved = await apiClient.addCustomer(customer);
         LocalStore.saveCustomer(saved);
       }
       this.triggerDataRefresh('customers');
@@ -133,7 +134,7 @@ export class DataSyncService {
       }
       let updated = (updates as any) as Customer;
       if (isOnline()) {
-        updated = await postgresDatabaseService.updateCustomer(id, updates);
+        updated = await apiClient.updateCustomer(id, updates);
         if ((updated as any).companyId) LocalStore.saveCustomer(updated);
       }
       this.triggerDataRefresh('customers');
@@ -147,7 +148,7 @@ export class DataSyncService {
   async deleteCustomer(id: string): Promise<void> {
     try {
       console.log('Deleting customer from server:', id);
-      await postgresDatabaseService.deleteCustomer(id);
+      await apiClient.deleteCustomer(id);
       console.log('Customer deleted successfully:', id);
       
       // Trigger data refresh event
@@ -162,7 +163,7 @@ export class DataSyncService {
   async syncTransactions(companyId: string): Promise<Transaction[]> {
     try {
       if (isOnline()) {
-        const transactions = await postgresDatabaseService.getTransactions(companyId);
+        const transactions = await apiClient.getTransactions(companyId);
         transactions.forEach(t => LocalStore.saveTransaction(t));
         return transactions;
       }
@@ -178,7 +179,7 @@ export class DataSyncService {
       LocalStore.saveTransaction(transaction);
       let saved = transaction;
       if (isOnline()) {
-        saved = await postgresDatabaseService.addTransaction(transaction);
+        saved = await apiClient.addTransaction(transaction);
         LocalStore.saveTransaction(saved);
       }
       this.triggerDataRefresh('transactions');
@@ -194,7 +195,7 @@ export class DataSyncService {
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction> {
     try {
       console.log('Updating transaction on server:', id);
-      const updatedTransaction = await postgresDatabaseService.updateTransaction(id, updates);
+      const updatedTransaction = await apiClient.updateTransaction(id, updates);
       console.log('Transaction updated successfully:', updatedTransaction);
       
       // Trigger data refresh event
@@ -210,7 +211,7 @@ export class DataSyncService {
   async deleteTransaction(id: string): Promise<void> {
     try {
       console.log('Deleting transaction from server:', id);
-      await postgresDatabaseService.deleteTransaction(id);
+      await apiClient.deleteTransaction(id);
       console.log('Transaction deleted successfully:', id);
       
       // Trigger data refresh events
@@ -227,7 +228,7 @@ export class DataSyncService {
   async syncEmployees(companyId: string): Promise<Employee[]> {
     try {
       console.log('Syncing employees for company:', companyId);
-      const employees = await postgresDatabaseService.getEmployees(companyId);
+      const employees = await apiClient.getEmployees(companyId);
       console.log('Employees synced successfully:', employees.length, 'employees');
       return employees;
     } catch (error) {
@@ -239,7 +240,7 @@ export class DataSyncService {
   async saveEmployee(employee: Employee): Promise<void> {
     try {
       console.log('Saving employee to server:', employee.name);
-      await postgresDatabaseService.addEmployee(employee);
+      await apiClient.addEmployee(employee);
       console.log('Employee saved successfully:', employee);
       
       // Trigger data refresh event
@@ -254,7 +255,7 @@ export class DataSyncService {
   async updateProductStock(productId: string, quantity: number, operation: 'add' | 'subtract'): Promise<void> {
     try {
       console.log('Updating product stock on server:', { productId, quantity, operation });
-      await postgresDatabaseService.updateProductStock(productId, quantity, operation);
+      await apiClient.updateProductStock(productId, quantity, operation);
       console.log('Product stock updated successfully');
       
       // Trigger data refresh event
@@ -269,7 +270,7 @@ export class DataSyncService {
   async updateCustomerStats(customerId: string, amount: number, operation: 'add' | 'subtract'): Promise<void> {
     try {
       console.log('Updating customer stats on server:', { customerId, amount, operation });
-      await postgresDatabaseService.updateCustomerStats(customerId, amount, operation);
+      await apiClient.updateCustomerStats(customerId, amount, operation);
       console.log('Customer stats updated successfully');
       
       // Trigger data refresh event
@@ -410,7 +411,7 @@ export class DataSyncService {
   // Health Check
   async healthCheck(): Promise<boolean> {
     try {
-      await postgresDatabaseService.getProducts('test');
+      await apiClient.getProducts('test');
       return true;
     } catch (error) {
       console.error('Database health check failed:', error);

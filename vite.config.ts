@@ -35,5 +35,18 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'wouter'],
+    exclude: ['pg'],
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@shared": path.resolve(__dirname, "..", "shared"),
+      "@assets": path.resolve(__dirname, "..", "attached_assets"),
+    },
+    // Prevent Node.js modules from being bundled for the browser
+    browserField: true,
+  },
+  define: {
+    'process.env': {},
   },
 });
