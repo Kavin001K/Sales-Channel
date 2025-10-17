@@ -3,58 +3,19 @@ if (typeof window !== 'undefined') {
   throw new Error('postgres-database should not be imported in browser code. Use API calls instead.');
 }
 
-import { Client } from 'pg';
+import { pool, getClient } from '../../server/postgres-pool';
 import bcryptjs from 'bcryptjs';
 import { Product, Transaction, Customer, Employee, Company, LoginCredentials, EmployeeLoginCredentials } from './types';
 import { config } from './config';
 
 class PostgresDatabaseService {
-  private client: Client | null = null;
-  private isConnecting = false;
-
   constructor() {
-    // Don't create client immediately, create it when needed
-  }
-
-  private async getClient(): Promise<Client> {
-    if (this.client && !this.client.ended) {
-      return this.client;
-    }
-
-    if (this.isConnecting) {
-      // Wait for existing connection attempt
-      while (this.isConnecting) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      if (this.client && !this.client.ended) {
-        return this.client;
-      }
-    }
-
-    this.isConnecting = true;
-    try {
-      this.client = new Client({
-        connectionString: config.database.url,
-        ssl: config.database.ssl ? {
-          rejectUnauthorized: false
-        } : false
-      });
-      
-      await this.client.connect();
-      console.log('PostgreSQL database connected successfully');
-      return this.client;
-    } catch (error) {
-      console.error('Failed to connect to PostgreSQL database:', error);
-      throw error;
-    } finally {
-      this.isConnecting = false;
-    }
+    console.log('✅ PostgresDatabaseService initialized with connection pool');
   }
 
   private async executeQuery<T>(query: string, params: (string | number | boolean | null)[] = []): Promise<T[]> {
     try {
-      const client = await this.getClient();
-      const result = await client.query(query, params);
+      const result = await pool.query(query, params);
       return result.rows;
     } catch (error) {
       console.error('Database query error:', error);
@@ -634,10 +595,10 @@ class PostgresDatabaseService {
   async addTransaction(transaction: Transaction): Promise<Transaction> {
     try {
       const transactionId = transaction.id || crypto.randomUUID();
-      
+
       // Start a transaction to ensure data consistency
-      const client = await this.getClient();
-      
+      const client = await getClient();
+
       try {
         await client.query('BEGIN');
         
@@ -685,7 +646,7 @@ class PostgresDatabaseService {
         }
 
         await client.query('COMMIT');
-        
+
         // Fetch and return the saved transaction
         const savedTransaction = await this.getTransactionById(transactionId);
         console.log('Transaction saved successfully:', savedTransaction);
@@ -693,6 +654,8 @@ class PostgresDatabaseService {
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
+      } finally {
+        client.release(); // Release client back to pool
       }
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -726,8 +689,8 @@ class PostgresDatabaseService {
         throw new Error('Transaction not found');
       }
 
-      const client = await this.getClient();
-      
+      const client = await getClient();
+
       try {
         await client.query('BEGIN');
         
@@ -765,6 +728,8 @@ class PostgresDatabaseService {
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;
+      } finally {
+        client.release(); // Release client back to pool
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
@@ -925,14 +890,6 @@ class PostgresDatabaseService {
     }
   }
 
-  // Close connection
-  async close(): Promise<void> {
-    if (this.client) {
-      await this.client.end();
-      this.client = null;
-      console.log('PostgreSQL database connection closed.');
-    }
-  }
 }
 
 // Export singleton instance

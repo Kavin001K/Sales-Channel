@@ -2,28 +2,40 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import {
+  ProductSchema,
+  CustomerSchema,
+  TransactionSchema,
+  EmployeeSchema,
+  LoginCredentialsSchema,
+  EmployeeLoginCredentialsSchema,
+} from "../shared/validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post('/api/auth/company/login', async (req, res) => {
     try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
-      }
+      // Validate input with Zod
+      const credentials = LoginCredentialsSchema.parse(req.body);
 
       // For demo purposes, use hardcoded credentials
       // In production, this should validate against actual company data
-      if (email === 'demo@store.com' && password === 'password') {
-        const company = await storage.getCompanyByEmail(email);
+      if (credentials.email === 'demo@store.com' && credentials.password === 'password') {
+        const company = await storage.getCompanyByEmail(credentials.email);
         if (company) {
           return res.json({ success: true, company });
         }
       }
-      
+
       return res.status(401).json({ error: 'Invalid email or password' });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
       console.error('Company login error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -31,23 +43,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/employee/login', async (req, res) => {
     try {
-      const { employeeId, password } = req.body;
-      
-      if (!employeeId || !password) {
-        return res.status(400).json({ error: 'Employee ID and password are required' });
-      }
+      // Validate input with Zod
+      const credentials = EmployeeLoginCredentialsSchema.parse(req.body);
 
       // For demo purposes, use hardcoded credentials
       // In production, this should validate against actual employee data
-      if (employeeId === 'EMP001' && password === 'password') {
-        const employee = await storage.getEmployeeByEmployeeId('demo-company-1', employeeId);
+      if (credentials.employeeId === 'EMP001' && credentials.password === 'password') {
+        const employee = await storage.getEmployeeByEmployeeId('demo-company-1', credentials.employeeId);
         if (employee) {
           return res.json({ success: true, employee });
         }
       }
-      
+
       return res.status(401).json({ error: 'Invalid employee ID or password' });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
       console.error('Employee login error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -94,10 +109,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/companies/:companyId/products', async (req, res) => {
     try {
       const { companyId } = req.params;
-      const productData = { ...req.body, companyId };
+
+      // Validate product data with Zod
+      const productData = ProductSchema.parse({ ...req.body, companyId });
+
       const product = await storage.createProduct(productData);
       res.json(product);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
       console.error('Create product error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -118,10 +142,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/companies/:companyId/customers', async (req, res) => {
     try {
       const { companyId } = req.params;
-      const customerData = { ...req.body, companyId };
+
+      // Validate customer data with Zod
+      const customerData = CustomerSchema.parse({ ...req.body, companyId });
+
       const customer = await storage.createCustomer(customerData);
       res.json(customer);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
       console.error('Create customer error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -154,10 +187,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/companies/:companyId/transactions', async (req, res) => {
     try {
       const { companyId } = req.params;
-      const transactionData = { ...req.body, companyId };
+
+      // Validate transaction data with Zod
+      const transactionData = TransactionSchema.parse({ ...req.body, companyId });
+
       const transaction = await storage.createTransaction(transactionData);
       res.json(transaction);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors
+        });
+      }
       console.error('Create transaction error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
