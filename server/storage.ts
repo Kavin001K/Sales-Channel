@@ -77,10 +77,12 @@ export class MemStorage implements IStorage {
 
   private initializeDemoCompany() {
     // Create a demo company (using 'demo-company-1' to match seed data)
+    // Password hash for 'password' using bcrypt
     const demoCompany: Company = {
       id: 'demo-company-1',
       name: 'Demo Store',
       email: 'demo@store.com',
+      passwordHash: '$2b$10$YfkZFW/M1RFK5LLzlE9TsuszPD.0h6vooSxB3I.7XyWnFFklwUyRW', // 'password' hashed with bcrypt
       phone: '+1234567890',
       address: '123 Demo Street',
       city: 'Demo City',
@@ -96,10 +98,12 @@ export class MemStorage implements IStorage {
     this.companies.set(demoCompany.id, demoCompany);
 
     // Create a demo employee
+    // Password hash for 'password' using bcrypt
     const demoEmployee: Employee = {
       id: 'demo-employee-1',
       companyId: 'demo-company-1',
       employeeId: 'EMP001',
+      passwordHash: '$2b$10$YfkZFW/M1RFK5LLzlE9TsuszPD.0h6vooSxB3I.7XyWnFFklwUyRW', // 'password' hashed with bcrypt
       name: 'Demo Employee',
       email: 'employee@demo.com',
       phone: '+1234567891',

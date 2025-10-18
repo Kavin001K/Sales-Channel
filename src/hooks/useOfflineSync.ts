@@ -46,22 +46,43 @@ export function useOfflineSync(companyId: string) {
     setIsSyncing(true);
     try {
       // 1. Process outbox (send pending mutations)
-      await indexedDBService.processOutbox();
+      const syncResults = await indexedDBService.processOutbox();
 
-      // 2. Fetch fresh data from server
-      const productsResponse = await fetch(`/api/companies/${companyId}/products`);
+      // Notify user of sync results
+      if (syncResults.success.length > 0) {
+        console.log(`✅ Successfully synced ${syncResults.success.length} changes`);
+      }
+
+      if (syncResults.conflicts.length > 0) {
+        console.warn(`⚠️ ${syncResults.conflicts.length} conflicts detected - manual resolution required`);
+        // TODO: Show UI notification to user about conflicts
+      }
+
+      if (syncResults.failed.length > 0) {
+        const permanentFailures = syncResults.failed.filter((f: any) => f.retriesExhausted);
+        if (permanentFailures.length > 0) {
+          console.error(`❌ ${permanentFailures.length} changes failed permanently`);
+          // TODO: Show error notification to user
+        }
+      }
+
+      // 2. Fetch fresh data from server (with auth token)
+      const authToken = localStorage.getItem('auth_token');
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+
+      const productsResponse = await fetch(`/api/companies/${companyId}/products`, { headers });
       if (productsResponse.ok) {
         const products = await productsResponse.json();
         await indexedDBService.cacheProducts(companyId, products);
       }
 
-      const customersResponse = await fetch(`/api/companies/${companyId}/customers`);
+      const customersResponse = await fetch(`/api/companies/${companyId}/customers`, { headers });
       if (customersResponse.ok) {
         const customers = await customersResponse.json();
         await indexedDBService.cacheCustomers(companyId, customers);
       }
 
-      const transactionsResponse = await fetch(`/api/companies/${companyId}/transactions`);
+      const transactionsResponse = await fetch(`/api/companies/${companyId}/transactions`, { headers });
       if (transactionsResponse.ok) {
         const transactions = await transactionsResponse.json();
         await indexedDBService.cacheTransactions(companyId, transactions);
@@ -71,8 +92,11 @@ export function useOfflineSync(companyId: string) {
       setPendingCount(count);
 
       console.log('✅ Sync completed successfully');
+
+      return syncResults;
     } catch (error) {
       console.error('❌ Sync failed:', error);
+      throw error;
     } finally {
       setIsSyncing(false);
     }

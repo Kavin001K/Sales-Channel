@@ -151,10 +151,22 @@ class IndexedDBService {
 
     if (mutations.length === 0) {
       console.log('📤 No pending mutations in outbox');
-      return;
+      return {
+        success: [],
+        failed: [],
+        conflicts: [],
+        total: 0
+      };
     }
 
     console.log(`📤 Processing ${mutations.length} queued operations...`);
+
+    const results = {
+      success: [] as any[],
+      failed: [] as any[],
+      conflicts: [] as any[],
+      total: mutations.length
+    };
 
     for (const mutation of mutations) {
       try {
@@ -165,16 +177,36 @@ class IndexedDBService {
 
         const response = await fetch(endpoint, {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
           body: JSON.stringify(mutation.data),
         });
 
+        // Handle conflicts (409)
+        if (response.status === 409) {
+          const serverData = await response.json();
+          results.conflicts.push({
+            mutation,
+            serverData,
+            message: 'Data was modified on server'
+          });
+          console.warn('⚠️ Conflict detected:', mutation.entity, mutation.data);
+          continue; // Keep in outbox for manual resolution
+        }
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`HTTP ${response.status}: ${await response.text()}`);
         }
 
         // Success! Remove from outbox
         await db.delete('outbox', mutation.id!);
+        results.success.push({
+          type: mutation.type,
+          entity: mutation.entity,
+          id: mutation.data.id
+        });
         console.log('✅ Synced:', mutation.type, mutation.entity);
 
       } catch (error) {
@@ -184,15 +216,28 @@ class IndexedDBService {
         mutation.retries += 1;
 
         if (mutation.retries >= 5) {
-          // Give up after 5 retries
+          // Give up after 5 retries and mark as failed
           await db.delete('outbox', mutation.id!);
+          results.failed.push({
+            mutation,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            retriesExhausted: true
+          });
           console.warn('⚠️ Gave up syncing after 5 retries:', mutation);
         } else {
-          // Update retry count
+          // Update retry count and keep in outbox
           await db.put('outbox', mutation);
+          results.failed.push({
+            mutation,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            willRetry: true,
+            retriesRemaining: 5 - mutation.retries
+          });
         }
       }
     }
+
+    return results;
   }
 
   // Get outbox size (show user pending changes)

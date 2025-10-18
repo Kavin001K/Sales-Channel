@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import Decimal from 'decimal.js';
 import { CartItem, Product } from '@/lib/types';
 
 export const useCart = () => {
@@ -7,7 +8,7 @@ export const useCart = () => {
   const addItem = useCallback((product: Product, quantity: number = 1) => {
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.product.id === product.id);
-      
+
       if (existingItem) {
         // Check stock limit before adding more
         const newQuantity = existingItem.quantity + quantity;
@@ -21,13 +22,13 @@ export const useCart = () => {
             : item
         );
       }
-      
+
       // Check stock for new item
       if (quantity > product.stock) {
         console.warn(`Cannot add ${product.name}. Stock limit: ${product.stock}`);
         return prevItems;
       }
-      
+
       return [...prevItems, { product, quantity }];
     });
   }, []);
@@ -37,7 +38,7 @@ export const useCart = () => {
       setItems(prevItems => prevItems.filter(item => item.product.id !== productId));
       return;
     }
-    
+
     setItems(prevItems =>
       prevItems.map(item => {
         if (item.product.id === productId) {
@@ -62,7 +63,17 @@ export const useCart = () => {
   }, []);
 
   const getTotal = useCallback(() => {
-    return Array.isArray(items) ? items.reduce((total, item) => total + ((item.product.price || 0) * (item.quantity || 0)), 0) : 0;
+    if (!Array.isArray(items)) return 0;
+
+    // Use Decimal.js for precise currency calculations
+    const total = items.reduce((acc, item) => {
+      const price = new Decimal(item.product.price || 0);
+      const quantity = new Decimal(item.quantity || 0);
+      return acc.plus(price.times(quantity));
+    }, new Decimal(0));
+
+    // Return as number with 2 decimal places
+    return total.toNumber();
   }, [items]);
 
   const getItemCount = useCallback(() => {

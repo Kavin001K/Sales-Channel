@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -7,6 +7,7 @@ export const companies = pgTable("companies", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
   phone: text("phone"),
   address: text("address"),
   city: text("city"),
@@ -18,13 +19,18 @@ export const companies = pgTable("companies", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  emailIdx: index("companies_email_idx").on(table.email),
+}));
 
 // Employee table for company staff
 export const employees = pgTable("employees", {
   id: text("id").primaryKey(),
-  companyId: text("company_id").notNull(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: 'cascade' }),
   employeeId: text("employee_id").notNull(),
+  passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
@@ -34,12 +40,17 @@ export const employees = pgTable("employees", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  companyIdx: index("employees_company_idx").on(table.companyId),
+  employeeIdIdx: index("employees_employee_id_idx").on(table.companyId, table.employeeId),
+}));
 
 // Product table for inventory management
 export const products = pgTable("products", {
   id: text("id").primaryKey(),
-  companyId: text("company_id").notNull(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: 'cascade' }),
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price").notNull(),
@@ -54,12 +65,19 @@ export const products = pgTable("products", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  companyIdx: index("products_company_idx").on(table.companyId),
+  categoryIdx: index("products_category_idx").on(table.category),
+  barcodeIdx: index("products_barcode_idx").on(table.barcode),
+  skuIdx: index("products_sku_idx").on(table.sku),
+}));
 
 // Customer table for CRM
 export const customers = pgTable("customers", {
   id: text("id").primaryKey(),
-  companyId: text("company_id").notNull(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: 'cascade' }),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
@@ -77,14 +95,22 @@ export const customers = pgTable("customers", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  companyIdx: index("customers_company_idx").on(table.companyId),
+  phoneIdx: index("customers_phone_idx").on(table.phone),
+  emailIdx: index("customers_email_idx").on(table.email),
+}));
 
 // Transaction table for sales records
 export const transactions = pgTable("transactions", {
   id: text("id").primaryKey(),
-  companyId: text("company_id").notNull(),
-  customerId: text("customer_id"),
-  employeeId: text("employee_id"),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: 'cascade' }),
+  customerId: text("customer_id")
+    .references(() => customers.id, { onDelete: 'set null' }),
+  employeeId: text("employee_id")
+    .references(() => employees.id, { onDelete: 'set null' }),
   items: json("items").notNull(), // Array of transaction items
   subtotal: decimal("subtotal").notNull(),
   tax: decimal("tax").notNull().default('0'),
@@ -98,7 +124,13 @@ export const transactions = pgTable("transactions", {
   customerName: text("customer_name"),
   employeeName: text("employee_name"),
   receipt: text("receipt"),
-});
+}, (table) => ({
+  companyIdx: index("transactions_company_idx").on(table.companyId),
+  customerIdx: index("transactions_customer_idx").on(table.customerId),
+  employeeIdx: index("transactions_employee_idx").on(table.employeeId),
+  timestampIdx: index("transactions_timestamp_idx").on(table.timestamp),
+  statusIdx: index("transactions_status_idx").on(table.status),
+}));
 
 // Legacy user table for backwards compatibility
 export const users = pgTable("users", {
