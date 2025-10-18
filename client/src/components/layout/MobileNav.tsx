@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import {
   BarChart3,
   ShoppingCart,
@@ -26,8 +26,7 @@ const allMobileNavItems = [
 ];
 
 export function MobileNav() {
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const [currentPath] = useLocation();
   const { company, employee, adminAuth } = useAuth();
 
   // Determine user role
@@ -64,9 +63,9 @@ export function MobileNav() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
       <div className="flex justify-around items-center h-16">
         {mobileNavItems.map((item) => (
-          <NavLink
+          <Link
             key={item.title}
-            to={item.url}
+            href={item.url}
             className={`flex flex-col items-center justify-center flex-1 h-full ${
               isActive(item.url)
                 ? "text-blue-600 bg-blue-50"
@@ -75,7 +74,7 @@ export function MobileNav() {
           >
             <item.icon className="w-5 h-5 mb-1" />
             <span className="text-xs font-medium">{item.title}</span>
-          </NavLink>
+          </Link>
         ))}
       </div>
     </div>

@@ -183,7 +183,7 @@ export function AppSidebar() {
                    {userRole && (userRole === 'company' || userRole === 'admin' || userRole === 'super_admin') && (
                      <SidebarMenuItem>
                        <SidebarMenuButton asChild>
-                         <NavLink to={userRole === 'company' ? "/settings" : "/admin/settings"} className={getNavCls}>
+                         <Link href={userRole === 'company' ? "/settings" : "/admin/settings"} className={getNavCls}>
                            <Settings className="w-5 h-5" />
                            {state !== "collapsed" && (
                              <div className="flex flex-col">
@@ -191,7 +191,7 @@ export function AppSidebar() {
                                <span className="text-xs text-sidebar-foreground/70">{userRole === 'company' ? 'Company Settings' : 'Admin Settings'}</span>
                              </div>
                            )}
-                         </NavLink>
+                         </Link>
                        </SidebarMenuButton>
                      </SidebarMenuItem>
                    )}
