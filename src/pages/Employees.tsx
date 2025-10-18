@@ -13,8 +13,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Search, UserCheck, Shield, Clock, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Employees() {
+  const { company } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -48,11 +50,16 @@ export default function Employees() {
 
   useEffect(() => {
     loadEmployees();
-  }, []);
+  }, [company]);
 
   const loadEmployees = async () => {
     try {
-      const employeesData = await getEmployees();
+      if (!company?.id) {
+        console.warn('No company ID available');
+        setEmployees([]);
+        return;
+      }
+      const employeesData = await getEmployees(company.id);
       const employeesArray = Array.isArray(employeesData) ? employeesData : [];
       setEmployees(employeesArray);
     } catch (error) {

@@ -279,7 +279,7 @@ export default function CompanyLogin() {
 
               <div className="text-center text-sm text-gray-600">
                 <p>Demo Credentials:</p>
-                <p className="font-mono text-xs">admin@defaultcompany.com / admin123</p>
+                <p className="font-mono text-xs">demo@store.com / admin123</p>
               </div>
             </TabsContent>
 

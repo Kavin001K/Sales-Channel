@@ -17,8 +17,10 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ExcelImport } from '@/components/import/ExcelImport';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Products() {
+  const { company } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -70,7 +72,7 @@ export default function Products() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [company]);
 
   useEffect(() => {
     try {
@@ -87,7 +89,12 @@ export default function Products() {
 
   const loadProducts = async () => {
     try {
-      const productsData = await getProducts();
+      if (!company?.id) {
+        console.warn('No company ID available');
+        setProducts([]);
+        return;
+      }
+      const productsData = await getProducts(company.id);
       const productsArray = Array.isArray(productsData) ? productsData : [];
       setProducts(productsArray);
     } catch (error) {

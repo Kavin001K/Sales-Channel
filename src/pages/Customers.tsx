@@ -70,7 +70,7 @@ export default function Customers() {
 
   useEffect(() => {
     loadCustomers();
-  }, []);
+  }, [company]);
 
   useEffect(() => {
     try {
@@ -99,7 +99,12 @@ export default function Customers() {
 
   const loadCustomers = async () => {
     try {
-      const customersData = await getCustomers();
+      if (!company?.id) {
+        console.warn('No company ID available');
+        setCustomers([]);
+        return;
+      }
+      const customersData = await getCustomers(company.id);
       const customersArray = Array.isArray(customersData) ? customersData : [];
       setCustomers(customersArray);
     } catch (error) {
