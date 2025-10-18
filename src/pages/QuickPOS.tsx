@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Product, Transaction, CartItem } from '@/lib/types';
+import { Product, Transaction, Customer } from '@/lib/types';
 import { useCart } from '@/hooks/useCart';
 import { useDataSync } from '@/hooks/useDataSync';
 import { Button } from '@/components/ui/button';
@@ -8,27 +8,24 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Search, 
-  ShoppingCart, 
-  Minus, 
-  Plus, 
-  Trash2, 
-  CreditCard, 
-  DollarSign, 
-  Keyboard,
-  Printer,
-  Calculator,
-  X,
+import {
+  Search,
+  ShoppingCart,
+  Minus,
+  Plus,
+  Trash2,
+  DollarSign,
   Package,
   ArrowLeft,
   LogOut,
   User,
-  Calendar,
-  Clock
+  ChevronDown,
+  ChevronUp,
+  X,
+  Percent,
+  IndianRupee
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -38,69 +35,80 @@ import { thermalPrinter, ReceiptData } from '@/lib/thermalPrinter';
 import PaymentDialog from '@/components/PaymentDialog';
 
 export default function QuickPOS() {
-  const { company, employee } = useAuth();
-  const { 
-    products, 
-    customers, 
-    saveTransaction, 
-    saveCustomer, 
+  const { company, employee, loading: authLoading } = useAuth();
+  const {
+    products,
+    customers,
+    saveTransaction,
+    saveCustomer,
     updateCustomer,
     updateProduct,
-    isLoading: isDataLoading 
+    isLoading: isDataLoading
   } = useDataSync();
-  
+
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'wallet'>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerGST, setCustomerGST] = useState('');
-  const [currentCustomer, setCurrentCustomer] = useState<any>(null);
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
   const [isCustomerLoading, setIsCustomerLoading] = useState(false);
-  const [cashAmount, setCashAmount] = useState('');
-  const [cardTransactionId, setCardTransactionId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [taxIncluded, setTaxIncluded] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  
-  // Add state for the quantity dialog
-  const [isQtyDialogOpen, setIsQtyDialogOpen] = useState(false);
-  const [qtyDialogProduct, setQtyDialogProduct] = useState<Product | null>(null);
-  const [qtyDialogQty, setQtyDialogQty] = useState('1');
-  const [qtyDialogError, setQtyDialogError] = useState('');
-  
-  // Add sub-unit logic for the quantity dialog
-  const [mainQty, setMainQty] = useState('');
-  const [subQty, setSubQty] = useState('');
-  
+  const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
+  const [isCustomerSectionOpen, setIsCustomerSectionOpen] = useState(false);
+  const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
+  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+
   const cart = useCart();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const exitRequestedRef = useRef(false);
-  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
-  const { companySettings, printSettings } = useSettings();
+  const { companySettings } = useSettings();
   const { logout } = useAuth();
 
   // Category management
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update time every second
+  // Redirect to login if no company
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!company?.id && !authLoading) {
+      console.warn('No company found, redirecting to login');
+      navigate('/');
+    }
+  }, [company, authLoading, navigate]);
 
-  // Initialize filtered products when products change
+  // Initialize filtered products
   useEffect(() => {
     if (Array.isArray(products)) {
       setFilteredProducts(products);
     }
   }, [products]);
 
-  // Fullscreen helper that falls back to a user prompt
+  // Filter products based on search and category
+  useEffect(() => {
+    let filtered = products;
+
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(query) ||
+        product.sku?.toLowerCase().includes(query) ||
+        product.barcode?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, searchQuery, selectedCategory]);
+
+  // Fullscreen management
   const ensureFullscreen = useCallback(async () => {
     if (!document.fullscreenEnabled) return;
     if (document.fullscreenElement) return;
@@ -112,76 +120,59 @@ export default function QuickPOS() {
     }
   }, []);
 
-  // Function to determine if a unit is decimal-based
-  const DECIMAL_UNITS = ['KGS', 'GMS', 'LTR', 'MLT', 'TON', 'SQM', 'SQF', 'MTR', 'CMS', 'CCM', 'CBM'];
-  const isDecimalUnit = (unit: string) => DECIMAL_UNITS.includes((unit || '').toUpperCase());
+  // Initialize fullscreen on mount
+  useEffect(() => {
+    ensureFullscreen();
 
-  // Quick add handler must be defined before effects that depend on it
-  const handleQuickAdd = useCallback((product: Product) => {
-    if (product.stock > 0) {
-      cart.addItem(product);
-      toast.success(`${product.name} added to cart`);
-    } else {
-      toast.error(`${product.name} is out of stock`);
-    }
-  }, [cart]);
-
-  // Handle product selection with quantity dialog
-  const handleProductSelect = useCallback((product: Product) => {
-    if (product.stock <= 0) {
-      toast.error(`${product.name} is out of stock`);
-      return;
-    }
-
-    if (product.unit && isDecimalUnit(product.unit)) {
-      setQtyDialogProduct(product);
-      setQtyDialogQty('1');
-      setMainQty('');
-      setSubQty('');
-      setQtyDialogError('');
-      setIsQtyDialogOpen(true);
-    } else {
-      handleQuickAdd(product);
-    }
-  }, [handleQuickAdd]);
-
-  // Handle quantity dialog confirmation
-  const handleQtyConfirm = useCallback(() => {
-    if (!qtyDialogProduct) return;
-
-    let finalQty = 1;
-    if (qtyDialogProduct.unit && isDecimalUnit(qtyDialogProduct.unit)) {
-      const main = parseFloat(mainQty) || 0;
-      const sub = parseFloat(subQty) || 0;
-      finalQty = main + (sub / 100);
-      
-      if (finalQty <= 0) {
-        setQtyDialogError('Please enter a valid quantity');
-        return;
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !exitRequestedRef.current) {
+        ensureFullscreen();
       }
-    } else {
-      finalQty = parseInt(qtyDialogQty) || 1;
-      if (finalQty <= 0) {
-        setQtyDialogError('Please enter a valid quantity');
-        return;
-      }
-    }
+    };
 
-    cart.addItem(qtyDialogProduct, finalQty);
-    toast.success(`${qtyDialogProduct.name} added to cart`);
-    setIsQtyDialogOpen(false);
-  }, [qtyDialogProduct, qtyDialogQty, mainQty, subQty, cart]);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, [ensureFullscreen]);
+
+  // Focus search on mount
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
+
+  // Handle ESC key for exit confirmation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        e.preventDefault();
+        setShowExitConfirmation(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleExitToDashboard = useCallback(async () => {
+    exitRequestedRef.current = true;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+    navigate('/dashboard');
+  }, [navigate]);
+
+  const handleCancelExit = useCallback(() => {
+    setShowExitConfirmation(false);
+  }, []);
 
   // Customer search by phone
   const handleCustomerPhoneChange = useCallback(async (phone: string) => {
     setCustomerPhone(phone);
-    
+
     if (phone.length >= 10 && /^\d+$/.test(phone)) {
       setIsCustomerLoading(true);
       try {
-        // Search for existing customer by phone using customers from data sync
         const existingCustomer = customers.find(c => c.phone === phone);
-        
+
         if (existingCustomer) {
           setCurrentCustomer(existingCustomer);
           setCustomerName(existingCustomer.name || '');
@@ -194,7 +185,6 @@ export default function QuickPOS() {
         }
       } catch (error) {
         console.error('Error searching for customer:', error);
-        toast.error('Error searching for customer');
       } finally {
         setIsCustomerLoading(false);
       }
@@ -205,245 +195,29 @@ export default function QuickPOS() {
     }
   }, [customers]);
 
-  // Auto-create or update customer when transaction is completed
-  const handleCustomerSave = useCallback(async (phone: string, name: string, gst: string = '') => {
-    if (!phone || !name || !company?.id) return;
-
-    try {
-      // Use customers from data sync hook instead of calling getCustomers
-      const existingCustomer = customers.find(c => c.phone === phone);
-      
-      if (existingCustomer) {
-        // Update existing customer
-        const updatedCustomer = {
-          ...existingCustomer,
-          name: name,
-          gst: gst, // Use gst to match the Customer interface
-          visitCount: (existingCustomer.visitCount || 0) + 1,
-          lastVisit: new Date()
-        };
-        
-        await updateCustomer(existingCustomer.id, updatedCustomer);
-        setCurrentCustomer(updatedCustomer);
-        toast.success('Customer updated successfully');
-      } else {
-        // Create new customer
-        const newCustomer = {
-          id: `customer_${Date.now()}`,
-          companyId: company.id,
-          name: name,
-          phone: phone,
-          gst: gst, // Use gst to match the Customer interface
-          email: '',
-          address: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: 'India',
-          isActive: true,
-          visitCount: 1,
-          loyaltyPoints: 0,
-          totalSpent: 0,
-          lastVisit: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        await saveCustomer(newCustomer);
-        setCurrentCustomer(newCustomer);
-        toast.success('New customer created successfully');
-      }
-    } catch (error) {
-      console.error('Error saving customer:', error);
-      toast.error('Error saving customer details');
-    }
-  }, [company?.id, customers, saveCustomer, updateCustomer]);
-
-  // Initialize data and fullscreen
-  useEffect(() => {
-    ensureFullscreen();
-    
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && !exitRequestedRef.current) {
-        ensureFullscreen();
-      }
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [ensureFullscreen]);
-
-  // Load products
-  useEffect(() => {
-    // No need to call initializeSampleData here as it's handled by useDataSync
-  }, []);
-
-  // Filter products based on search and category
-  useEffect(() => {
-    let filtered = products;
-    
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
-    
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(query) ||
-        product.sku?.toLowerCase().includes(query) ||
-        product.barcode?.toLowerCase().includes(query)
-      );
-    }
-    
-    setFilteredProducts(filtered);
-  }, [products, searchQuery, selectedCategory]);
-
-  // Focus search on mount and after transaction
-  useEffect(() => {
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  }, []);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        exitRequestedRef.current = true;
-        navigate('/dashboard');
-      }
-      // Add Ctrl+D shortcut for dashboard
-      if (e.ctrlKey && e.key === 'd') {
-        e.preventDefault();
-        navigate('/dashboard');
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
-
-  // Handle transaction completion
-  const handleTransactionComplete = useCallback(async (transaction: Transaction) => {
-    try {
-      console.log('Saving transaction:', transaction);
-      
-      // Validate transaction data before saving
-      if (!transaction.companyId) {
-        throw new Error('Company ID is required');
-      }
-      if (!transaction.items || transaction.items.length === 0) {
-        throw new Error('Transaction must have at least one item');
-      }
-      if (transaction.total <= 0) {
-        throw new Error('Transaction total must be greater than 0');
-      }
-      
-      const savedTransaction = await saveTransaction(transaction);
-      console.log('Transaction saved successfully:', savedTransaction);
-      
-      // Auto-save/update customer information and link transaction to customer
-      if (customerPhone && customerName) {
-        await handleCustomerSave(customerPhone, customerName, customerGST);
-        
-        // Update customer's transaction history and spending
-        if (currentCustomer) {
-          const updatedCustomer = {
-            ...currentCustomer,
-            totalSpent: (currentCustomer.totalSpent || 0) + transaction.total,
-            visitCount: (currentCustomer.visitCount || 0) + 1,
-            lastVisit: new Date()
-          };
-          await updateCustomer(currentCustomer.id, updatedCustomer);
-        }
-      }
-      
-      // Prepare receipt data for thermal printer
-      const receiptData: ReceiptData = {
-        companyName: companySettings?.name || 'ACE Business',
-        companyAddress: companySettings?.address || '',
-        companyPhone: companySettings?.phone || '',
-        companyTaxId: companySettings?.taxId || '',
-        receiptNumber: transaction.id,
-        date: new Date(transaction.timestamp).toLocaleString(),
-        cashierName: employee?.name || 'Unknown',
-        customerName: transaction.customerName || 'Walk-in Customer',
-        items: transaction.items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
-        })),
-        subtotal: transaction.subtotal,
-        tax: transaction.tax,
-        total: transaction.total,
-        paymentMethod: transaction.paymentMethod,
-        paymentDetails: transaction.paymentDetails
-      };
-
-      // Print receipt using thermal printer service
-      const printSuccess = await thermalPrinter.printReceipt(receiptData);
-      
-      if (printSuccess) {
-        toast.success('Transaction completed and receipt printed successfully!');
-      } else {
-        toast.success('Transaction completed successfully!');
-        toast.warning('Receipt printing failed - check printer connection');
-      }
-      
-      // Dispatch event to notify other components
-      window.dispatchEvent(new CustomEvent('transactionUpdated'));
-      
-      // Clear cart and form
-      cart.clearCart();
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerGST('');
-      setCurrentCustomer(null);
-      setCashAmount('');
-      setCardTransactionId('');
-      
-      // Re-request fullscreen and focus search
-      setTimeout(() => {
-        ensureFullscreen();
-        if (searchRef.current) {
-          searchRef.current.focus();
-        }
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error saving transaction:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to save transaction: ${errorMessage}`);
-      
-      // Log additional debugging information
-      console.log('Transaction data that failed to save:', {
-        id: transaction.id,
-        companyId: transaction.companyId,
-        itemsCount: transaction.items?.length,
-        total: transaction.total,
-        hasEmployee: !!transaction.employeeId,
-        hasCustomer: !!transaction.customerName
-      });
-    }
-  }, [cart, ensureFullscreen, companySettings, employee, customerPhone, customerName, customerGST, handleCustomerSave, currentCustomer, saveTransaction]);
-
-
-
   // Calculate totals
   const subtotal = useMemo(() => {
     return cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   }, [cart.items]);
 
+  const discountAmount = useMemo(() => {
+    if (discountType === 'percent') {
+      return subtotal * (discount / 100);
+    }
+    return discount;
+  }, [subtotal, discount, discountType]);
+
+  const subtotalAfterDiscount = useMemo(() => {
+    return Math.max(0, subtotal - discountAmount);
+  }, [subtotal, discountAmount]);
+
   const tax = useMemo(() => {
-    return subtotal * 0.18; // 18% GST
-  }, [subtotal]);
+    return subtotalAfterDiscount * 0.18;
+  }, [subtotalAfterDiscount]);
 
   const total = useMemo(() => {
-    return taxIncluded ? subtotal : subtotal + tax;
-  }, [subtotal, tax, taxIncluded]);
+    return taxIncluded ? subtotalAfterDiscount : subtotalAfterDiscount + tax;
+  }, [subtotalAfterDiscount, tax, taxIncluded]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -451,7 +225,7 @@ export default function QuickPOS() {
     return cats;
   }, [products]);
 
-  // Handle payment dialog open
+  // Handle payment
   const handlePaymentClick = useCallback(() => {
     if (cart.items.length === 0) {
       toast.error('Cart is empty');
@@ -466,13 +240,11 @@ export default function QuickPOS() {
     setIsPaymentDialogOpen(true);
   }, [cart.items.length, customerName]);
 
-  // Handle payment completion from dialog
   const handlePaymentComplete = useCallback(async (paymentData: { parts: { method: 'cash' | 'card' | 'wallet'; amount: number; txnId?: string; lastDigits?: string }[] }) => {
     setIsProcessing(true);
     setIsPaymentDialogOpen(false);
 
     try {
-      // Create or update customer
       let customer = customers.find(c => c.phone === customerPhone);
 
       if (!customer && customerPhone) {
@@ -498,13 +270,11 @@ export default function QuickPOS() {
           name: customerName,
           gst: customerGST,
           totalSpent: (customer.totalSpent || 0) + total,
-          visits: (customer.visits || 0) + 1,
           visitCount: (customer.visitCount || 0) + 1,
           updatedAt: new Date()
         });
       }
 
-      // Update product stock
       for (const item of cart.items) {
         const product = products.find(p => p.id === item.product.id);
         if (product) {
@@ -515,13 +285,11 @@ export default function QuickPOS() {
         }
       }
 
-      // Build split payment details
       const parts = paymentData.parts || [];
       const cashAmount = parts.filter(p => p.method === 'cash').reduce((s, p) => s + (p.amount || 0), 0);
       const cardAmount = parts.filter(p => p.method === 'card').reduce((s, p) => s + (p.amount || 0), 0);
       const walletAmount = parts.filter(p => p.method === 'wallet').reduce((s, p) => s + (p.amount || 0), 0);
 
-      // Create transaction
       const transaction: Transaction = {
         id: Date.now().toString(),
         items: cart.items.map(item => ({
@@ -534,7 +302,7 @@ export default function QuickPOS() {
         })),
         subtotal,
         tax,
-        discount: 0,
+        discount: discountAmount,
         total,
         paymentMethod: cashAmount > 0 && (cardAmount > 0 || walletAmount > 0) ? 'split' : (parts[0]?.method || 'cash'),
         status: 'completed',
@@ -553,7 +321,40 @@ export default function QuickPOS() {
         }
       };
 
-      await handleTransactionComplete(transaction);
+      await saveTransaction(transaction);
+
+      const receiptData: ReceiptData = {
+        companyName: companySettings?.name || 'ACE Business',
+        companyAddress: companySettings?.address || '',
+        companyPhone: companySettings?.phone || '',
+        companyTaxId: companySettings?.taxId || '',
+        receiptNumber: transaction.id,
+        date: new Date(transaction.timestamp).toLocaleString(),
+        cashierName: employee?.name || 'Unknown',
+        customerName: transaction.customerName || 'Walk-in Customer',
+        items: transaction.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        })),
+        subtotal: transaction.subtotal,
+        tax: transaction.tax,
+        total: transaction.total,
+        paymentMethod: transaction.paymentMethod,
+        paymentDetails: transaction.paymentDetails
+      };
+
+      await thermalPrinter.printReceipt(receiptData);
+      toast.success('Transaction completed successfully!');
+
+      cart.clearCart();
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerGST('');
+      setCurrentCustomer(null);
+      setDiscount(0);
+      setIsCustomerSectionOpen(false);
 
     } catch (error) {
       console.error('Payment error:', error);
@@ -561,403 +362,454 @@ export default function QuickPOS() {
     } finally {
       setIsProcessing(false);
     }
-  }, [cart, customerName, customerPhone, customerGST, total, products, company, employee, handleTransactionComplete, saveCustomer, updateCustomer, customers]);
+  }, [cart, customerName, customerPhone, customerGST, total, products, company, employee, saveCustomer, updateCustomer, customers, subtotal, tax, discountAmount, companySettings, saveTransaction, updateProduct]);
 
-  // Handle logout
   const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
   }, [logout, navigate]);
 
+  const applyDiscount = useCallback(() => {
+    setIsDiscountDialogOpen(false);
+    if (discount > 0) {
+      toast.success(`Discount of ${discountType === 'percent' ? discount + '%' : '₹' + discount} applied`);
+    }
+  }, [discount, discountType]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Fullscreen Prompt Overlay */}
+      {/* Fullscreen Prompt */}
       {needsFullscreenPrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl text-center shadow-2xl max-w-md w-full mx-4">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg mb-6">
-              <h3 className="text-xl font-bold">Fullscreen Required</h3>
-            </div>
-            <p className="text-gray-600 mb-6 text-lg">Please press F11 or click the fullscreen button to continue with POS operations.</p>
-            <p className="text-gray-500 mb-4 text-sm">💡 Tip: Press ESC or Ctrl+D anytime to return to Dashboard</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button 
-                onClick={ensureFullscreen}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Enter Fullscreen
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-                className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-semibold py-3 px-6 transition-all duration-200"
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-          </div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <Card className="max-w-md w-full mx-4">
+            <CardContent className="p-6 text-center">
+              <h3 className="text-xl font-bold mb-4">Fullscreen Mode Required</h3>
+              <p className="text-gray-600 mb-6">
+                Press F11 or click below to enter fullscreen for the best POS experience
+              </p>
+              <div className="flex gap-3">
+                <Button onClick={ensureFullscreen} className="flex-1">
+                  Enter Fullscreen
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard')}
+                  className="flex-1"
+                >
+                  Go to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Header - Streamlined with Logo, Search, and Session Info */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between shadow-lg">
-        {/* Logo */}
-        <div className="flex items-center">
-          <div className="bg-white bg-opacity-20 rounded-lg p-2 mr-3">
-            <Package className="h-6 w-6 text-white" />
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-900">Quick POS</h1>
+            <Badge variant="outline" className="text-sm">
+              <User className="h-3 w-3 mr-1" />
+              {employee?.name || 'Cashier'}
+            </Badge>
           </div>
-          <h1 className="text-2xl font-bold">ACE-POS</h1>
-        </div>
-
-        {/* Universal Search Bar */}
-        <div className="flex-1 max-w-2xl mx-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              ref={searchRef}
-              type="text"
-              placeholder="Search by Item Name, Code, or Tag..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg bg-white text-gray-800 border-0 rounded-lg shadow-sm focus:ring-2 focus:ring-white focus:ring-opacity-50"
-            />
-          </div>
-        </div>
-
-        {/* Session Info */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <User className="h-4 w-4" />
-            <span className="font-medium">{employee?.name || 'Cashier'}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <Calendar className="h-4 w-4" />
-            <span>{currentTime.toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-sm bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <Clock className="h-4 w-4" />
-            <span>{currentTime.toLocaleTimeString()}</span>
-          </div>
-          <div className="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-1">
-            <Label htmlFor="tax-included" className="text-sm font-medium cursor-pointer">Tax Inc.</Label>
-            <Switch
-              id="tax-included"
-              checked={taxIncluded}
-              onCheckedChange={setTaxIncluded}
-              className="data-[state=checked]:bg-white data-[state=unchecked]:bg-white bg-opacity-30"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center space-x-1 bg-white text-blue-600 hover:bg-gray-100 border-white"
-            title="Go to Dashboard (ESC or Ctrl+D)"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Dashboard</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-            className="flex items-center space-x-1 bg-white text-red-600 hover:bg-red-50 border-white"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Category Tabs - Horizontal */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
-        <div className="flex space-x-3 overflow-x-auto">
-          {categories.map((category) => (
+          <div className="flex items-center gap-3">
             <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setSelectedCategory(category)}
-              className={`whitespace-nowrap font-medium transition-all duration-200 ${
-                selectedCategory === category 
-                  ? 'bg-blue-600 text-white shadow-md' 
-                  : 'hover:bg-blue-50 hover:text-blue-600 border-blue-200'
-              }`}
+              onClick={() => navigate('/dashboard')}
             >
-              {category}
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Dashboard
             </Button>
-          ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Two Panel Layout */}
+      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Product Selection (70%) */}
-        <div className="flex-1 bg-white p-4 overflow-y-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map((product) => (
-              <Card
-                key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-400 hover:scale-105"
-                onClick={() => handleProductSelect(product)}
-              >
-                <CardContent className="p-3 text-center">
-                  <div className="h-20 bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Package className="h-10 w-10 text-blue-500" />
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2 text-gray-800">{product.name}</h3>
-                  <p className="text-xs text-gray-500 mb-2">{product.sku || product.barcode}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-green-600">₹{product.price.toFixed(2)}</span>
-                    <Badge variant={product.stock > 0 ? "default" : "destructive"} className="text-xs">
-                      {product.stock > 0 ? `${product.stock}` : 'Out'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No products found</p>
+        {/* Left Column - Products */}
+        <div className="flex-1 flex flex-col">
+          {/* Search Bar */}
+          <div className="bg-white border-b border-gray-200 p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                ref={searchRef}
+                type="text"
+                placeholder="Search products by name, code, or barcode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base"
+              />
             </div>
-          )}
+          </div>
+
+          {/* Category Filters */}
+          <div className="bg-white border-b border-gray-200 px-4 py-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className="whitespace-nowrap"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Grid */}
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            {filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <Package className="h-20 w-20 mb-4" />
+                <p className="text-lg font-medium">
+                  {isDataLoading ? 'Loading products...' : 'No products found'}
+                </p>
+                <p className="text-sm mt-1">
+                  {isDataLoading ? 'Please wait...' : searchQuery || selectedCategory !== 'All' ? 'Try adjusting your filters' : 'Add products to get started'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredProducts.map((product) => (
+                  <Card
+                    key={product.id}
+                    className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-500"
+                    onClick={() => {
+                      if (product.stock > 0) {
+                        cart.addItem(product);
+                        toast.success(`${product.name} added to cart`);
+                      } else {
+                        toast.error(`${product.name} is out of stock`);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-4">
+                      <div className="aspect-square bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg mb-3 flex items-center justify-center">
+                        <Package className="h-12 w-12 text-blue-500" />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1 line-clamp-2 h-10">{product.name}</h3>
+                      <div className="flex items-center justify-between mt-2">
+                        <div>
+                          <div className="text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</div>
+                          {product.mrp && product.mrp > product.price && (
+                            <div className="text-xs text-gray-400 line-through">₹{product.mrp.toFixed(2)}</div>
+                          )}
+                        </div>
+                        <Badge variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}>
+                          {product.stock > 0 ? product.stock : 'Out'}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Panel - Live Bill/Cart (30%) */}
-        <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col">
-          {/* Customer Info */}
-          <div className="bg-white p-4 border-b border-gray-200">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              Customer Information
-              {isCustomerLoading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              )}
-              {currentCustomer && (
-                <Badge variant="secondary" className="text-xs">
-                  Existing Customer
-                </Badge>
-              )}
-            </h3>
-            <div className="space-y-3">
-              <Input
-                placeholder="Customer Name"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="text-sm"
-                disabled={isCustomerLoading}
-              />
-              <div className="relative">
-                <Input
-                  placeholder="Mobile Number"
-                  value={customerPhone}
-                  onChange={(e) => handleCustomerPhoneChange(e.target.value)}
-                  className="text-sm"
-                  disabled={isCustomerLoading}
-                />
-                {currentCustomer && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                      Found
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              <Input
-                placeholder="GST Number (Optional)"
-                value={customerGST}
-                onChange={(e) => setCustomerGST(e.target.value)}
-                className="text-sm"
-                disabled={isCustomerLoading}
-              />
-              {currentCustomer && (
-                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
-                  <div><strong>Visit Count:</strong> {currentCustomer.visitCount || 0}</div>
-                  <div><strong>Last Visit:</strong> {currentCustomer.lastVisit ? new Date(currentCustomer.lastVisit).toLocaleDateString() : 'Never'}</div>
-                  {currentCustomer.loyaltyPoints > 0 && (
-                    <div><strong>Loyalty Points:</strong> {currentCustomer.loyaltyPoints}</div>
-                  )}
-                </div>
+        {/* Right Column - Cart */}
+        <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
+          {/* Cart Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Cart ({cart.items.length})
+              </h2>
+              {cart.items.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => cart.clearCart()}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
               )}
             </div>
           </div>
 
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="font-semibold mb-3">Cart Items</h3>
             {cart.items.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No items in cart</p>
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <ShoppingCart className="h-16 w-16 mb-3" />
+                <p className="font-medium">Cart is empty</p>
+                <p className="text-sm">Click products to add them</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {cart.items.map((item, index) => (
-                  <div key={index} className="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm text-gray-800">{item.product.name}</h4>
-                        <p className="text-xs text-gray-500">₹{item.product.price.toFixed(2)} each</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => cart.removeItem(item.product.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2 bg-gray-50 rounded-lg px-2 py-1">
+                  <Card key={index} className="border">
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm">{item.product.name}</h4>
+                          <p className="text-xs text-gray-500">₹{item.product.price.toFixed(2)} each</p>
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => cart.updateQuantity(item.product.id, Math.max(0, item.quantity - 1))}
-                          className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => cart.removeItem(item.product.id)}
+                          className="h-6 w-6 p-0 text-red-500"
                         >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="text-sm font-bold w-8 text-center text-gray-800">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
-                          className="h-6 w-6 p-0 hover:bg-green-50 hover:text-green-600"
-                        >
-                          <Plus className="h-3 w-3" />
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      <span className="font-bold text-green-600">₹{(item.product.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cart.updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-bold w-8 text-center">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="text-base font-bold">
+                          ₹{(item.product.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Totals and Payment */}
-          <div className="bg-white p-4 border-t border-gray-200">
-            <div className="space-y-3 mb-4">
+          {/* Customer Section (Collapsible) */}
+          <div className="border-t border-gray-200">
+            <button
+              onClick={() => setIsCustomerSectionOpen(!isCustomerSectionOpen)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <span className="font-semibold flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Customer Details
+              </span>
+              {isCustomerSectionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            {isCustomerSectionOpen && (
+              <div className="px-4 pb-4 space-y-3">
+                <Input
+                  placeholder="Customer Name *"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="h-10"
+                />
+                <div className="relative">
+                  <Input
+                    placeholder="Mobile Number"
+                    value={customerPhone}
+                    onChange={(e) => handleCustomerPhoneChange(e.target.value)}
+                    className="h-10"
+                    disabled={isCustomerLoading}
+                  />
+                  {isCustomerLoading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                    </div>
+                  )}
+                </div>
+                <Input
+                  placeholder="GST Number (Optional)"
+                  value={customerGST}
+                  onChange={(e) => setCustomerGST(e.target.value)}
+                  className="h-10"
+                />
+                {currentCustomer && (
+                  <div className="bg-green-50 p-3 rounded-lg text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Visits:</span>
+                      <span className="font-bold">{currentCustomer.visitCount || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total Spent:</span>
+                      <span className="font-bold text-green-600">₹{(currentCustomer.totalSpent || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Totals & Checkout */}
+          <div className="border-t-2 border-gray-200 p-4 bg-gray-50">
+            {/* Discount Link */}
+            {discountAmount === 0 ? (
+              <button
+                onClick={() => setIsDiscountDialogOpen(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium mb-3 flex items-center gap-1"
+              >
+                <Percent className="h-4 w-4" />
+                + Add Discount
+              </button>
+            ) : (
+              <div className="flex items-center justify-between mb-3 p-2 bg-blue-50 rounded-lg">
+                <span className="text-sm font-medium text-blue-900">
+                  Discount: {discountType === 'percent' ? `${discount}%` : `₹${discount}`}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDiscount(0);
+                    toast.success('Discount removed');
+                  }}
+                  className="h-6 w-6 p-0 text-blue-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal:</span>
                 <span className="font-medium">₹{subtotal.toFixed(2)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Discount:</span>
+                  <span className="font-medium">-₹{discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Tax (18%):</span>
+                <span className="text-gray-600">Tax (18% GST):</span>
                 <span className="font-medium">₹{tax.toFixed(2)}</span>
               </div>
-              <Separator />
-              <div className="flex justify-between text-xl font-bold text-green-600">
+              <div className="flex items-center justify-between text-sm">
+                <Label htmlFor="tax-inc" className="cursor-pointer text-gray-600">Tax Included:</Label>
+                <Switch
+                  id="tax-inc"
+                  checked={taxIncluded}
+                  onCheckedChange={setTaxIncluded}
+                />
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between text-xl font-bold">
                 <span>TOTAL:</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span className="text-green-600">₹{total.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* Payment Method */}
-            <div className="mb-4">
-              <Label className="text-sm font-medium mb-3 block text-gray-700">Payment Method</Label>
-              <RadioGroup value={paymentMethod} onValueChange={(value: 'cash' | 'card' | 'wallet') => setPaymentMethod(value)}>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash" className="text-sm font-medium cursor-pointer">Cash</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 p-2 rounded-lg border-2 hover:border-blue-300 transition-colors">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="text-sm font-medium cursor-pointer">Card</Label>
-                  </div>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Pay Button */}
             <Button
               onClick={handlePaymentClick}
-              disabled={cart.items.length === 0 || isProcessing}
-              className="w-full py-4 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              disabled={cart.items.length === 0 || isProcessing || !customerName.trim()}
+              className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700"
             >
               {isProcessing ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Processing...</span>
-                </div>
+                <>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Processing...
+                </>
               ) : (
-                `PAY ₹${total.toFixed(2)}`
+                <>
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  PAY NOW ₹{total.toFixed(2)}
+                </>
               )}
             </Button>
 
-
+            <p className="text-xs text-center text-gray-500 mt-2">
+              {isDataLoading ? 'Syncing...' : `${products.length} products • ${customers.length} customers`}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Quantity Dialog */}
-      <Dialog open={isQtyDialogOpen} onOpenChange={setIsQtyDialogOpen}>
+      {/* Exit Confirmation Dialog */}
+      <Dialog open={showExitConfirmation} onOpenChange={setShowExitConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enter Quantity</DialogTitle>
+            <DialogTitle>Exit POS?</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-600">
+            Are you sure you want to exit fullscreen and return to the dashboard?
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" onClick={handleCancelExit} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleExitToDashboard} className="flex-1">
+              Exit to Dashboard
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Discount Dialog */}
+      <Dialog open={isDiscountDialogOpen} onOpenChange={setIsDiscountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Apply Discount</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {qtyDialogProduct && (
-              <div className="text-center">
-                <h3 className="font-semibold">{qtyDialogProduct.name}</h3>
-                <p className="text-sm text-gray-500">Unit: {qtyDialogProduct.unit}</p>
-              </div>
-            )}
-            
-            {qtyDialogProduct?.unit && isDecimalUnit(qtyDialogProduct.unit) ? (
-              <div className="space-y-3">
-                <div>
-                  <Label>Main Unit</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={mainQty}
-                    onChange={(e) => setMainQty(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Sub Unit (cents)</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={subQty}
-                    onChange={(e) => setSubQty(e.target.value)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  placeholder="1"
-                  value={qtyDialogQty}
-                  onChange={(e) => setQtyDialogQty(e.target.value)}
-                />
-              </div>
-            )}
-            
-            {qtyDialogError && (
-              <p className="text-red-500 text-sm">{qtyDialogError}</p>
-            )}
-            
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={() => setIsQtyDialogOpen(false)} className="flex-1">
+            <div className="flex gap-2">
+              <Button
+                variant={discountType === 'percent' ? 'default' : 'outline'}
+                onClick={() => setDiscountType('percent')}
+                className="flex-1"
+              >
+                <Percent className="h-4 w-4 mr-2" />
+                Percentage
+              </Button>
+              <Button
+                variant={discountType === 'amount' ? 'default' : 'outline'}
+                onClick={() => setDiscountType('amount')}
+                className="flex-1"
+              >
+                <IndianRupee className="h-4 w-4 mr-2" />
+                Fixed Amount
+              </Button>
+            </div>
+            <div>
+              <Label>Enter {discountType === 'percent' ? 'Percentage' : 'Amount'}</Label>
+              <Input
+                type="number"
+                value={discount}
+                onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                placeholder={discountType === 'percent' ? 'e.g., 10' : 'e.g., 100'}
+                className="text-lg font-bold text-center mt-2"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setIsDiscountDialogOpen(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleQtyConfirm} className="flex-1">
-                Add to Cart
+              <Button onClick={applyDiscount} className="flex-1">
+                Apply Discount
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-
-
 
       {/* Payment Dialog */}
       <PaymentDialog
