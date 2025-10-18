@@ -14,17 +14,18 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@shared": path.resolve(__dirname, "..", "shared"),
-      "@assets": path.resolve(__dirname, "..", "attached_assets"),
+      "@": path.resolve(__dirname, "client/src"),
+      "@shared": path.resolve(__dirname, "shared"),
+      "@assets": path.resolve(__dirname, "attached_assets"),
     },
     // Prevent Node.js modules from being bundled for the browser
     browserField: true,
   },
-  root: ".",
+  root: "client",
+  publicDir: path.resolve(__dirname, "client/public"),
   build: {
-    outDir: path.resolve(__dirname, "..", "dist/public"),
-    emptyOutDir: true,
+    outDir: path.resolve(__dirname, "dist/public"),
+    emptyOutDir: false, // Don't delete server files in dist/
     rollupOptions: {
       output: {
         manualChunks: {
