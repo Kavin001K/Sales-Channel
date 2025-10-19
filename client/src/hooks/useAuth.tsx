@@ -270,24 +270,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       const data = await response.json();
-      if (!data.success || !data.company) {
+      if (!data.success || !data.company || !data.token) {
         recordLoginAttempt(`company_${sanitizedEmail}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
 
       const company = data.company;
+      const token = data.token;
+
+      // Security: Store JWT token for API requests
+      localStorage.setItem('auth_token', token);
 
       // Security: Record successful login
       recordLoginAttempt(`company_${sanitizedEmail}`, true);
-      
+
       const newState: AuthState = {
-        isAuthenticated: false, // Not fully authenticated until employee logs in
+        isAuthenticated: true, // Fully authenticated for company login
         company,
         employee: null,
         loading: false
       };
-      
+
       setAuthState(newState);
       saveAuthState(newState);
       return true;
@@ -347,24 +351,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       const data = await response.json();
-      if (!data.success || !data.employee) {
+      if (!data.success || !data.employee || !data.token) {
         recordLoginAttempt(`employee_${sanitizedEmployeeId}`, false);
         setAuthState(prev => ({ ...prev, loading: false }));
         return false;
       }
 
       const employee = data.employee;
+      const token = data.token;
+
+      // Security: Store JWT token for API requests
+      localStorage.setItem('auth_token', token);
 
       // Security: Record successful login
       recordLoginAttempt(`employee_${sanitizedEmployeeId}`, true);
-      
+
       const newState: AuthState = {
         isAuthenticated: true, // Now fully authenticated
         company: authState.company,
         employee,
         loading: false
       };
-      
+
       setAuthState(newState);
       saveAuthState(newState);
       return true;
@@ -479,8 +487,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSessionTimeout(null);
       }
 
-      // Security: Clear all auth data
+      // Security: Clear all auth data including token
       localStorage.removeItem('auth_state');
+      localStorage.removeItem('auth_token');
       setAuthState({
         isAuthenticated: false,
         company: null,
@@ -503,6 +512,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSessionTimeout(null);
       }
 
+      // Security: Clear auth token when employee logs out
+      localStorage.removeItem('auth_token');
+
       // Security: Keep company but remove employee
       const newState: AuthState = {
         isAuthenticated: false,
@@ -510,7 +522,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         employee: null,
         loading: false
       };
-      
+
       setAuthState(newState);
       saveAuthState(newState);
       console.log('Employee logged out successfully');
